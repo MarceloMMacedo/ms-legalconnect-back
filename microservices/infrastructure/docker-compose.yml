@@ -1,0 +1,57 @@
+# /infrastructure/docker-compose.yml
+version: "3.8"
+
+services:
+  nginx:
+    image: nginx:alpine # Usaremos uma imagem Nginx pré-construída
+    ports:
+      - "80:80" # Mapeia a porta 80 do container para a porta 80 do seu host
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro # Monta sua configuração do Nginx
+      - ./nginx/logs:/var/log/nginx # Opcional: para acessar logs do Nginx no seu host
+    networks:
+      - legalconnect-network
+    # Nginx não precisa de 'depends_on' para os microsserviços,
+    # pois eles não estão no Docker Compose.
+    # Ele só dependerá de bancos de dados ou outros serviços que você conteinerizar.
+    depends_on:
+      - db-global # Se você optar por rodar o DB em container
+      - db-tenant # Se você optar por rodar o DB de tenants em container
+
+  # Exemplo de configuração de banco de dados PostgreSQL em container (OPCIONAL)
+  # Se você já tem um PostgreSQL local rodando, pode remover este bloco
+  db-global:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_DB: legalconnect_global
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432" # Expor a porta se você precisar acessar este DB diretamente do seu host
+    volumes:
+      - ./db/init-scripts:/docker-entrypoint-initdb.d # Para scripts de inicialização
+      - db-global-data:/var/lib/postgresql/data # Volume persistente para os dados do DB
+    networks:
+      - legalconnect-network
+
+  db-tenant:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_DB: legalconnect_tenant_1
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432" # Porta diferente para o segundo DB
+    volumes:
+      - ./db/flyway/tenants:/flyway/sql # Migrações do Flyway para tenants
+      - db-tenant-data:/var/lib/postgresql/data
+    networks:
+      - legalconnect-network
+
+volumes:
+  db-global-data:
+  db-tenant-data:
+
+networks:
+  legalconnect-network:
+    driver: bridge

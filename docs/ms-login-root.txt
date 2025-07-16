@@ -1,0 +1,112 @@
+legalconnect/
+├── microservices/
+│   ├── auth-service/
+│   │   ├── pom.xml
+│   │   └── src/
+│   │       ├── main/
+│   │       │   ├── java/
+│   │       │   │   └── br/com/legalconnect/
+│   │       │   │       ├── LegalconnectAuthServiceApplication.java
+│   │       │   │       ├── auth/
+│   │       │   │       │   ├── controller/
+│   │       │   │       │   │   └── AuthController.java
+│   │       │   │       │   ├── dto/
+│   │       │   │       │   │   ├── AuthResponse.java
+│   │       │   │       │   │   ├── LoginRequest.java
+│   │       │   │       │   │   ├── RefreshTokenRequest.java
+│   │       │   │       │   │   ├── RefreshTokenResponseDTO.java
+│   │       │   │       │   │   └── SocialLoginRequest.java
+│   │       │   │       │   ├── entity/
+│   │       │   │       │   │   ├── RefreshToken.java
+│   │       │   │       │   │   └── Tenant.java
+│   │       │   │       │   ├── mapper/
+│   │       │   │       │   │   ├── RefreshTokenMapper.java
+│   │       │   │       │   │   └── TenantMapper.java
+│   │       │   │       │   ├── repository/
+│   │       │   │       │   │   ├── RefreshTokenRepository.java
+│   │       │   │       │   │   └── TenantRepository.java
+│   │       │   │       │   ├── security/
+│   │       │   │       │   │   ├── CustomUserDetails.java
+│   │       │   │       │   │   ├── JwtAuthEntryPoint.java
+│   │       │   │       │   │   ├── JwtAuthFilter.java
+│   │       │   │       │   │   └── JwtUtil.java
+│   │       │   │       │   ├── service/
+│   │       │   │       │   │   ├── AuthService.java
+│   │       │   │       │   │   └── RefreshTokenService.java
+│   │       │   │       │   └── util/
+│   │       │   │       │       └── PasswordEncoderUtil.java
+│   │       │   │       ├── common/
+│   │       │   │       │   ├── BaseEntity.java
+│   │       │   │       │   ├── config/
+│   │       │   │       │   │   ├── FlywayMultiTenantConfig.java
+│   │       │   │       │   │   ├── OpenApiConfig.java
+│   │       │   │       │   │   └── WebConfig.java
+│   │       │   │       │   ├── constants/
+│   │       │   │       │   │   ├── ErrorCode.java
+│   │       │   │       │   │   └── Roles.java
+│   │       │   │       │   ├── dto/
+│   │       │   │       │   │   ├── BaseResponse.java
+│   │       │   │       │   │   └── SuccessResponseDTO.java
+│   │       │   │       │   ├── exception/
+│   │       │   │       │   │   ├── BusinessException.java
+│   │       │   │       │   │   └── GlobalExceptionHandler.java
+│   │       │   │       │   ├── mapper/
+│   │       │   │       │   │   └── AuditLogMapper.java
+│   │       │   │       │   ├── multitenancy/
+│   │       │   │       │   │   ├── HibernateMultiTenantConfig.java
+│   │       │   │       │   │   ├── SchemaMultiTenantConnectionProvider.java
+│   │       │   │       │   │   ├── SchemaTenantIdentifierResolver.java
+│   │       │   │       │   │   ├── TenantContext.java
+│   │       │   │       │   │   └── TenantFilter.java
+│   │       │   │       │   ├── repository/
+│   │       │   │       │   │   └── AuditLogRepository.java
+│   │       │   │       │   ├── service/
+│   │       │   │       │   │   ├── AuditLogService.java
+│   │       │   │       │   │   └── NotificationService.java
+│   │       │   │       │   └── util/
+│   │       │   │       │       └── ValidatorUtil.java
+│   │       │   │       ├── config/
+│   │       │   │       │   ├── ApplicationConfig.java
+│   │       │   │       │   ├── JwtAuthenticationFilter.java
+│   │       │   │       │   └── SecurityConfig.java
+│   │       │   │       ├── tenant/
+│   │       │   │       │   ├── repository/
+│   │       │   │       │   │   └── TenantRepository.java
+│   │       │   │       │   └── service/
+│   │       │   │       │       └── TenantService.java
+│   │       │   │       └── user/
+│   │       │   │           ├── controller/
+│   │       │   │           │   └── UserController.java
+│   │       │   │           ├── dto/
+│   │       │   │           │   ├── PasswordRecoveryRequest.java
+│   │       │   │           │   ├── PasswordResetRequest.java
+│   │       │   │           │   ├── RoleDTO.java
+│   │       │   │           │   ├── UserProfileUpdate.java
+│   │       │   │           │   └── UserRegistrationRequest.java
+│   │       │   │           │   └── UserResponseDTO.java
+│   │       │   │           ├── entity/
+│   │       │   │           │   ├── PasswordResetToken.java
+│   │       │   │           │   ├── Role.java
+│   │       │   │           │   └── User.java
+│   │       │   │           ├── mapper/
+│   │       │   │           │   ├── RoleMapper.java
+│   │       │   │           │   └── UserMapper.java
+│   │       │   │           ├── repository/
+│   │       │   │           │   ├── PasswordResetTokenRepository.java
+│   │       │   │           │   ├── RoleRepository.java
+│   │       │   │           │   └── UserRepository.java
+│   │       │   │           └── service/
+│   │       │   │               ├── PasswordResetTokenService.java
+│   │       │   │               └── UserService.java
+│   │       │   └── resources/
+│   │       │       ├── application.yml
+│   │       │       └── db/
+│   │       │           └── migration/
+│   │       │               ├── global/
+│   │       │               │   └── V1__create_tenant_table_global.sql
+│   │       │               └── tenants/
+│   │       │                   └── V1__create_all_application_tables.sql
+│   │       └── test/
+│   │           └── java/
+│   │               └── br/com/legalconnect/auth/
+│   │                   └── LegalconnectAuthServiceApplicationTests.java
