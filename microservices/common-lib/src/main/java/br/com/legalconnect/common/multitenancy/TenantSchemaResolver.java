@@ -5,15 +5,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class HeaderTenantIdentifierResolver implements CurrentTenantIdentifierResolver {
+public class TenantSchemaResolver implements CurrentTenantIdentifierResolver {
 
     @Value("${application.tenant.default-id}")
     private String defaultTenantId;
 
     @Override
     public String resolveCurrentTenantIdentifier() {
-        String tenant = TenantContext.getTenantId();
-        return (tenant != null && !tenant.trim().isEmpty()) ? tenant : defaultTenantId;
+        String tenantId = TenantContext.getCurrentTenant();
+        return tenantId != null ? tenantId : defaultTenantId;
     }
 
     @Override
