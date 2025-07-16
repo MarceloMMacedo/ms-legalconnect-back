@@ -1,4 +1,4 @@
-package br.com.legalconnect.common.multitenancy;
+package br.com.legalconnect.auth.auth_service.multitenancy;
 
 public class TenantContext {
     private static final ThreadLocal<String> CURRENT_TENANT = new ThreadLocal<>();

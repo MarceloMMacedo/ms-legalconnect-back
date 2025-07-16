@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.experimental.SuperBuilder;
 
 /**
  * @class SuccessResponseDTO
@@ -15,7 +14,6 @@ import lombok.experimental.SuperBuilder;
  *        que podem ou não retornar dados específicos.
  */
 @Data
-@SuperBuilder
 @EqualsAndHashCode(callSuper = true) // Inclui campos da superclasse no equals e hashCode
 public class SuccessResponseDTO extends BaseResponse {
 

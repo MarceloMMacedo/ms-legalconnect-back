@@ -1,4 +1,4 @@
-package br.com.legalconnect.common.multitenancy;
+package br.com.legalconnect.auth.auth_service.multitenancy;
 
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.springframework.beans.factory.annotation.Value;
