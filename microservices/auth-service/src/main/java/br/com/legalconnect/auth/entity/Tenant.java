@@ -1,6 +1,6 @@
 package br.com.legalconnect.auth.entity;
 
-import br.com.legalconnect.common.BaseEntity;
+import br.com.legalconnect.common.dto.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

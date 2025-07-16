@@ -2,7 +2,7 @@ package br.com.legalconnect.auth.entity;
 
 import java.time.Instant;
 
-import br.com.legalconnect.common.BaseEntity;
+import br.com.legalconnect.common.dto.BaseEntity;
 import br.com.legalconnect.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

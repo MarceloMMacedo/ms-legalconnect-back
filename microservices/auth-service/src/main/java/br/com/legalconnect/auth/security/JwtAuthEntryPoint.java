@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import br.com.legalconnect.common.dto.BaseResponse;
+import br.com.legalconnect.common.common_lib.BaseResponse;
 import br.com.legalconnect.common.exception.ErrorCode;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

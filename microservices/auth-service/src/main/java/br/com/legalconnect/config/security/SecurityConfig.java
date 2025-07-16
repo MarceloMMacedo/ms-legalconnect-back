@@ -17,8 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import br.com.legalconnect.auth.auth_service.auth.security.JwtAuthEntryPoint;
-import br.com.legalconnect.auth.auth_service.auth.security.JwtAuthFilter;
+import br.com.legalconnect.auth.security.JwtAuthEntryPoint;
+import br.com.legalconnect.auth.security.JwtAuthFilter;
 
 /**
  * @class SecurityConfig

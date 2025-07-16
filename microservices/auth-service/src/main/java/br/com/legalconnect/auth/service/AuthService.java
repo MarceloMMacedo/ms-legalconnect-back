@@ -1,7 +1,5 @@
 package br.com.legalconnect.auth.service;
 
-import java.util.UUID;
-
 import org.slf4j.Logger; // Importação para Logger
 import org.slf4j.LoggerFactory; // Importação para LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,19 +9,13 @@ import org.springframework.transaction.annotation.Transactional;
 import br.com.legalconnect.auth.dto.AuthResponse;
 import br.com.legalconnect.auth.dto.LoginRequest;
 import br.com.legalconnect.auth.dto.RefreshTokenRequest;
-import br.com.legalconnect.auth.dto.SocialLoginRequest;
 import br.com.legalconnect.auth.entity.RefreshToken;
-import br.com.legalconnect.auth.entity.Tenant; // Importação para a entidade Tenant
 import br.com.legalconnect.auth.security.CustomUserDetails;
 import br.com.legalconnect.auth.security.JwtUtil;
 import br.com.legalconnect.auth.util.PasswordEncoderUtil;
 import br.com.legalconnect.common.exception.BusinessException; // Importação para BusinessException
 import br.com.legalconnect.common.exception.ErrorCode;
-import br.com.legalconnect.common.exception.Roles;
-import br.com.legalconnect.common.service.AuditLogService; // Importação para AuditLogService
-import br.com.legalconnect.common.util.ValidatorUtil; // Importação para ValidatorUtil (agora uma classe estática)
 import br.com.legalconnect.tenant.repository.TenantRepository; // Importar TenantRepository
-import br.com.legalconnect.user.entity.Role; // Importação para a entidade Role
 import br.com.legalconnect.user.entity.User; // Importação para a entidade User
 import br.com.legalconnect.user.mapper.UserMapper;
 import br.com.legalconnect.user.repository.RoleRepository; // Importação para RoleRepository
@@ -53,8 +45,6 @@ public class AuthService {
     @Autowired
     private UserMapper userMapper; /// < Mapper para converter entidades User em DTOs.
     @Autowired
-    private AuditLogService auditLogService; /// < Serviço para registrar logs de auditoria de erros.
-    @Autowired
     private RoleRepository roleRepository; // Repositório para acesso a dados de roles.
     @Autowired
     private TenantRepository tenantRepository; // Repositório para acesso a dados de tenants.
@@ -78,24 +68,24 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> {
                     log.warn("Falha no login: Usuário não encontrado para o e-mail: {}", request.getEmail());
-                    auditLogService.logError(ErrorCode.USER_NOT_FOUND.getCode(),
-                            "Login falhou: Usuário não encontrado.", request.getEmail(), null, null);
+                    // auditLogService.logError(ErrorCode.USER_NOT_FOUND.getCode(),
+                    // "Login falhou: Usuário não encontrado.", request.getEmail(), null, null);
                     return new BusinessException(ErrorCode.USER_NOT_FOUND, "Usuário ou senha inválidos.");
                 });
 
         // 2. Verifica se o usuário está ativo
         if (user.getStatus() != User.UserStatus.ACTIVE) {
             log.warn("Falha no login: Usuário inativo para o e-mail: {}", request.getEmail());
-            auditLogService.logError(ErrorCode.USER_INACTIVE.getCode(), "Login falhou: Usuário inativo.",
-                    request.getEmail(), user.getId(), user.getTenant().getId());
-            throw new BusinessException(ErrorCode.USER_INACTIVE, "Usuário inativo. Favor contatar o suporte.");
+            // auditLogService.logError(ErrorCode.USER_INACTIVE.getCode(), "Login falhou:
+            // Usuário inativo.",
+            // request.getEmail(), user.getId(), user.getTenant().getId());
+            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED, "Usuário inativo. Favor contatar o suporte.");
         }
 
         // 3. Compara a senha fornecida com a senha criptografada armazenada
         if (!passwordEncoderUtil.matches(request.getSenha(), user.getSenhaHash())) {
             log.warn("Falha no login: Credenciais inválidas para o e-mail: {}", request.getEmail());
-            auditLogService.logError(ErrorCode.INVALID_CREDENTIALS.getCode(), "Login falhou: Credenciais inválidas.",
-                    request.getEmail(), user.getId(), user.getTenant().getId());
+
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "Usuário ou senha inválidos.");
         }
 
@@ -128,8 +118,7 @@ public class AuthService {
         RefreshToken refreshToken = refreshTokenService.findByToken(request.getRefreshToken())
                 .orElseThrow(() -> {
                     log.warn("Falha no refresh token: Token não encontrado.");
-                    auditLogService.logError(ErrorCode.INVALID_TOKEN.getCode(),
-                            "Refresh token falhou: Token não encontrado.", request.getRefreshToken(), null, null);
+
                     return new BusinessException(ErrorCode.INVALID_TOKEN, "Refresh token inválido.");
                 });
 
@@ -166,8 +155,7 @@ public class AuthService {
             log.info("Logout bem-sucedido para o refresh token.");
         } catch (BusinessException e) {
             log.warn("Falha no logout: {}", e.getMessage());
-            auditLogService.logError(e.getErrorCode().getCode(), "Logout falhou: " + e.getMessage(), refreshToken, null,
-                    null);
+
             throw e;
         }
     }
@@ -179,132 +167,163 @@ public class AuthService {
      * @return Um `AuthResponse` com o access token e refresh token.
      * @throws BusinessException se o token social for inválido ou o provedor não
      *                           for suportado.
+     * 
+     * @Transactional
+     *                public AuthResponse socialLogin(SocialLoginRequest request) {
+     *                log.info("Tentativa de login social para o provedor: {}",
+     *                request.getProvider());
+     * 
+     *                // TODO: [PRODUÇÃO] Implementar integração real com provedores
+     *                OAuth2 (Google,
+     *                // LinkedIn).
+     *                // Esta é uma implementação mock. Em um ambiente de produção,
+     *                você faria
+     *                // chamadas
+     *                // para as APIs dos provedores para validar o token e obter os
+     *                dados do usuário.
+     *                // Isso pode envolver bibliotecas específicas para
+     *                OAuth2/OIDC.
+     * 
+     *                if ("GOOGLE".equalsIgnoreCase(request.getProvider())) {
+     *                log.debug("Processando login social com Google.");
+     *                // Simula validação do token Google
+     *                if (!"valid-google-token-123".equals(request.getToken())) {
+     *                log.warn("Falha no login social Google: Token inválido.");
+     * 
+     *                throw new BusinessException(ErrorCode.INVALID_TOKEN, "Token
+     *                Google inválido.");
+     *                }
+     *                // Simula busca ou criação de usuário
+     *                User user =
+     *                userRepository.findByEmail("social.user@gmail.com").orElseGet(()
+     *                -> {
+     *                log.info("Criando novo usuário para login social Google:
+     *                social.user@gmail.com");
+     *                // Para social login, você precisará de um tenant padrão para
+     *                associar o usuário
+     *                // Em um ambiente de produção, este "public" schemaName pode
+     *                ser configurável
+     *                // ou o tenant padrão pode ser buscado de outra forma.
+     *                Tenant defaultTenant =
+     *                tenantRepository.findBySchemaName("public")
+     *                .orElseThrow(() -> {
+     *                log.error("Falha na criação de usuário social: Tenant padrão
+     *                'public' não encontrado.");
+     * 
+     *                return new BusinessException(ErrorCode.TENANT_NOT_FOUND,
+     *                "Tenant padrão não encontrado para social login.");
+     *                });
+     * 
+     *                User newUser = User.builder()
+     *                .nomeCompleto("Usuário Social Google")
+     *                .email("social.user@gmail.com")
+     *                .cpf(ValidatorUtil.generateRandomCpf()) // Usa o método
+     *                estático de ValidatorUtil
+     *                .telefone("999999999")
+     *                .senhaHash(passwordEncoderUtil.encode(UUID.randomUUID().toString()))
+     *                // Senha aleatória para
+     *                // social login
+     *                .userType(User.UserType.CLIENTE)
+     *                .status(User.UserStatus.ACTIVE)
+     *                .tenant(defaultTenant)
+     *                .build();
+     *                // Adicionar role CLIENTE
+     *                Role clienteRole =
+     *                roleRepository.findByNome(Roles.ROLE_CLIENT)
+     *                .orElseThrow(() -> {
+     *                log.error("Falha na criação de usuário social: Role CLIENTE
+     *                não encontrada.");
+     * 
+     *                return new BusinessException(ErrorCode.DATABASE_ERROR,
+     *                "Role CLIENTE não encontrada.");
+     *                });
+     *                newUser.getRoles().add(clienteRole);
+     *                return userRepository.save(newUser);
+     *                });
+     * 
+     *                String accessToken = jwtUtil.generateToken(new
+     *                CustomUserDetails(user));
+     *                RefreshToken refreshToken =
+     *                refreshTokenService.createRefreshToken(user);
+     *                log.info("Login social Google bem-sucedido para o usuário:
+     *                {}", user.getEmail());
+     *                return AuthResponse.builder()
+     *                .accessToken(accessToken)
+     *                .refreshToken(refreshToken.getToken())
+     *                .build();
+     * 
+     *                } else if ("LINKEDIN".equalsIgnoreCase(request.getProvider()))
+     *                {
+     *                log.debug("Processando login social com LinkedIn.");
+     *                // Simula validação do token LinkedIn
+     *                if (!"valid-linkedin-token-456".equals(request.getToken())) {
+     *                log.warn("Falha no login social LinkedIn: Token inválido.");
+     * 
+     *                throw new BusinessException(ErrorCode.INVALID_TOKEN, "Token
+     *                LinkedIn inválido.");
+     *                }
+     *                // Simula busca ou criação de usuário
+     *                User user =
+     *                userRepository.findByEmail("social.user@linkedin.com").orElseGet(()
+     *                -> {
+     *                log.info("Criando novo usuário para login social LinkedIn:
+     *                social.user@linkedin.com");
+     *                // Para social login, você precisará de um tenant padrão para
+     *                associar o usuário
+     *                Tenant defaultTenant =
+     *                tenantRepository.findBySchemaName("public")
+     *                .orElseThrow(() -> {
+     *                log.error("Falha na criação de usuário social: Tenant padrão
+     *                'public' não encontrado.");
+     * 
+     *                return new BusinessException(ErrorCode.TENANT_NOT_FOUND,
+     *                "Tenant padrão não encontrado para social login.");
+     *                });
+     * 
+     *                User newUser = User.builder()
+     *                .nomeCompleto("Usuário Social LinkedIn")
+     *                .email("social.user@linkedin.com")
+     *                .cpf(ValidatorUtil.generateRandomCpf()) // Usa o método
+     *                estático de ValidatorUtil
+     *                .telefone("888888888")
+     *                .senhaHash(passwordEncoderUtil.encode(UUID.randomUUID().toString()))
+     *                // Senha aleatória para
+     *                // social login
+     *                .userType(User.UserType.CLIENTE)
+     *                .status(User.UserStatus.ACTIVE)
+     *                .tenant(defaultTenant)
+     *                .build();
+     *                // Adicionar role CLIENTE
+     *                Role clienteRole =
+     *                roleRepository.findByNome(Roles.ROLE_CLIENT)
+     *                .orElseThrow(() -> {
+     *                log.error("Falha na criação de usuário social: Role CLIENTE
+     *                não encontrada.");
+     * 
+     *                return new BusinessException(ErrorCode.USER_NOT_FOUND,
+     *                "Role CLIENTE não encontrada.");
+     *                });
+     *                newUser.getRoles().add(clienteRole);
+     *                return userRepository.save(newUser);
+     *                });
+     * 
+     *                String accessToken = jwtUtil.generateToken(new
+     *                CustomUserDetails(user));
+     *                RefreshToken refreshToken =
+     *                refreshTokenService.createRefreshToken(user);
+     *                log.info("Login social LinkedIn bem-sucedido para o usuário:
+     *                {}", user.getEmail());
+     *                return AuthResponse.builder()
+     *                .accessToken(accessToken)
+     *                .refreshToken(refreshToken.getToken())
+     *                .build();
+     *                } else {
+     *                log.warn("Provedor social não suportado: {}",
+     *                request.getProvider());
+     * 
+     *                throw new BusinessException(ErrorCode.SERVICE_UNAVAILABLE,
+     *                "Provedor social não suportado.");
+     *                }
+     *                }
      */
-    @Transactional
-    public AuthResponse socialLogin(SocialLoginRequest request) {
-        log.info("Tentativa de login social para o provedor: {}", request.getProvider());
-
-        // TODO: [PRODUÇÃO] Implementar integração real com provedores OAuth2 (Google,
-        // LinkedIn).
-        // Esta é uma implementação mock. Em um ambiente de produção, você faria
-        // chamadas
-        // para as APIs dos provedores para validar o token e obter os dados do usuário.
-        // Isso pode envolver bibliotecas específicas para OAuth2/OIDC.
-
-        if ("GOOGLE".equalsIgnoreCase(request.getProvider())) {
-            log.debug("Processando login social com Google.");
-            // Simula validação do token Google
-            if (!"valid-google-token-123".equals(request.getToken())) {
-                log.warn("Falha no login social Google: Token inválido.");
-                auditLogService.logError(ErrorCode.INVALID_TOKEN.getCode(),
-                        "Social Login Google falhou: Token inválido.", request.getToken(), null, null);
-                throw new BusinessException(ErrorCode.INVALID_TOKEN, "Token Google inválido.");
-            }
-            // Simula busca ou criação de usuário
-            User user = userRepository.findByEmail("social.user@gmail.com").orElseGet(() -> {
-                log.info("Criando novo usuário para login social Google: social.user@gmail.com");
-                // Para social login, você precisará de um tenant padrão para associar o usuário
-                // Em um ambiente de produção, este "public" schemaName pode ser configurável
-                // ou o tenant padrão pode ser buscado de outra forma.
-                Tenant defaultTenant = tenantRepository.findBySchemaName("public")
-                        .orElseThrow(() -> {
-                            log.error("Falha na criação de usuário social: Tenant padrão 'public' não encontrado.");
-                            auditLogService.logError(ErrorCode.TENANT_NOT_FOUND.getCode(),
-                                    "Social Login falhou: Tenant padrão não encontrado.", "public", null, null);
-                            return new BusinessException(ErrorCode.TENANT_NOT_FOUND,
-                                    "Tenant padrão não encontrado para social login.");
-                        });
-
-                User newUser = User.builder()
-                        .nomeCompleto("Usuário Social Google")
-                        .email("social.user@gmail.com")
-                        .cpf(ValidatorUtil.generateRandomCpf()) // Usa o método estático de ValidatorUtil
-                        .telefone("999999999")
-                        .senhaHash(passwordEncoderUtil.encode(UUID.randomUUID().toString())) // Senha aleatória para
-                                                                                             // social login
-                        .userType(User.UserType.CLIENTE)
-                        .status(User.UserStatus.ACTIVE)
-                        .tenant(defaultTenant)
-                        .build();
-                // Adicionar role CLIENTE
-                Role clienteRole = roleRepository.findByNome(Roles.CLIENTE)
-                        .orElseThrow(() -> {
-                            log.error("Falha na criação de usuário social: Role CLIENTE não encontrada.");
-                            auditLogService.logError(ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
-                                    "Social Login falhou: Role CLIENTE não encontrada.", Roles.CLIENTE, null, null);
-                            return new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR,
-                                    "Role CLIENTE não encontrada.");
-                        });
-                newUser.getRoles().add(clienteRole);
-                return userRepository.save(newUser);
-            });
-
-            String accessToken = jwtUtil.generateToken(new CustomUserDetails(user));
-            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-            log.info("Login social Google bem-sucedido para o usuário: {}", user.getEmail());
-            return AuthResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken.getToken())
-                    .build();
-
-        } else if ("LINKEDIN".equalsIgnoreCase(request.getProvider())) {
-            log.debug("Processando login social com LinkedIn.");
-            // Simula validação do token LinkedIn
-            if (!"valid-linkedin-token-456".equals(request.getToken())) {
-                log.warn("Falha no login social LinkedIn: Token inválido.");
-                auditLogService.logError(ErrorCode.INVALID_TOKEN.getCode(),
-                        "Social Login LinkedIn falhou: Token inválido.", request.getToken(), null, null);
-                throw new BusinessException(ErrorCode.INVALID_TOKEN, "Token LinkedIn inválido.");
-            }
-            // Simula busca ou criação de usuário
-            User user = userRepository.findByEmail("social.user@linkedin.com").orElseGet(() -> {
-                log.info("Criando novo usuário para login social LinkedIn: social.user@linkedin.com");
-                // Para social login, você precisará de um tenant padrão para associar o usuário
-                Tenant defaultTenant = tenantRepository.findBySchemaName("public")
-                        .orElseThrow(() -> {
-                            log.error("Falha na criação de usuário social: Tenant padrão 'public' não encontrado.");
-                            auditLogService.logError(ErrorCode.TENANT_NOT_FOUND.getCode(),
-                                    "Social Login falhou: Tenant padrão não encontrado.", "public", null, null);
-                            return new BusinessException(ErrorCode.TENANT_NOT_FOUND,
-                                    "Tenant padrão não encontrado para social login.");
-                        });
-
-                User newUser = User.builder()
-                        .nomeCompleto("Usuário Social LinkedIn")
-                        .email("social.user@linkedin.com")
-                        .cpf(ValidatorUtil.generateRandomCpf()) // Usa o método estático de ValidatorUtil
-                        .telefone("888888888")
-                        .senhaHash(passwordEncoderUtil.encode(UUID.randomUUID().toString())) // Senha aleatória para
-                                                                                             // social login
-                        .userType(User.UserType.CLIENTE)
-                        .status(User.UserStatus.ACTIVE)
-                        .tenant(defaultTenant)
-                        .build();
-                // Adicionar role CLIENTE
-                Role clienteRole = roleRepository.findByNome(Roles.CLIENTE)
-                        .orElseThrow(() -> {
-                            log.error("Falha na criação de usuário social: Role CLIENTE não encontrada.");
-                            auditLogService.logError(ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
-                                    "Social Login falhou: Role CLIENTE não encontrada.", Roles.CLIENTE, null, null);
-                            return new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR,
-                                    "Role CLIENTE não encontrada.");
-                        });
-                newUser.getRoles().add(clienteRole);
-                return userRepository.save(newUser);
-            });
-
-            String accessToken = jwtUtil.generateToken(new CustomUserDetails(user));
-            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-            log.info("Login social LinkedIn bem-sucedido para o usuário: {}", user.getEmail());
-            return AuthResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken.getToken())
-                    .build();
-        } else {
-            log.warn("Provedor social não suportado: {}", request.getProvider());
-            auditLogService.logError(ErrorCode.INVALID_REQUEST_PARAMETER.getCode(), "Provedor social não suportado.",
-                    request.getProvider(), null, null);
-            throw new BusinessException(ErrorCode.INVALID_REQUEST_PARAMETER, "Provedor social não suportado.");
-        }
-    }
 }

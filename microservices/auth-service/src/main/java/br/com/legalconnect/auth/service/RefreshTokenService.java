@@ -16,7 +16,6 @@ import br.com.legalconnect.auth.entity.RefreshToken;
 import br.com.legalconnect.auth.repository.RefreshTokenRepository;
 import br.com.legalconnect.common.exception.BusinessException;
 import br.com.legalconnect.common.exception.ErrorCode;
-import br.com.legalconnect.common.service.AuditLogService;
 import br.com.legalconnect.user.entity.User;
 import br.com.legalconnect.user.repository.UserRepository;
 
@@ -37,8 +36,6 @@ public class RefreshTokenService {
     private RefreshTokenRepository refreshTokenRepository; /// < Repositório para acesso a dados de Refresh Tokens.
     @Autowired
     private UserRepository userRepository; /// < Repositório para acesso a dados de usuários.
-    @Autowired
-    private AuditLogService auditLogService; /// < Serviço para registrar logs de auditoria de erros.
 
     @Value("${jwt.refresh-expiration}")
     private long refreshTokenExpirationMs; // Tempo de expiração do Refresh Token em milissegundos
@@ -97,8 +94,7 @@ public class RefreshTokenService {
         if (token.getExpiraEm().isBefore(Instant.now())) {
             refreshTokenRepository.delete(token); // Remove o token expirado
             log.warn("Refresh token expirado para o usuário: {}. Token deletado.", token.getUser().getEmail());
-            auditLogService.logError(ErrorCode.REFRESH_TOKEN_EXPIRED.getCode(), "Refresh token expirado.",
-                    token.getToken(), token.getUser().getId(), token.getUser().getTenant().getId());
+
             throw new BusinessException(ErrorCode.REFRESH_TOKEN_EXPIRED,
                     "Refresh token expirado. Por favor, faça login novamente.");
         }
@@ -118,8 +114,7 @@ public class RefreshTokenService {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
                 .orElseThrow(() -> {
                     log.warn("Tentativa de deletar refresh token não encontrado: {}", token);
-                    auditLogService.logError(ErrorCode.INVALID_TOKEN.getCode(),
-                            "Falha ao deletar refresh token: Token não encontrado.", token, null, null);
+
                     return new BusinessException(ErrorCode.INVALID_TOKEN, "Refresh token não encontrado.");
                 });
         refreshTokenRepository.delete(refreshToken);

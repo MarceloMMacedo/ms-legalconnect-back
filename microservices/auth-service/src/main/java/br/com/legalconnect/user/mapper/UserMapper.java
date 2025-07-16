@@ -19,11 +19,15 @@ import br.com.legalconnect.user.entity.User;
  * @interface UserMapper
  * @brief Mapper para conversão entre a entidade `User` e seus DTOs.
  *
- * Utiliza MapStruct para gerar automaticamente o código de mapeamento,
- * incluindo a conversão de `UserType`, `UserStatus` e `Set<Role>` para
- * Strings.
+ *        Utiliza MapStruct para gerar automaticamente o código de mapeamento,
+ *        incluindo a conversão de `UserType`, `UserStatus` e `Set<Role>` para
+ *        Strings.
  */
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = { RoleMapper.class }) // Adiciona RoleMapper para mapear roles
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = { RoleMapper.class }) // Adiciona
+                                                                                                               // RoleMapper
+                                                                                                               // para
+                                                                                                               // mapear
+                                                                                                               // roles
 public interface UserMapper {
     @Mapping(source = "roles", target = "roles", qualifiedByName = "roleSetToStringSet")
     @Mapping(source = "userType", target = "userType")

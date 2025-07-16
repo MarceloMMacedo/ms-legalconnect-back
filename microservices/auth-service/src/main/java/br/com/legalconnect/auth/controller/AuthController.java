@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.legalconnect.auth.dto.AuthResponse;
 import br.com.legalconnect.auth.dto.LoginRequest;
 import br.com.legalconnect.auth.dto.RefreshTokenRequest;
-import br.com.legalconnect.auth.dto.SocialLoginRequest;
 import br.com.legalconnect.auth.service.AuthService;
 import br.com.legalconnect.common.common_lib.BaseResponse;
 import br.com.legalconnect.common.dto.SuccessResponseDTO;
@@ -95,16 +94,20 @@ public class AuthController {
      *        LinkedIn) (RF054).
      * @param request DTO contendo o provedor e o token social.
      * @return ResponseEntity com BaseResponse contendo AuthResponse.
+     * 
+     *         @PostMapping("/social-login")
+     *         public ResponseEntity<BaseResponse<AuthResponse>>
+     *         socialLogin(@Valid @RequestBody SocialLoginRequest request) {
+     *         log.info("Requisição de login social recebida para o provedor: {}",
+     *         request.getProvider());
+     *         // 1. Chama o serviço de autenticação para processar o login social
+     *         AuthResponse authResponse = authService.socialLogin(request);
+     *         // 2. Retorna uma resposta de sucesso com os tokens
+     *         log.info("Login social bem-sucedido para o provedor: {}",
+     *         request.getProvider());
+     *         return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
+     *         .data(authResponse)
+     *         .build());
+     *         }
      */
-    @PostMapping("/social-login")
-    public ResponseEntity<BaseResponse<AuthResponse>> socialLogin(@Valid @RequestBody SocialLoginRequest request) {
-        log.info("Requisição de login social recebida para o provedor: {}", request.getProvider());
-        // 1. Chama o serviço de autenticação para processar o login social
-        AuthResponse authResponse = authService.socialLogin(request);
-        // 2. Retorna uma resposta de sucesso com os tokens
-        log.info("Login social bem-sucedido para o provedor: {}", request.getProvider());
-        return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
-                .data(authResponse)
-                .build());
-    }
 }

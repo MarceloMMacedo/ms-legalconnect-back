@@ -2,10 +2,9 @@ package br.com.legalconnect.user.entity;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 import br.com.legalconnect.auth.entity.Tenant;
-import br.com.legalconnect.common.BaseEntity;
+import br.com.legalconnect.common.dto.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -26,11 +25,11 @@ import lombok.experimental.SuperBuilder;
 /**
  * @class User
  * @brief Entidade base para todos os usuários (clientes, advogados,
- * administradores de tenant, etc.).
+ *        administradores de tenant, etc.).
  *
- * Esta entidade representa um usuário na plataforma e está associada a
- * um tenant
- * específico. A tabela de usuário reside nos schemas de tenant.
+ *        Esta entidade representa um usuário na plataforma e está associada a
+ *        um tenant
+ *        específico. A tabela de usuário reside nos schemas de tenant.
  */
 @Entity
 @Table(name = "tb_user") // A tabela tb_user agora reside no schema do tenant
@@ -83,8 +82,8 @@ public class User extends BaseEntity {
     /**
      * @enum UserType
      * @brief Enumeração para categorizar o tipo principal de um usuário.
-     * Define se o usuário é um cliente, advogado ou administrador da
-     * plataforma.
+     *        Define se o usuário é um cliente, advogado ou administrador da
+     *        plataforma.
      */
     public enum UserType {
         CLIENTE, // Usuário final que busca serviços jurídicos
@@ -95,7 +94,7 @@ public class User extends BaseEntity {
     /**
      * @enum UserStatus
      * @brief Enumeração para representar o status atual da conta de um usuário.
-     * Define o estado operacional da conta do usuário na plataforma.
+     *        Define o estado operacional da conta do usuário na plataforma.
      */
     public enum UserStatus {
         ACTIVE, INACTIVE, PENDING_APPROVAL, REJECTED
