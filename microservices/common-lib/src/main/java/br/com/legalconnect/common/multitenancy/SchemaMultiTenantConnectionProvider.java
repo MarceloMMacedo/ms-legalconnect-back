@@ -9,11 +9,19 @@ import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component
 public class SchemaMultiTenantConnectionProvider implements MultiTenantConnectionProvider {
 
+    private final DataSource dataSource;
+
     @Autowired
-    private DataSource dataSource;
+    public SchemaMultiTenantConnectionProvider(DataSource dataSource) {
+        log.info("Injetando DataSource: {}", dataSource);
+        this.dataSource = dataSource;
+    }
 
     @Override
     public Connection getConnection(Object tenantIdentifier) throws SQLException {
