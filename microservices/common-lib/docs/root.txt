@@ -1,0 +1,29 @@
+legalconnect/
+├── common-lib/
+│   ├── pom.xml                                 # Configurações do Maven para a biblioteca comum
+│   └── src/
+│       └── main/
+│           └── java/
+│               └── br/com/legalconnect/common/
+│                   ├── BaseEntity.java         # Entidade base para todos os modelos de dados
+│                   ├── config/
+│                   │   ├── FlywayMultiTenantConfig.java # Configuração Flyway para multitenancy (se global)
+│                   │   ├── OpenApiConfig.java           # Configuração OpenAPI/Swagger UI
+│                   │   └── WebConfig.java               # Configurações CORS e MVC gerais
+│                   ├── constants/
+│                   │   ├── ErrorCode.java               # Códigos de erro padronizados
+│                   │   └── Roles.java                   # Constantes para papéis de usuário
+│                   ├── dto/
+│                   │   ├── BaseResponse.java            # DTO base para respostas da API
+│                   │   └── SuccessResponseDTO.java      # DTO para respostas de sucesso simples
+│                   ├── exception/
+│                   │   ├── BusinessException.java       # Exceção de negócio personalizada
+│                   │   └── GlobalExceptionHandler.java  # Manipulador global de exceções
+│                   ├── multitenancy/
+│                   │   ├── HibernateMultiTenantConfig.java # Configuração Hibernate para multitenancy
+│                   │   ├── SchemaMultiTenantConnectionProvider.java # Provedor de conexão multi-tenant
+│                   │   ├── SchemaTenantIdentifierResolver.java    # Resolvedor de identificador de tenant
+│                   │   ├── TenantContext.java                     # Contexto da thread para o tenant atual
+│                   │   └── TenantFilter.java                    # Filtro HTTP para extrair o tenant ID
+│                   └── util/
+│                       └── ValidatorUtil.java           # Utilitários de validação (ex: CPF, CNPJ)

@@ -1,0 +1,17 @@
+# Use a imagem oficial do NGINX como base
+FROM nginx:latest
+
+# Remove o arquivo de configuração padrão
+RUN rm /etc/nginx/nginx.conf
+
+# Copia o arquivo de configuração personalizado
+COPY ./nginx.conf /etc/nginx/nginx.conf
+
+# Verifica a sintaxe do arquivo de configuração
+RUN nginx -t
+
+# Expõe a porta 80
+EXPOSE 80
+
+# Comando para iniciar o NGINX
+CMD ["nginx", "-g", "daemon off;"]
