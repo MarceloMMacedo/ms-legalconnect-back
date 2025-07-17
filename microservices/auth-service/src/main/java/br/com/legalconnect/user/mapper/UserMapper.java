@@ -1,18 +1,13 @@
 package br.com.legalconnect.user.mapper;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 
 import br.com.legalconnect.user.dto.UserProfileUpdate;
 import br.com.legalconnect.user.dto.UserRegistrationRequest;
 import br.com.legalconnect.user.dto.UserResponseDTO;
-import br.com.legalconnect.user.entity.Role;
 import br.com.legalconnect.user.entity.User;
 
 /**
@@ -23,13 +18,10 @@ import br.com.legalconnect.user.entity.User;
  *        incluindo a conversão de `UserType`, `UserStatus` e `Set<Role>` para
  *        Strings.
  */
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = { RoleMapper.class }) // Adiciona
-                                                                                                               // RoleMapper
-                                                                                                               // para
-                                                                                                               // mapear
-                                                                                                               // roles
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = { RoleMapper.class })
 public interface UserMapper {
-    @Mapping(source = "roles", target = "roles", qualifiedByName = "roleSetToStringSet")
+    // @Mapping(source = "roles", target = "roles", qualifiedByName =
+    // "roleSetToStringSet")
     @Mapping(source = "userType", target = "userType")
     @Mapping(source = "status", target = "status")
     UserResponseDTO toDto(User entity);
@@ -61,13 +53,13 @@ public interface UserMapper {
         return userStatus != null ? userStatus.name() : null;
     }
 
-    @Named("roleSetToStringSet")
-    default Set<String> roleSetToStringSet(Set<Role> roles) {
-        if (roles == null) {
-            return null;
-        }
-        return roles.stream()
-                .map(Role::getNome)
-                .collect(Collectors.toSet());
-    }
+    // @Named("roleSetToStringSet")
+    // default Set<String> roleSetToStringSet(Set<Role> roles) {
+    // if (roles == null) {
+    // return null;
+    // }
+    // return roles.stream()
+    // .map(Role::getNome)
+    // .collect(Collectors.toSet());
+    // }
 }

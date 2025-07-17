@@ -64,7 +64,7 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
 
         // Constrói o objeto de resposta padronizado
         BaseResponse<Void> errorResponse = BaseResponse.<Void>builder()
-                .codigoErro(ErrorCode.UNAUTHORIZED_ACCESS.getCode())
+                .codigoErro(Integer.parseInt(ErrorCode.UNAUTHORIZED_ACCESS.getCode()))
                 .mensagemErro(ErrorCode.UNAUTHORIZED_ACCESS.getMessage() + ": " + authException.getMessage())
                 .build();
 

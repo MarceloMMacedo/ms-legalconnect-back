@@ -15,10 +15,7 @@ import br.com.legalconnect.auth.security.JwtUtil;
 import br.com.legalconnect.auth.util.PasswordEncoderUtil;
 import br.com.legalconnect.common.exception.BusinessException; // Importação para BusinessException
 import br.com.legalconnect.common.exception.ErrorCode;
-import br.com.legalconnect.tenant.repository.TenantRepository; // Importar TenantRepository
 import br.com.legalconnect.user.entity.User; // Importação para a entidade User
-import br.com.legalconnect.user.mapper.UserMapper;
-import br.com.legalconnect.user.repository.RoleRepository; // Importação para RoleRepository
 import br.com.legalconnect.user.repository.UserRepository;
 
 /**
@@ -42,12 +39,6 @@ public class AuthService {
     private JwtUtil jwtUtil; /// < Utilitário para manipulação de JWTs.
     @Autowired
     private RefreshTokenService refreshTokenService; /// < Serviço para gerenciamento de Refresh Tokens.
-    @Autowired
-    private UserMapper userMapper; /// < Mapper para converter entidades User em DTOs.
-    @Autowired
-    private RoleRepository roleRepository; // Repositório para acesso a dados de roles.
-    @Autowired
-    private TenantRepository tenantRepository; // Repositório para acesso a dados de tenants.
 
     /**
      * @brief Realiza o login de um usuário na plataforma.

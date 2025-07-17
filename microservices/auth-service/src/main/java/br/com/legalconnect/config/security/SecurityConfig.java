@@ -45,6 +45,19 @@ public class SecurityConfig {
     private JwtAuthEntryPoint unauthorizedHandler; // Manipulador para requisições não autorizadas
     @Autowired
     private PasswordEncoder passwordEncoder; // Codificador de senhas
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/api/v1/auth/**",
+            "/api/v1/public/**",
+            "/api/v1/advogados/**",
+            "/api/v1/agendamentos/**",
+            "/api/v1/avaliacoes/**",
+            "/api/v1/depoimentos/**",
+            "/**",
+            // Endpoints para documentação da API (Swagger/OpenAPI)
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html"
+    };
 
     /**
      * @brief Configura o provedor de autenticação.
@@ -98,21 +111,13 @@ public class SecurityConfig {
         log.info("Configurando SecurityFilterChain.");
         http
                 .csrf(csrf -> csrf.disable()) // Desabilita CSRF (não necessário para APIs RESTful com JWT)
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler)) // Manipulador
-                                                                                                         // de exceções
-                                                                                                         // de
-                                                                                                         // autenticação
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Política
-                                                                                                              // de
-                                                                                                              // sessão
-                                                                                                              // sem
-                                                                                                              // estado
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // estado
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/public/**", "/actuator/**").permitAll() // Permite acesso público a
-                                                                                          // endpoints de autenticação e
-                                                                                          // Actuator
-                        .requestMatchers("/h2-console/**").permitAll() // Permitir acesso ao H2 Console (apenas para
-                                                                       // dev)
+                        .requestMatchers("/api/v1/public/**", "/actuator/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated() // Todas as outras requisições exigem autenticação
                 );
 

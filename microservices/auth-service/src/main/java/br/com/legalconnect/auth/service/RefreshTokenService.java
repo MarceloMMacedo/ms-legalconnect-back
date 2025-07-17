@@ -17,7 +17,6 @@ import br.com.legalconnect.auth.repository.RefreshTokenRepository;
 import br.com.legalconnect.common.exception.BusinessException;
 import br.com.legalconnect.common.exception.ErrorCode;
 import br.com.legalconnect.user.entity.User;
-import br.com.legalconnect.user.repository.UserRepository;
 
 /**
  * @class RefreshTokenService
@@ -33,11 +32,9 @@ public class RefreshTokenService {
     private static final Logger log = LoggerFactory.getLogger(RefreshTokenService.class); // Instância do Logger
 
     @Autowired
-    private RefreshTokenRepository refreshTokenRepository; /// < Repositório para acesso a dados de Refresh Tokens.
-    @Autowired
-    private UserRepository userRepository; /// < Repositório para acesso a dados de usuários.
+    private RefreshTokenRepository refreshTokenRepository; /// < Repositório para acesso a dados de usuários.
 
-    @Value("${jwt.refresh-expiration}")
+    @Value("${application.security.jwt.refresh-expiration}")
     private long refreshTokenExpirationMs; // Tempo de expiração do Refresh Token em milissegundos
 
     /**

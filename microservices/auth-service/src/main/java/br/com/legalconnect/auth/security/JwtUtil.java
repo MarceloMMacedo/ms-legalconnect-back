@@ -7,43 +7,44 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger; // Importação para Logger
+import org.slf4j.LoggerFactory; // Importação para LoggerFactory
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import org.slf4j.Logger; // Importação para Logger
-import org.slf4j.LoggerFactory; // Importação para LoggerFactory
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 
 /**
  * @class JwtUtil
  * @brief Utilitário para manipulação de JSON Web Tokens (JWT).
  *
- * Esta classe é responsável por gerar, extrair informações e validar
- * JWTs,
- * que são usados para autenticação e autorização na API. A chave secreta
- * e o tempo de expiração são configuráveis via `application.properties`.
+ *        Esta classe é responsável por gerar, extrair informações e validar
+ *        JWTs,
+ *        que são usados para autenticação e autorização na API. A chave secreta
+ *        e o tempo de expiração são configuráveis via `application.properties`.
  */
 @Service
 public class JwtUtil {
 
     private static final Logger log = LoggerFactory.getLogger(JwtUtil.class); // Instância do Logger
 
-    // Chave secreta para assinar e verificar os JWTs, injetada do application.properties
+    // Chave secreta para assinar e verificar os JWTs, injetada do
+    // application.properties
     // É crucial que esta chave seja forte e mantida em segredo.
-    @Value("${jwt.secret}")
+    @Value("${application.security.jwt.secret-key}")
     private String secretKey;
 
     // Tempo de expiração do JWT em milissegundos (ex: 3600000ms = 1 hora)
-    @Value("${jwt.expiration}")
+    @Value("${application.security.jwt.expiration}")
     private long jwtExpiration;
 
     /**
@@ -60,7 +61,7 @@ public class JwtUtil {
      * @brief Extrai uma claim específica do token JWT.
      * @param token          O token JWT.
      * @param claimsResolver Função para resolver a claim a partir do objeto
-     * `Claims`.
+     *                       `Claims`.
      * @return O valor da claim extraída.
      * @tparam T O tipo da claim a ser extraída.
      */
@@ -72,7 +73,7 @@ public class JwtUtil {
     /**
      * @brief Gera um token JWT para um `UserDetails`.
      *
-     * Este método é um atalho para gerar um token sem claims extras.
+     *        Este método é um atalho para gerar um token sem claims extras.
      *
      * @param userDetails Os detalhes do usuário (implementação de `UserDetails`).
      * @return O token JWT gerado.
@@ -85,10 +86,10 @@ public class JwtUtil {
     /**
      * @brief Gera um token JWT com claims extras.
      *
-     * Inclui o nome de usuário (e-mail), roles e, se for um
-     * `CustomUserDetails`,
-     * o `tenantId` como claims no token. Define a data de emissão e
-     * expiração.
+     *        Inclui o nome de usuário (e-mail), roles e, se for um
+     *        `CustomUserDetails`,
+     *        o `tenantId` como claims no token. Define a data de emissão e
+     *        expiração.
      *
      * @param extraClaims Claims adicionais para incluir no token (ex: "user_type").
      * @param userDetails Os detalhes do usuário (implementação de `UserDetails`).
@@ -117,7 +118,8 @@ public class JwtUtil {
                 .setSubject(userDetails.getUsername()) // O e-mail do usuário como subject (identificador principal)
                 .setIssuedAt(new Date(System.currentTimeMillis())) // Data de emissão do token
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration)) // Data de expiração do token
-                .signWith(getSignInKey(), SignatureAlgorithm.HS256) // Assina o token com a chave secreta e algoritmo HS256
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256) // Assina o token com a chave secreta e algoritmo
+                                                                    // HS256
                 .compact(); // Constrói e compacta o token JWT
         log.debug("Token JWT gerado com sucesso para o usuário: {}", userDetails.getUsername());
         return token;
@@ -126,9 +128,9 @@ public class JwtUtil {
     /**
      * @brief Valida um token JWT.
      *
-     * Verifica se o nome de usuário no token corresponde ao `UserDetails`
-     * fornecido
-     * e se o token não expirou.
+     *        Verifica se o nome de usuário no token corresponde ao `UserDetails`
+     *        fornecido
+     *        e se o token não expirou.
      *
      * @param token       O token JWT a ser validado.
      * @param userDetails Os detalhes do usuário para quem o token foi emitido.
@@ -140,7 +142,8 @@ public class JwtUtil {
             final String username = extractUsername(token);
             boolean isValid = (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
             if (!isValid) {
-                log.warn("Token JWT inválido para o usuário {}. Username não corresponde ou token expirou.", userDetails.getUsername());
+                log.warn("Token JWT inválido para o usuário {}. Username não corresponde ou token expirou.",
+                        userDetails.getUsername());
             }
             return isValid;
         } catch (SignatureException e) {
@@ -183,7 +186,7 @@ public class JwtUtil {
     /**
      * @brief Extrai todas as claims do token JWT.
      *
-     * Realiza o parsing do token usando a chave de assinatura.
+     *        Realiza o parsing do token usando a chave de assinatura.
      *
      * @param token O token JWT.
      * @return As claims (payload) do token.
@@ -201,8 +204,8 @@ public class JwtUtil {
     /**
      * @brief Obtém a chave de assinatura decodificada para o JWT.
      *
-     * Decodifica a chave secreta base64 configurada para uso na
-     * assinatura/verificação.
+     *        Decodifica a chave secreta base64 configurada para uso na
+     *        assinatura/verificação.
      *
      * @return A chave de assinatura.
      */

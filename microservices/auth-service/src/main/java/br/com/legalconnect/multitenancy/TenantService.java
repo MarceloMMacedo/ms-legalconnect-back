@@ -1,4 +1,4 @@
-package br.com.legalconnect.auth.auth_service.multitenancy;
+package br.com.legalconnect.multitenancy;
 
 import java.util.UUID;
 

@@ -1,35 +1,34 @@
-version: "3.8"
-
+version: '3.8'
 services:
   nginx:
-    image: nginx:alpine
+    image: seu_nginx_image
     ports:
       - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/logs:/var/log/nginx
-    networks:
-      - legalconnect-network
-    depends_on:
-      - db-global
-
-  db-global:
-    image: postgres:13-alpine
+      - "443:443"
     environment:
-      POSTGRES_DB: jusplatform_db  # Corrigido: removido o "P" extra
-      POSTGRES_USER: jususer
-      POSTGRES_PASSWORD: juspassword
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./db/init-scripts:/docker-entrypoint-initdb.d
-      - db-global-data:/var/lib/postgresql/data
+      # Estas variáveis devem ser definidas aqui se você as usa em um template Nginx
+      AUTH_SERVICE_HOST: auth-service
+      AUTH_SERVICE_PORT: 8082
+      USER_SERVICE_HOST: user-service
+      USER_SERVICE_PORT: 8083
+      # ... e assim por diante para todos os seus serviços
+    depends_on:
+      - auth-service
+      - user-service
+      # ...
     networks:
-      - legalconnect-network
+      - minha_rede_app # Ambos os serviços devem estar na mesma rede
 
-volumes:
-  db-global-data:
+  auth-service:
+    image: seu_auth_service_image
+    networks:
+      - minha_rede_app
+
+  user-service:
+    image: seu_user_service_image
+    networks:
+      - minha_rede_app
 
 networks:
-  legalconnect-network:
+  minha_rede_app:
     driver: bridge
