@@ -1,23 +1,25 @@
-package br.com.legalconnect.config.security;
+package br.com.legalconnect.auth.security;
 
-import br.com.legalconnect.auth.security.CustomUserDetails;
-import br.com.legalconnect.user.entity.User;
-import br.com.legalconnect.user.repository.UserRepository;
+import org.slf4j.Logger; // Importação para Logger
+import org.slf4j.LoggerFactory; // Importação para LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.slf4j.Logger; // Importação para Logger
-import org.slf4j.LoggerFactory; // Importação para LoggerFactory
+
+import br.com.legalconnect.user.entity.User;
+import br.com.legalconnect.user.repository.UserRepository;
 
 /**
  * @class UserDetailsServiceImpl
- * @brief Implementação personalizada de `UserDetailsService` do Spring Security.
+ * @brief Implementação personalizada de `UserDetailsService` do Spring
+ *        Security.
  *
- * Esta classe é responsável por carregar os detalhes do usuário (e-mail, senha, roles)
- * do banco de dados quando um usuário tenta se autenticar.
+ *        Esta classe é responsável por carregar os detalhes do usuário (e-mail,
+ *        senha, roles)
+ *        do banco de dados quando um usuário tenta se autenticar.
  */
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -31,7 +33,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
      * @brief Carrega os detalhes do usuário pelo nome de usuário (e-mail).
      * @param email O e-mail do usuário.
      * @return Uma instância de `UserDetails` (CustomUserDetails).
-     * @throws UsernameNotFoundException se o usuário não for encontrado no banco de dados.
+     * @throws UsernameNotFoundException se o usuário não for encontrado no banco de
+     *                                   dados.
      */
     @Override
     @Transactional(readOnly = true) // Garante que a operação de busca seja somente leitura

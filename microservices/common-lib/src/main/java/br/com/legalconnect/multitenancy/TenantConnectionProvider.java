@@ -32,12 +32,11 @@ public class TenantConnectionProvider extends AbstractDataSourceBasedMultiTenant
     @Override
     public Connection getConnection(String tenantIdentifier) throws SQLException {
         Connection connection = super.getConnection(tenantIdentifier);
-        connection.setSchema(sanitizeSchemaName(tenantIdentifier));
+        // connection.setSchema(sanitizeSchemaName(tenantIdentifier));
+        // connection = dataSource.getConnection();
+        connection.setSchema((tenantIdentifier != null ? tenantIdentifier : "public"));
+
         return connection;
     }
 
-    private String sanitizeSchemaName(String rawName) {
-        // Remove caracteres inválidos para nomes de schema no PostgreSQL
-        return rawName.replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase();
-    }
 }

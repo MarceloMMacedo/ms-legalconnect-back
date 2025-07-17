@@ -1,0 +1,3245 @@
+```java
+package br.com.legalconnect;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+
+import br.com.legalconnect.multitenancy.TenantContext;
+import br.com.legalconnect.multitenancy.TenantSchemaService;
+
+/**
+ * @class LegalconnectAuthServiceApplication
+ * @brief Classe principal da aplicação Spring Boot para o microsserviço de
+ *        autenticação.
+ *
+ *        Esta classe inicializa a aplicação, configura o escaneamento de
+ *        pacotes para
+ *        entidades JPA e repositórios, e define a localização dos componentes
+ *        Spring
+ *        para injeção de dependência, focando apenas nas classes de
+ *        autenticação.
+ */
+@SpringBootApplication
+@EnableJpaRepositories(basePackages = {
+		"br.com.legalconnect.auth.repository",
+		"br.com.legalconnect.user.repository",
+		"br.com.legalconnect.tenant.repository" // Manter se Tenant for uma entidade global acessada por auth
+})
+@EntityScan(basePackages = {
+		"br.com.legalconnect.auth.entity",
+		"br.com.legalconnect.user.entity",
+		"br.com.legalconnect.common.entity" // Se BaseEntity ou AuditLog ainda forem usados
+})
+@ComponentScan(basePackages = {
+		"br.com.legalconnect.auth",
+		"br.com.legalconnect.auth.security",
+		"br.com.legalconnect.auth.controller",
+		"br.com.legalconnect.auth.service",
+		"br.com.legalconnect.multitenancy",
+		"br.com.legalconnect.user.entity", // Para User entity
+		"br.com.legalconnect.user.mapper", // Para UserMapper (se usado em AuthService)
+		"br.com.legalconnect.common.constants", // Para ErrorCode, Roles
+		"br.com.legalconnect.common.exception", // Para BusinessException, GlobalExceptionHandler
+		"br.com.legalconnect.common.service", // Para AuditLogService, NotificationService (mocks)
+		"br.com.legalconnect.common.util", // Para ValidatorUtil
+		"br.com.legalconnect.tenant.service", // Para TenantService (se necessário para social login ou criação de //
+												// usuário)
+		"br.com.legalconnect.config.security" // Configuração de segurança
+})
+public class AuthServiceApplication {
+
+	@Value("${application.tenant.default-id}")
+	private String defaultTenantId;
+	@Autowired
+	private TenantSchemaService tenantService;
+
+	@Bean
+	public CommandLineRunner init() {
+		return args -> {
+			// Define o tenant ID no contexto da thread para que o Hibernate
+			// saiba em qual esquema operar durante a inicialização (ddl-auto)
+			TenantContext.setCurrentTenant(defaultTenantId);
+			try {
+				// Este método irá criar o schema do banco de dados se ele não existir
+				// O JPA/Hibernate, ao iniciar o ddl-auto, usará a conexão
+				// configurada pelo TenantConnectionProvider (que consulta TenantContext)
+				// para criar/atualizar as tabelas no esquema definido.
+				tenantService.initializeDefaultTenant();
+			} finally {
+				// Limpa o contexto do tenant após a inicialização para evitar vazamentos
+				TenantContext.clear();
+			}
+		};
+	};
+
+	public static void main(String[] args) {
+		SpringApplication.run(AuthServiceApplication.class, args);
+	}
+
+}
+
+```
+```java
+package br.com.legalconnect.auth.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import br.com.legalconnect.auth.dto.AuthResponse;
+import br.com.legalconnect.auth.dto.LoginRequest;
+import br.com.legalconnect.auth.dto.RefreshTokenRequest;
+import br.com.legalconnect.auth.service.AuthService;
+import br.com.legalconnect.common.common_lib.BaseResponse;
+import br.com.legalconnect.common.dto.SuccessResponseDTO;
+// Importações do Swagger/SpringDoc OpenAPI
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+
+/**
+ * @class AuthController
+ * @brief Controlador REST para endpoints de autenticação e gerenciamento de
+ *        sessão.
+ *
+ *        Gerencia requisições de login (RF049), refresh de token (RF051),
+ *        logout (RF052) e autenticação social (RF054).
+ */
+@RestController
+@RequestMapping("/api/v1/public/auth") // Endpoints públicos para autenticação
+@Tag(name = "Autenticação", description = "Gerencia o fluxo de login, refresh e logout de usuários na aplicação LegalConnect.")
+public class AuthController {
+
+        private static final Logger log = LoggerFactory.getLogger(AuthController.class); // Instância do Logger
+
+        @Autowired
+        private AuthService authService; /// < Serviço de autenticação.
+
+        /**
+         * @brief Endpoint para login de usuários (RF049).
+         * @param request DTO contendo e-mail e senha.
+         * @return ResponseEntity com BaseResponse contendo AuthResponse (access token e
+         *         refresh token).
+         */
+        @Operation(summary = "Realiza o login de um usuário", // Resumo da operação
+                        description = "Autentica o usuário com e-mail e senha e retorna tokens de acesso e refresh (RF049).", tags = {
+                                        "Autenticação" } // Opcional, mas útil para agrupar
+        )
+        @ApiResponses(value = { // Definição das possíveis respostas da API
+                        @ApiResponse(responseCode = "200", description = "Login bem-sucedido. Retorna o access token e refresh token.", content = @Content(schema = @Schema(implementation = AuthResponse.class))),
+                        @ApiResponse(responseCode = "400", description = "Requisição inválida (e.g., e-mail ou senha ausentes).", content = @Content(schema = @Schema(implementation = BaseResponse.class))),
+                        @ApiResponse(responseCode = "401", description = "Credenciais inválidas (e.g., e-mail ou senha incorretos).", content = @Content(schema = @Schema(implementation = BaseResponse.class))),
+                        @ApiResponse(responseCode = "500", description = "Erro interno do servidor.")
+        })
+        @PostMapping("/login")
+        public ResponseEntity<BaseResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
+                log.info("Requisição de login recebida para o e-mail: {}", request.getEmail());
+                // 1. Chama o serviço de autenticação para processar o login
+                AuthResponse authResponse = authService.login(request);
+                // 2. Retorna uma resposta de sucesso com os tokens
+                log.info("Login bem-sucedido para o e-mail: {}", request.getEmail());
+                return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
+                                .data(authResponse)
+                                .build());
+        }
+
+        /**
+         * @brief Endpoint para renovar o Access Token usando um Refresh Token (RF051).
+         * @param request DTO contendo o Refresh Token.
+         * @return ResponseEntity com BaseResponse contendo AuthResponse (novo access
+         *         token e refresh token).
+         */
+        @Operation(summary = "Renova o Access Token com um Refresh Token", description = "Usa um refresh token válido para obter um novo access token e refresh token (RF051).", tags = {
+                        "Autenticação" })
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Tokens renovados com sucesso.", content = @Content(schema = @Schema(implementation = AuthResponse.class))),
+                        @ApiResponse(responseCode = "400", description = "Requisição inválida (e.g., refresh token ausente ou mal formatado).", content = @Content(schema = @Schema(implementation = BaseResponse.class))),
+                        @ApiResponse(responseCode = "401", description = "Refresh token inválido ou expirado.", content = @Content(schema = @Schema(implementation = BaseResponse.class))),
+                        @ApiResponse(responseCode = "500", description = "Erro interno do servidor.")
+        })
+        @PostMapping("/refresh-token")
+        public ResponseEntity<BaseResponse<AuthResponse>> refreshAccessToken(
+                        @Valid @RequestBody RefreshTokenRequest request) {
+                log.info("Requisição de refresh token recebida.");
+                // 1. Chama o serviço de autenticação para renovar o token
+                AuthResponse authResponse = authService.refreshAccessToken(request);
+                // 2. Retorna uma resposta de sucesso com os novos tokens
+                log.info("Refresh token processado com sucesso.");
+                return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
+                                .data(authResponse)
+                                .build());
+        }
+
+        /**
+         * @brief Endpoint para logout de usuários, invalidando o Refresh Token (RF052).
+         * @param request DTO contendo o Refresh Token a ser invalidado.
+         * @return ResponseEntity com BaseResponse de sucesso.
+         */
+        @Operation(summary = "Realiza o logout de um usuário", description = "Invalida o refresh token fornecido, encerrando a sessão do usuário (RF052).", tags = {
+                        "Autenticação" })
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Logout realizado com sucesso.", content = @Content(schema = @Schema(implementation = SuccessResponseDTO.class))),
+                        @ApiResponse(responseCode = "400", description = "Requisição inválida (e.g., refresh token ausente).", content = @Content(schema = @Schema(implementation = BaseResponse.class))),
+                        @ApiResponse(responseCode = "401", description = "Refresh token inválido.", content = @Content(schema = @Schema(implementation = BaseResponse.class))),
+                        @ApiResponse(responseCode = "500", description = "Erro interno do servidor.")
+        })
+        @PostMapping("/logout")
+        public ResponseEntity<BaseResponse<SuccessResponseDTO>> logout(
+                        @Valid @RequestBody RefreshTokenRequest request) {
+                log.info("Requisição de logout recebida para o refresh token: {}", request.getRefreshToken());
+                // 1. Chama o serviço de autenticação para invalidar o refresh token
+                authService.logout(request.getRefreshToken());
+                // 2. Retorna uma resposta de sucesso
+                log.info("Logout realizado com sucesso para o refresh token.");
+                return ResponseEntity.ok(BaseResponse.<SuccessResponseDTO>builder()
+                                .data((SuccessResponseDTO) SuccessResponseDTO.builder()
+                                                .message("Logout realizado com sucesso.")
+                                                .build())
+                                .build());
+        }
+
+        /**
+         * @brief Endpoint para login/cadastro via autenticação social (Google,
+         *        LinkedIn) (RF054).
+         * @param request DTO contendo o provedor e o token social.
+         * @return ResponseEntity com BaseResponse contendo AuthResponse.
+         *         * @PostMapping("/social-login")
+         *         public ResponseEntity<BaseResponse<AuthResponse>>
+         *         socialLogin(@Valid @RequestBody SocialLoginRequest request) {
+         *         log.info("Requisição de login social recebida para o provedor: {}",
+         *         request.getProvider());
+         *         // 1. Chama o serviço de autenticação para processar o login social
+         *         AuthResponse authResponse = authService.socialLogin(request);
+         *         // 2. Retorna uma resposta de sucesso com os tokens
+         *         log.info("Login social bem-sucedido para o provedor: {}",
+         *         request.getProvider());
+         *         return ResponseEntity.ok(BaseResponse.<AuthResponse>builder()
+         *         .data(authResponse)
+         *         .build());
+         *         }
+         */
+}
+```
+```java
+package br.com.legalconnect.auth.dto;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+
+/**
+ * @class AuthResponse
+ * @brief DTO para resposta de login (access_token, refresh_token).
+ *
+ * Contém os tokens JWT e Refresh Token retornados após um login bem-sucedido.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class AuthResponse {
+    private String accessToken;
+    private String refreshToken;
+}
+```
+```java
+package br.com.legalconnect.auth.dto;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import jakarta.validation.constraints.*;
+
+/**
+ * @class LoginRequest
+ * @brief DTO para dados de requisição de login (e-mail, senha).
+ *
+ * Utilizado para receber as credenciais do usuário durante o processo de login.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class LoginRequest {
+    @NotBlank(message = "O e-mail é obrigatório.")
+    @Email(message = "Formato de e-mail inválido.")
+    @Size(max = 255, message = "O e-mail deve ter no máximo 255 caracteres.")
+    private String email;
+
+    @NotBlank(message = "A senha é obrigatória.")
+    private String senha;
+}
+```
+```java
+package br.com.legalconnect.auth.dto;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import jakarta.validation.constraints.NotBlank;
+
+/**
+ * @class RefreshTokenRequest
+ * @brief DTO para requisição de refresh de token.
+ *
+ * Utilizado para enviar o Refresh Token para obter um novo Access Token.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class RefreshTokenRequest {
+    @NotBlank(message = "O refresh token é obrigatório.")
+    private String refreshToken;
+}
+```
+```java
+package br.com.legalconnect.auth.dto;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import java.time.Instant;
+import java.util.UUID;
+
+/**
+ * @class RefreshTokenResponseDTO
+ * @brief DTO para a representação de um RefreshToken em respostas da API.
+ *
+ * Inclui o ID do token, o ID do usuário associado, o valor do token,
+ * a data de expiração e a data de criação.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class RefreshTokenResponseDTO {
+    private UUID id;
+    private UUID userId; // ID do usuário associado ao Refresh Token
+    private String token;
+    private Instant expiresAt;
+    private Instant createdAt;
+}
+```
+```java
+package br.com.legalconnect.auth.dto;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import jakarta.validation.constraints.NotBlank;
+
+/**
+ * @class SocialLoginRequest
+ * @brief DTO para requisição de login social (token do provedor).
+ *
+ * Utilizado para autenticação via provedores de identidade externos como Google ou LinkedIn.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class SocialLoginRequest {
+    @NotBlank(message = "O provedor social é obrigatório.")
+    private String provider; // Ex: "GOOGLE", "LINKEDIN"
+
+    @NotBlank(message = "O token do provedor é obrigatório.")
+    private String token; // O token OAuth real
+}
+```
+```java
+package br.com.legalconnect.auth.entity;
+
+import java.time.Instant;
+
+import br.com.legalconnect.common.dto.BaseEntity;
+import br.com.legalconnect.user.entity.User;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class RefreshToken
+ * @brief Entidade que representa o Refresh Token no banco de dados.
+ *
+ *        Esta tabela de refresh tokens agora reside nos schemas de tenant.
+ */
+@Entity
+@Table(name = "tb_refresh_token") // A tabela tb_refresh_token agora reside no schema do tenant
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class RefreshToken extends BaseEntity {
+
+    @OneToOne(fetch = FetchType.LAZY) // Relacionamento um-para-um com User
+    @JoinColumn(name = "user_id", nullable = false, unique = true) // Coluna de chave estrangeira
+    private User user; // Usuário ao qual este refresh token está associado
+
+    @Column(name = "token", nullable = false, unique = true, columnDefinition = "TEXT")
+    private String token; // O valor real do refresh token
+
+    @Column(name = "expira_em", nullable = false)
+    private Instant expiraEm; // Data e hora em que este refresh token se tornará inválido
+}
+```
+```java
+package br.com.legalconnect.auth.entity;
+
+import br.com.legalconnect.common.dto.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class Tenant
+ * @brief Entidade que representa um tenant (ambiente isolado para
+ *        escritórios/advogados).
+ *
+ *        Esta tabela é global e reside no schema `public`, pois é usada para
+ *        descobrir e gerenciar
+ *        os diferentes schemas de tenant na aplicação.
+ */
+@Entity
+@Table(name = "tb_tenant", schema = "public") // Agora a tabela tb_tenant reside EXPLICITAMENTE no schema 'public'
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true) // Inclui os campos da superclasse no equals e hashCode
+public class Tenant extends BaseEntity {
+
+    @Column(name = "nome", nullable = false, length = 255)
+    private String nome; // Nome descritivo do tenant (ex: "JusPlatform Principal")
+
+    @Column(name = "schema_name", nullable = false, unique = true, length = 63)
+    private String schemaName; // Nome do esquema do banco de dados para multitenancy
+
+    @Enumerated(EnumType.STRING) // Mapeia o enum para String no banco de dados
+    @Column(name = "status", nullable = false, length = 50)
+    private TenantStatus status; // Status operacional atual do tenant (ex: ACTIVE, INACTIVE)
+
+    /**
+     * @enum TenantStatus
+     * @brief Enumeração para representar o status operacional de um Tenant.
+     *        Define os possíveis estados de um ambiente isolado na plataforma.
+     */
+    public enum TenantStatus {
+        ACTIVE, // Tenant está ativo e operacional
+        INACTIVE, // Tenant está inativo e não pode ser acessado
+        PENDING_ACTIVATION, // Tenant foi criado, mas aguarda ativação (ex: via e-mail)
+        SUSPENDED // Tenant foi suspenso temporariamente (ex: por inadimplência)
+    }
+}
+```
+```java
+package br.com.legalconnect.auth.mapper;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
+
+import br.com.legalconnect.auth.dto.RefreshTokenResponseDTO;
+import br.com.legalconnect.auth.entity.RefreshToken;
+
+/**
+ * @interface RefreshTokenMapper
+ * @brief Mapper para conversão entre a entidade `RefreshToken` e seu DTO de
+ *        resposta.
+ *
+ *        Utiliza MapStruct para gerar automaticamente o código de mapeamento.
+ */
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public interface RefreshTokenMapper {
+    @Mapping(source = "user.id", target = "userId")
+    @Mapping(source = "expiraEm", target = "expiresAt")
+    RefreshTokenResponseDTO toDto(RefreshToken entity);
+}
+```
+```java
+package br.com.legalconnect.auth.mapper;
+
+import java.util.List;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
+
+import br.com.legalconnect.auth.entity.Tenant;
+import br.com.legalconnect.tenant.dto.TenantCreationRequest;
+import br.com.legalconnect.tenant.dto.TenantResponseDTO;
+
+/**
+ * @interface TenantMapper
+ * @brief Mapper para conversão entre a entidade `Tenant` e seus DTOs.
+ *
+ *        Utiliza MapStruct para gerar automaticamente o código de mapeamento,
+ *        incluindo a conversão do enum `TenantStatus` para String.
+ */
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public interface TenantMapper {
+    @Mapping(source = "status", target = "status")
+    TenantResponseDTO toDto(Tenant entity);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "status", ignore = true) // Status é gerenciado pelo serviço
+    Tenant toEntity(TenantCreationRequest dto);
+
+    List<TenantResponseDTO> toDtoList(List<Tenant> entities);
+
+    default String mapTenantStatus(Tenant.TenantStatus status) {
+        return status != null ? status.name() : null;
+    }
+}
+```
+```java
+package br.com.legalconnect.auth.repository;
+
+import br.com.legalconnect.auth.entity.RefreshToken;
+import br.com.legalconnect.user.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * @interface RefreshTokenRepository
+ * @brief Repositório JPA para a entidade RefreshToken.
+ *
+ * Fornece operações CRUD (Create, Read, Update, Delete) e métodos de consulta personalizados
+ * para gerenciar os tokens de atualização de sessão dos usuários.
+ */
+@Repository
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID> {
+
+    /**
+     * @brief Busca um RefreshToken pelo seu valor de token.
+     * @param token O valor String do refresh token.
+     * @return Um Optional contendo o RefreshToken, se encontrado.
+     */
+    Optional<RefreshToken> findByToken(String token);
+
+    /**
+     * @brief Busca um RefreshToken associado a um usuário específico.
+     * @param user O objeto User para o qual o refresh token é procurado.
+     * @return Um Optional contendo o RefreshToken, se encontrado.
+     */
+    Optional<RefreshToken> findByUser(User user);
+
+    /**
+     * @brief Deleta um RefreshToken pelo seu valor de token.
+     * @param token O valor String do refresh token a ser deletado.
+     */
+    void deleteByToken(String token);
+}
+```
+```java
+package br.com.legalconnect.auth.security;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import br.com.legalconnect.user.entity.User;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * @class CustomUserDetails
+ * @brief Implementação personalizada de `UserDetails` do Spring Security.
+ *
+ *        Esta classe estende a implementação padrão de `UserDetails` para
+ *        incluir
+ *        informações adicionais do usuário, como o `tenantId`, que é crucial
+ *        para a funcionalidade de multitenancy da aplicação.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class CustomUserDetails implements UserDetails {
+
+    private String username; // Geralmente o e-mail do usuário
+    private String password; // Senha hashed
+    private List<SimpleGrantedAuthority> authorities; // Roles/permissões do usuário
+    private UUID userId; // ID do usuário
+    private UUID tenantId; // ID do tenant ao qual o usuário pertence
+    private boolean accountNonExpired;
+    private boolean accountNonLocked;
+    private boolean credentialsNonExpired;
+    private boolean enabled;
+
+    /**
+     * @brief Construtor para facilitar a criação a partir da entidade User.
+     * @param user A entidade User para a qual criar o CustomUserDetails.
+     */
+    public CustomUserDetails(User user) {
+        this.username = user.getEmail();
+        this.password = user.getSenhaHash();
+        this.authorities = user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getNome()))
+                .collect(Collectors.toList());
+        this.userId = user.getId();
+        // Garante que o tenantId é obtido do Tenant associado ao User
+        this.tenantId = user.getTenant() != null ? user.getTenant().getId() : null;
+        this.accountNonExpired = user.getStatus() != User.UserStatus.INACTIVE; // Exemplo de mapeamento
+        this.accountNonLocked = user.getStatus() != User.UserStatus.INACTIVE; // Exemplo de mapeamento
+        this.credentialsNonExpired = true; // Assumindo que credenciais não expiram por padrão
+        this.enabled = user.getStatus() == User.UserStatus.ACTIVE
+                || user.getStatus() == User.UserStatus.PENDING_APPROVAL; // Ativo ou aguardando aprovação
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return this.authorities;
+    }
+
+    @Override
+    public String getPassword() {
+        return this.password;
+    }
+
+    @Override
+    public String getUsername() {
+        return this.username;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return this.accountNonExpired;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return this.accountNonLocked;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return this.credentialsNonExpired;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.enabled;
+    }
+}
+```
+```java
+package br.com.legalconnect.auth.security;
+
+import java.io.IOException;
+
+import org.slf4j.Logger; // Importação para Logger
+import org.slf4j.LoggerFactory; // Importação para LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import br.com.legalconnect.common.common_lib.BaseResponse;
+import br.com.legalconnect.common.exception.ErrorCode;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+/**
+ * @class JwtAuthEntryPoint
+ * @brief Ponto de entrada de autenticação para requisições não autenticadas ou
+ *        com falha de autenticação.
+ *
+ *        Esta classe implementa `AuthenticationEntryPoint` para lidar com
+ *        requisições que
+ *        chegam sem credenciais válidas ou com credenciais que falham na
+ *        autenticação.
+ *        Ela retorna uma resposta JSON padronizada com `HTTP 401 Unauthorized`
+ *        e um
+ *        `BaseResponse` contendo o código e mensagem de erro.
+ */
+@Component
+public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthEntryPoint.class); // Instância do Logger
+
+    @Autowired
+    private ObjectMapper objectMapper; // Para converter o objeto de resposta em JSON
+
+    /**
+     * @brief Lida com requisições não autenticadas ou com falha de autenticação.
+     *
+     *        Retorna uma resposta HTTP 401 Unauthorized com um corpo JSON
+     *        padronizado,
+     *        utilizando o `BaseResponse` e o `ErrorCode.UNAUTHORIZED_ACCESS`.
+     *
+     * @param request       A requisição HTTP.
+     * @param response      A resposta HTTP.
+     * @param authException A exceção de autenticação que causou a falha.
+     * @throws IOException      Se ocorrer um erro de I/O ao escrever a resposta.
+     * @throws ServletException Se ocorrer um erro de servlet.
+     */
+    @Override
+    public void commence(HttpServletRequest request, HttpServletResponse response,
+            AuthenticationException authException) throws IOException, ServletException {
+
+        log.error("Erro de autenticação: {}", authException.getMessage(), authException); // Loga o erro de autenticação
+
+        // Define o status HTTP como 401 Unauthorized
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        // Define o tipo de conteúdo da resposta como JSON
+        response.setContentType("application/json");
+
+        // Constrói o objeto de resposta padronizado
+        BaseResponse<Void> errorResponse = BaseResponse.<Void>builder()
+                .codigoErro(Integer.parseInt(ErrorCode.UNAUTHORIZED_ACCESS.getCode()))
+                .mensagemErro(ErrorCode.UNAUTHORIZED_ACCESS.getMessage() + ": " + authException.getMessage())
+                .build();
+
+        // Escreve o objeto JSON na resposta
+        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+    }
+}
+```
+```java
+package br.com.legalconnect.auth.security;
+
+import java.io.IOException;
+
+import org.slf4j.Logger; // Importação para Logger
+import org.slf4j.LoggerFactory; // Importação para LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource; // Importar esta classe
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import br.com.legalconnect.multitenancy.TenantContext;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+/**
+ * @class JwtAuthFilter
+ * @brief Filtro de autenticação JWT para requisições HTTP.
+ *
+ *        Este filtro intercepta todas as requisições, extrai o JWT do cabeçalho
+ *        de Autorização,
+ *        valida-o e, se válido, configura o contexto de segurança do Spring
+ *        Security.
+ *        Em caso de token inválido ou expirado, ele delega a resposta ao
+ *        `JwtAuthEntryPoint`.
+ *        Também define o `tenantId` no `TenantContext` para a thread atual.
+ */
+@Component
+public class JwtAuthFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class); // Instância do Logger
+
+    @Autowired
+    private JwtUtil jwtUtil; /// < Utilitário para manipulação de JWTs.
+    @Autowired
+    private UserDetailsService userDetailsService; /// < Serviço para carregar detalhes do usuário.
+
+    /**
+     * @brief Implementa a lógica do filtro para cada requisição.
+     *
+     *        Extrai o token JWT do cabeçalho "Authorization", valida-o e, se
+     *        válido,
+     *        autentica o usuário no contexto de segurança. Em caso de falha, loga o
+     *        erro
+     *        e permite que o `AuthenticationEntryPoint` lide com a resposta HTTP.
+     *
+     * @param request     A requisição HTTP.
+     * @param response    A resposta HTTP.
+     * @param filterChain A cadeia de filtros.
+     * @throws ServletException Se ocorrer um erro de servlet.
+     * @throws IOException      Se ocorrer um erro de I/O.
+     */
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        final String userEmail;
+
+        log.debug("Iniciando doFilterInternal para a requisição: {}", request.getRequestURI());
+
+        // 1. Verifica se o cabeçalho de Autorização está presente e no formato "Bearer
+        // <token>"
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.debug("Cabeçalho de Autorização ausente ou em formato inválido. Prosseguindo sem autenticação JWT.");
+            filterChain.doFilter(request, response); // Continua a cadeia de filtros (requisição não autenticada)
+            return;
+        }
+
+        jwt = authHeader.substring(7); // Extrai o token JWT (remove "Bearer ")
+        log.debug("JWT extraído: {}", jwt);
+
+        try {
+            userEmail = jwtUtil.extractUsername(jwt); // Extrai o e-mail do usuário do token
+            log.debug("E-mail do usuário extraído do JWT: {}", userEmail);
+
+            // 2. Se o e-mail do usuário foi extraído e não há autenticação no contexto de
+            // segurança
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                log.debug("Carregando detalhes do usuário para: {}", userEmail);
+                // Carrega os detalhes do usuário usando o UserDetailsService
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+                log.debug("Detalhes do usuário carregados para: {}", userDetails.getUsername());
+
+                // 3. Valida o token e, se válido, autentica o usuário
+                if (jwtUtil.isTokenValid(jwt, userDetails)) {
+                    log.debug("Token JWT válido para o usuário: {}", userDetails.getUsername());
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails, // Principal (UserDetails)
+                            null, // Credenciais (já validadas pelo JWT, então nulas)
+                            userDetails.getAuthorities() // Autoridades/roles do usuário
+                    );
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request) // Adiciona detalhes da
+                                                                                       // requisição
+                    );
+                    // Define a autenticação no contexto de segurança do Spring Security
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    log.info("Usuário '{}' autenticado com sucesso no contexto de segurança.",
+                            userDetails.getUsername());
+
+                    // 4. Se o userDetails for CustomUserDetails, define o tenantId no TenantContext
+                    if (userDetails instanceof CustomUserDetails) {
+                        CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;
+                        if (customUserDetails.getTenantId() != null) {
+                            TenantContext.setCurrentTenant(customUserDetails.getTenantId().toString());
+                            log.debug("TenantContext definido para o tenantId: {}", customUserDetails.getTenantId());
+                        } else {
+                            log.warn(
+                                    "CustomUserDetails para o usuário {} não possui tenantId. TenantContext não será definido.",
+                                    userDetails.getUsername());
+                        }
+                    }
+                } else {
+                    log.warn("Token JWT inválido para o usuário: {}. Token não corresponde ou expirou.", userEmail);
+                }
+            } else if (userEmail == null) {
+                log.warn("E-mail do usuário não pôde ser extraído do JWT.");
+            } else {
+                log.debug("Usuário '{}' já autenticado no contexto de segurança. Pulando autenticação JWT.", userEmail);
+            }
+        } catch (AuthenticationException e) {
+            // Esta exceção é lançada intencionalmente para ser capturada pelo
+            // JwtAuthEntryPoint
+            log.error("Falha na autenticação JWT: {}", e.getMessage());
+            throw e; // Re-lança para o EntryPoint
+        } catch (Exception e) {
+            log.error("Erro inesperado durante a validação do JWT: {}", e.getMessage(), e);
+            throw new AuthenticationException("Erro interno durante a autenticação.") {
+            };
+        }
+
+        // 5. Continua a cadeia de filtros
+        filterChain.doFilter(request, response);
+        log.debug("Finalizando doFilterInternal para a requisição: {}", request.getRequestURI());
+    }
+}
+```
+```java
+package br.com.legalconnect.auth.security;
+
+import java.security.Key;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger; // Importação para Logger
+import org.slf4j.LoggerFactory; // Importação para LoggerFactory
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+
+/**
+ * @class JwtUtil
+ * @brief Utilitário para manipulação de JSON Web Tokens (JWT).
+ *
+ *        Esta classe é responsável por gerar, extrair informações e validar
+ *        JWTs,
+ *        que são usados para autenticação e autorização na API. A chave secreta
+ *        e o tempo de expiração são configuráveis via `application.properties`.
+ */
+@Service
+public class JwtUtil {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtUtil.class); // Instância do Logger
+
+    // Chave secreta para assinar e verificar os JWTs, injetada do
+    // application.properties
+    // É crucial que esta chave seja forte e mantida em segredo.
+    @Value("${application.security.jwt.secret-key}")
+    private String secretKey;
+
+    // Tempo de expiração do JWT em milissegundos (ex: 3600000ms = 1 hora)
+    @Value("${application.security.jwt.expiration}")
+    private long jwtExpiration;
+
+    /**
+     * @brief Extrai o nome de usuário (subject) do token JWT.
+     * @param token O token JWT.
+     * @return O nome de usuário (geralmente o e-mail do usuário) contido no token.
+     */
+    public String extractUsername(String token) {
+        log.debug("Extraindo username do token JWT.");
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    /**
+     * @brief Extrai uma claim específica do token JWT.
+     * @param token          O token JWT.
+     * @param claimsResolver Função para resolver a claim a partir do objeto
+     *                       `Claims`.
+     * @return O valor da claim extraída.
+     * @tparam T O tipo da claim a ser extraída.
+     */
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    /**
+     * @brief Gera um token JWT para um `UserDetails`.
+     *
+     *        Este método é um atalho para gerar um token sem claims extras.
+     *
+     * @param userDetails Os detalhes do usuário (implementação de `UserDetails`).
+     * @return O token JWT gerado.
+     */
+    public String generateToken(UserDetails userDetails) {
+        log.info("Gerando token JWT para o usuário: {}", userDetails.getUsername());
+        return generateToken(new HashMap<>(), userDetails);
+    }
+
+    /**
+     * @brief Gera um token JWT com claims extras.
+     *
+     *        Inclui o nome de usuário (e-mail), roles e, se for um
+     *        `CustomUserDetails`,
+     *        o `tenantId` como claims no token. Define a data de emissão e
+     *        expiração.
+     *
+     * @param extraClaims Claims adicionais para incluir no token (ex: "user_type").
+     * @param userDetails Os detalhes do usuário (implementação de `UserDetails`).
+     * @return O token JWT gerado e assinado.
+     */
+    public String generateToken(
+            Map<String, Object> extraClaims,
+            UserDetails userDetails) {
+        // Adiciona as roles do usuário como uma claim "roles"
+        extraClaims.put("roles", userDetails.getAuthorities().stream()
+                .map(grantedAuthority -> grantedAuthority.getAuthority())
+                .collect(Collectors.toList()));
+
+        // Adiciona o tenant_id como claim se o UserDetails for uma instância de
+        // CustomUserDetails
+        if (userDetails instanceof CustomUserDetails) {
+            CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;
+            if (customUserDetails.getTenantId() != null) {
+                extraClaims.put("tenant_id", customUserDetails.getTenantId().toString());
+            }
+        }
+
+        String token = Jwts
+                .builder()
+                .setClaims(extraClaims) // Define as claims personalizadas
+                .setSubject(userDetails.getUsername()) // O e-mail do usuário como subject (identificador principal)
+                .setIssuedAt(new Date(System.currentTimeMillis())) // Data de emissão do token
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration)) // Data de expiração do token
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256) // Assina o token com a chave secreta e algoritmo
+                                                                    // HS256
+                .compact(); // Constrói e compacta o token JWT
+        log.debug("Token JWT gerado com sucesso para o usuário: {}", userDetails.getUsername());
+        return token;
+    }
+
+    /**
+     * @brief Valida um token JWT.
+     *
+     *        Verifica se o nome de usuário no token corresponde ao `UserDetails`
+     *        fornecido
+     *        e se o token não expirou.
+     *
+     * @param token       O token JWT a ser validado.
+     * @param userDetails Os detalhes do usuário para quem o token foi emitido.
+     * @return `true` se o token for válido, `false` caso contrário.
+     */
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        log.debug("Validando token JWT para o usuário: {}", userDetails.getUsername());
+        try {
+            final String username = extractUsername(token);
+            boolean isValid = (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+            if (!isValid) {
+                log.warn("Token JWT inválido para o usuário {}. Username não corresponde ou token expirou.",
+                        userDetails.getUsername());
+            }
+            return isValid;
+        } catch (SignatureException e) {
+            log.error("Assinatura JWT inválida: {}", e.getMessage());
+        } catch (MalformedJwtException e) {
+            log.error("Token JWT malformado: {}", e.getMessage());
+        } catch (ExpiredJwtException e) {
+            log.error("Token JWT expirado: {}", e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            log.error("Token JWT não suportado: {}", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            log.error("String JWT vazia: {}", e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * @brief Verifica se o token JWT expirou.
+     * @param token O token JWT.
+     * @return `true` se o token expirou, `false` caso contrário.
+     */
+    private boolean isTokenExpired(String token) {
+        Date expiration = extractExpiration(token);
+        boolean expired = expiration.before(new Date());
+        if (expired) {
+            log.debug("Token JWT expirado em: {}", expiration);
+        }
+        return expired;
+    }
+
+    /**
+     * @brief Extrai a data de expiração do token JWT.
+     * @param token O token JWT.
+     * @return A data de expiração.
+     */
+    private Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    /**
+     * @brief Extrai todas as claims do token JWT.
+     *
+     *        Realiza o parsing do token usando a chave de assinatura.
+     *
+     * @param token O token JWT.
+     * @return As claims (payload) do token.
+     */
+    private Claims extractAllClaims(String token) {
+
+        return Jwts
+                .parserBuilder() // Usar parserBuilder para construir o parser
+                .setSigningKey(getSignInKey()) // Define a chave para verificar a assinatura
+                .build()
+                .parseClaimsJws(token) // Faz o parsing e valida a assinatura
+                .getBody(); // Retorna o corpo (claims) do token
+    }
+
+    /**
+     * @brief Obtém a chave de assinatura decodificada para o JWT.
+     *
+     *        Decodifica a chave secreta base64 configurada para uso na
+     *        assinatura/verificação.
+     *
+     * @return A chave de assinatura.
+     */
+    private Key getSignInKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+}
+```
+```java
+package br.com.legalconnect.auth.security;
+
+import org.slf4j.Logger; // Importação para Logger
+import org.slf4j.LoggerFactory; // Importação para LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.com.legalconnect.user.entity.User;
+import br.com.legalconnect.user.repository.UserRepository;
+
+/**
+ * @class UserDetailsServiceImpl
+ * @brief Implementação personalizada de `UserDetailsService` do Spring
+ *        Security.
+ *
+ *        Esta classe é responsável por carregar os detalhes do usuário (e-mail,
+ *        senha, roles)
+ *        do banco de dados quando um usuário tenta se autenticar.
+ */
+@Service
+public class UserDetailsServiceImpl implements UserDetailsService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserDetailsServiceImpl.class); // Instância do Logger
+
+    @Autowired
+    private UserRepository userRepository; // Repositório para acessar dados de usuários
+
+    /**
+     * @brief Carrega os detalhes do usuário pelo nome de usuário (e-mail).
+     * @param email O e-mail do usuário.
+     * @return Uma instância de `UserDetails` (CustomUserDetails).
+     * @throws UsernameNotFoundException se o usuário não for encontrado no banco de
+     *                                   dados.
+     */
+    @Override
+    @Transactional(readOnly = true) // Garante que a operação de busca seja somente leitura
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        log.info("Tentando carregar detalhes do usuário para o e-mail: {}", email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    log.warn("Usuário não encontrado com e-mail: {}", email);
+                    return new UsernameNotFoundException("Usuário não encontrado com e-mail: " + email);
+                });
+
+        log.info("Detalhes do usuário carregados com sucesso para: {}", user.getEmail());
+        // Retorna uma instância do seu CustomUserDetails, que implementa UserDetails
+        return new CustomUserDetails(user);
+    }
+}
+```
+```java
+package br.com.legalconnect.auth.service;
+
+import org.slf4j.Logger; // Importação para Logger
+import org.slf4j.LoggerFactory; // Importação para LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.com.legalconnect.auth.dto.AuthResponse;
+import br.com.legalconnect.auth.dto.LoginRequest;
+import br.com.legalconnect.auth.dto.RefreshTokenRequest;
+import br.com.legalconnect.auth.entity.RefreshToken;
+import br.com.legalconnect.auth.security.CustomUserDetails;
+import br.com.legalconnect.auth.security.JwtUtil;
+import br.com.legalconnect.auth.util.PasswordEncoderUtil;
+import br.com.legalconnect.common.exception.BusinessException; // Importação para BusinessException
+import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.user.entity.User; // Importação para a entidade User
+import br.com.legalconnect.user.repository.UserRepository;
+
+/**
+ * @class AuthService
+ * @brief Serviço responsável pela lógica de autenticação e autorização de
+ *        usuários.
+ *
+ *        Gerencia operações como login, geração e validação de JWTs e Refresh
+ *        Tokens.
+ */
+@Service
+public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class); // Instância do Logger
+
+    @Autowired
+    private UserRepository userRepository; /// < Repositório para acesso a dados de usuários.
+    @Autowired
+    private PasswordEncoderUtil passwordEncoderUtil; /// < Utilitário para criptografia de senhas.
+    @Autowired
+    private JwtUtil jwtUtil; /// < Utilitário para manipulação de JWTs.
+    @Autowired
+    private RefreshTokenService refreshTokenService; /// < Serviço para gerenciamento de Refresh Tokens.
+
+    /**
+     * @brief Realiza o login de um usuário na plataforma.
+     *
+     *        Valida as credenciais (e-mail e senha) e, se válidas, gera um JWT e um
+     *        Refresh Token.
+     *
+     * @param request DTO contendo e-mail e senha do usuário.
+     * @return Um `AuthResponse` com o access token e refresh token.
+     * @throws BusinessException se o usuário não for encontrado, estiver inativo ou
+     *                           as credenciais forem inválidas.
+     */
+    @Transactional
+    public AuthResponse login(LoginRequest request) {
+        log.info("Tentativa de login para o e-mail: {}", request.getEmail());
+
+        // 1. Busca o usuário pelo e-mail
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> {
+                    log.warn("Falha no login: Usuário não encontrado para o e-mail: {}", request.getEmail());
+                    // auditLogService.logError(ErrorCode.USER_NOT_FOUND.getCode(),
+                    // "Login falhou: Usuário não encontrado.", request.getEmail(), null, null);
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND, "Usuário ou senha inválidos.");
+                });
+
+        // 2. Verifica se o usuário está ativo
+        if (user.getStatus() != User.UserStatus.ACTIVE) {
+            log.warn("Falha no login: Usuário inativo para o e-mail: {}", request.getEmail());
+            // auditLogService.logError(ErrorCode.USER_INACTIVE.getCode(), "Login falhou:
+            // Usuário inativo.",
+            // request.getEmail(), user.getId(), user.getTenant().getId());
+            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED, "Usuário inativo. Favor contatar o suporte.");
+        }
+
+        // 3. Compara a senha fornecida com a senha criptografada armazenada
+        if (!passwordEncoderUtil.matches(request.getSenha(), user.getSenhaHash())) {
+            log.warn("Falha no login: Credenciais inválidas para o e-mail: {}", request.getEmail());
+
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "Usuário ou senha inválidos.");
+        }
+
+        // 4. Gera o Access Token (JWT)
+        String accessToken = jwtUtil.generateToken(new CustomUserDetails(user));
+        log.debug("Access Token gerado para o usuário: {}", user.getEmail());
+
+        // 5. Gera e armazena o Refresh Token
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        log.debug("Refresh Token gerado para o usuário: {}", user.getEmail());
+
+        log.info("Login bem-sucedido para o usuário: {}", user.getEmail());
+        AuthResponse response = AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken.getToken())
+                .build();
+        return response;
+    }
+
+    /**
+     * @brief Renova o Access Token utilizando um Refresh Token válido.
+     *
+     * @param request DTO contendo o Refresh Token.
+     * @return Um `AuthResponse` com um novo access token e o mesmo refresh token.
+     * @throws BusinessException se o refresh token for inválido ou expirado.
+     */
+    @Transactional
+    public AuthResponse refreshAccessToken(RefreshTokenRequest request) {
+        log.info("Tentativa de refresh de token.");
+        // 1. Valida o Refresh Token
+        RefreshToken refreshToken = refreshTokenService.findByToken(request.getRefreshToken())
+                .orElseThrow(() -> {
+                    log.warn("Falha no refresh token: Token não encontrado.");
+
+                    return new BusinessException(ErrorCode.INVALID_TOKEN, "Refresh token inválido.");
+                });
+
+        // 2. Verifica se o Refresh Token expirou
+        refreshTokenService.verifyExpiration(refreshToken);
+        log.debug("Refresh Token verificado e válido.");
+
+        // 3. Busca o usuário associado ao Refresh Token
+        User user = refreshToken.getUser();
+        log.debug("Usuário associado ao refresh token: {}", user.getEmail());
+
+        // 4. Gera um novo Access Token
+        String newAccessToken = jwtUtil.generateToken(new CustomUserDetails(user));
+        log.debug("Novo Access Token gerado para o usuário: {}", user.getEmail());
+
+        log.info("Refresh de token bem-sucedido para o usuário: {}", user.getEmail());
+        return AuthResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(refreshToken.getToken())
+                .build();
+    }
+
+    /**
+     * @brief Realiza o logout do usuário, invalidando o Refresh Token.
+     *
+     * @param refreshToken O Refresh Token a ser invalidado.
+     * @throws BusinessException se o refresh token não for encontrado.
+     */
+    @Transactional
+    public void logout(String refreshToken) {
+        log.info("Tentativa de logout para o refresh token.");
+        try {
+            refreshTokenService.deleteByToken(refreshToken);
+            log.info("Logout bem-sucedido para o refresh token.");
+        } catch (BusinessException e) {
+            log.warn("Falha no logout: {}", e.getMessage());
+
+            throw e;
+        }
+    }
+
+    /**
+     * @brief Realiza o login/cadastro via autenticação social (Google, LinkedIn).
+     *
+     * @param request DTO contendo o provedor e o token social.
+     * @return Um `AuthResponse` com o access token e refresh token.
+     * @throws BusinessException se o token social for inválido ou o provedor não
+     *                           for suportado.
+     * 
+     * @Transactional
+     *                public AuthResponse socialLogin(SocialLoginRequest request) {
+     *                log.info("Tentativa de login social para o provedor: {}",
+     *                request.getProvider());
+     * 
+     *                // TODO: [PRODUÇÃO] Implementar integração real com provedores
+     *                OAuth2 (Google,
+     *                // LinkedIn).
+     *                // Esta é uma implementação mock. Em um ambiente de produção,
+     *                você faria
+     *                // chamadas
+     *                // para as APIs dos provedores para validar o token e obter os
+     *                dados do usuário.
+     *                // Isso pode envolver bibliotecas específicas para
+     *                OAuth2/OIDC.
+     * 
+     *                if ("GOOGLE".equalsIgnoreCase(request.getProvider())) {
+     *                log.debug("Processando login social com Google.");
+     *                // Simula validação do token Google
+     *                if (!"valid-google-token-123".equals(request.getToken())) {
+     *                log.warn("Falha no login social Google: Token inválido.");
+     * 
+     *                throw new BusinessException(ErrorCode.INVALID_TOKEN, "Token
+     *                Google inválido.");
+     *                }
+     *                // Simula busca ou criação de usuário
+     *                User user =
+     *                userRepository.findByEmail("social.user@gmail.com").orElseGet(()
+     *                -> {
+     *                log.info("Criando novo usuário para login social Google:
+     *                social.user@gmail.com");
+     *                // Para social login, você precisará de um tenant padrão para
+     *                associar o usuário
+     *                // Em um ambiente de produção, este "public" schemaName pode
+     *                ser configurável
+     *                // ou o tenant padrão pode ser buscado de outra forma.
+     *                Tenant defaultTenant =
+     *                tenantRepository.findBySchemaName("public")
+     *                .orElseThrow(() -> {
+     *                log.error("Falha na criação de usuário social: Tenant padrão
+     *                'public' não encontrado.");
+     * 
+     *                return new BusinessException(ErrorCode.TENANT_NOT_FOUND,
+     *                "Tenant padrão não encontrado para social login.");
+     *                });
+     * 
+     *                User newUser = User.builder()
+     *                .nomeCompleto("Usuário Social Google")
+     *                .email("social.user@gmail.com")
+     *                .cpf(ValidatorUtil.generateRandomCpf()) // Usa o método
+     *                estático de ValidatorUtil
+     *                .telefone("999999999")
+     *                .senhaHash(passwordEncoderUtil.encode(UUID.randomUUID().toString()))
+     *                // Senha aleatória para
+     *                // social login
+     *                .userType(User.UserType.CLIENTE)
+     *                .status(User.UserStatus.ACTIVE)
+     *                .tenant(defaultTenant)
+     *                .build();
+     *                // Adicionar role CLIENTE
+     *                Role clienteRole =
+     *                roleRepository.findByNome(Roles.ROLE_CLIENT)
+     *                .orElseThrow(() -> {
+     *                log.error("Falha na criação de usuário social: Role CLIENTE
+     *                não encontrada.");
+     * 
+     *                return new BusinessException(ErrorCode.DATABASE_ERROR,
+     *                "Role CLIENTE não encontrada.");
+     *                });
+     *                newUser.getRoles().add(clienteRole);
+     *                return userRepository.save(newUser);
+     *                });
+     * 
+     *                String accessToken = jwtUtil.generateToken(new
+     *                CustomUserDetails(user));
+     *                RefreshToken refreshToken =
+     *                refreshTokenService.createRefreshToken(user);
+     *                log.info("Login social Google bem-sucedido para o usuário:
+     *                {}", user.getEmail());
+     *                return AuthResponse.builder()
+     *                .accessToken(accessToken)
+     *                .refreshToken(refreshToken.getToken())
+     *                .build();
+     * 
+     *                } else if ("LINKEDIN".equalsIgnoreCase(request.getProvider()))
+     *                {
+     *                log.debug("Processando login social com LinkedIn.");
+     *                // Simula validação do token LinkedIn
+     *                if (!"valid-linkedin-token-456".equals(request.getToken())) {
+     *                log.warn("Falha no login social LinkedIn: Token inválido.");
+     * 
+     *                throw new BusinessException(ErrorCode.INVALID_TOKEN, "Token
+     *                LinkedIn inválido.");
+     *                }
+     *                // Simula busca ou criação de usuário
+     *                User user =
+     *                userRepository.findByEmail("social.user@linkedin.com").orElseGet(()
+     *                -> {
+     *                log.info("Criando novo usuário para login social LinkedIn:
+     *                social.user@linkedin.com");
+     *                // Para social login, você precisará de um tenant padrão para
+     *                associar o usuário
+     *                Tenant defaultTenant =
+     *                tenantRepository.findBySchemaName("public")
+     *                .orElseThrow(() -> {
+     *                log.error("Falha na criação de usuário social: Tenant padrão
+     *                'public' não encontrado.");
+     * 
+     *                return new BusinessException(ErrorCode.TENANT_NOT_FOUND,
+     *                "Tenant padrão não encontrado para social login.");
+     *                });
+     * 
+     *                User newUser = User.builder()
+     *                .nomeCompleto("Usuário Social LinkedIn")
+     *                .email("social.user@linkedin.com")
+     *                .cpf(ValidatorUtil.generateRandomCpf()) // Usa o método
+     *                estático de ValidatorUtil
+     *                .telefone("888888888")
+     *                .senhaHash(passwordEncoderUtil.encode(UUID.randomUUID().toString()))
+     *                // Senha aleatória para
+     *                // social login
+     *                .userType(User.UserType.CLIENTE)
+     *                .status(User.UserStatus.ACTIVE)
+     *                .tenant(defaultTenant)
+     *                .build();
+     *                // Adicionar role CLIENTE
+     *                Role clienteRole =
+     *                roleRepository.findByNome(Roles.ROLE_CLIENT)
+     *                .orElseThrow(() -> {
+     *                log.error("Falha na criação de usuário social: Role CLIENTE
+     *                não encontrada.");
+     * 
+     *                return new BusinessException(ErrorCode.USER_NOT_FOUND,
+     *                "Role CLIENTE não encontrada.");
+     *                });
+     *                newUser.getRoles().add(clienteRole);
+     *                return userRepository.save(newUser);
+     *                });
+     * 
+     *                String accessToken = jwtUtil.generateToken(new
+     *                CustomUserDetails(user));
+     *                RefreshToken refreshToken =
+     *                refreshTokenService.createRefreshToken(user);
+     *                log.info("Login social LinkedIn bem-sucedido para o usuário:
+     *                {}", user.getEmail());
+     *                return AuthResponse.builder()
+     *                .accessToken(accessToken)
+     *                .refreshToken(refreshToken.getToken())
+     *                .build();
+     *                } else {
+     *                log.warn("Provedor social não suportado: {}",
+     *                request.getProvider());
+     * 
+     *                throw new BusinessException(ErrorCode.SERVICE_UNAVAILABLE,
+     *                "Provedor social não suportado.");
+     *                }
+     *                }
+     */
+}
+```
+```java
+package br.com.legalconnect.auth.service;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.com.legalconnect.auth.entity.RefreshToken;
+import br.com.legalconnect.auth.repository.RefreshTokenRepository;
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.user.entity.User;
+import jakarta.persistence.EntityManager; // Importar EntityManager
+
+/**
+ * @class RefreshTokenService
+ * @brief Serviço para gerenciamento de Refresh Tokens.
+ *
+ *        Responsável por criar, validar e invalidar refresh tokens, garantindo
+ *        a
+ *        renovação segura de sessões de usuário.
+ */
+@Service
+public class RefreshTokenService {
+
+    private static final Logger log = LoggerFactory.getLogger(RefreshTokenService.class);
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired // Injetar EntityManager
+    private EntityManager entityManager;
+
+    @Value("${application.security.jwt.refresh-expiration}")
+    private long refreshTokenExpirationMs;
+
+    /**
+     * @brief Cria e salva um novo Refresh Token para um usuário.
+     *
+     * @param user O usuário para o qual o Refresh Token será criado.
+     * @return O RefreshToken criado e persistido.
+     */
+    @Transactional
+    public RefreshToken createRefreshToken(User user) {
+        log.info("Criando refresh token para o usuário: {}", user.getEmail());
+        // Invalida qualquer refresh token existente para este usuário para garantir
+        // apenas um por vez
+        refreshTokenRepository.findByUser(user).ifPresent(existingToken -> {
+            log.debug("Deletando refresh token existente para o usuário: {}", user.getEmail());
+            refreshTokenRepository.delete(existingToken);
+            // Força o Hibernate a sincronizar a deleção com o banco de dados imediatamente
+            entityManager.flush();
+        });
+
+        // Gera um novo token único
+        String token = UUID.randomUUID().toString();
+        Instant expiryDate = Instant.now().plus(refreshTokenExpirationMs, ChronoUnit.MILLIS);
+
+        RefreshToken refreshToken = RefreshToken.builder()
+                .user(user)
+                .token(token)
+                .expiraEm(expiryDate)
+                .build();
+
+        refreshToken = refreshTokenRepository.save(refreshToken);
+        log.info("Refresh token criado e salvo com sucesso para o usuário: {}", user.getEmail());
+        return refreshToken;
+    }
+
+    /**
+     * @brief Busca um Refresh Token pelo seu valor.
+     *
+     * @param token O valor do Refresh Token.
+     * @return Um `Optional` contendo o RefreshToken, se encontrado.
+     */
+    public Optional<RefreshToken> findByToken(String token) {
+        log.debug("Buscando refresh token pelo valor: {}", token);
+        return refreshTokenRepository.findByToken(token);
+    }
+
+    /**
+     * @brief Verifica se um Refresh Token expirou.
+     *
+     * @param token O RefreshToken a ser verificado.
+     * @return O RefreshToken se não estiver expirado.
+     * @throws BusinessException se o Refresh Token estiver expirado.
+     */
+    public RefreshToken verifyExpiration(RefreshToken token) {
+        log.debug("Verificando expiração do refresh token para o usuário: {}", token.getUser().getEmail());
+        if (token.getExpiraEm().isBefore(Instant.now())) {
+            refreshTokenRepository.delete(token); // Remove o token expirado
+            entityManager.flush(); // Força o Hibernate a sincronizar a deleção
+            log.warn("Refresh token expirado para o usuário: {}. Token deletado.", token.getUser().getEmail());
+
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_EXPIRED,
+                    "Refresh token expirado. Por favor, faça login novamente.");
+        }
+        log.debug("Refresh token para o usuário {} ainda é válido.", token.getUser().getEmail());
+        return token;
+    }
+
+    /**
+     * @brief Deleta um Refresh Token pelo seu valor.
+     *
+     * @param token O valor do Refresh Token a ser deletado.
+     * @throws BusinessException se o Refresh Token não for encontrado.
+     */
+    @Transactional
+    public void deleteByToken(String token) {
+        log.info("Deletando refresh token pelo valor: {}", token);
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
+                .orElseThrow(() -> {
+                    log.warn("Tentativa de deletar refresh token não encontrado: {}", token);
+
+                    return new BusinessException(ErrorCode.INVALID_TOKEN, "Refresh token não encontrado.");
+                });
+        refreshTokenRepository.delete(refreshToken);
+        entityManager.flush(); // Força o Hibernate a sincronizar a deleção
+        log.info("Refresh token deletado com sucesso para o usuário: {}", refreshToken.getUser().getEmail());
+    }
+
+    /**
+     * @brief Deleta um Refresh Token pelo usuário associado.
+     *
+     * @param user O usuário cujo Refresh Token será deletado.
+     */
+    @Transactional
+    public void deleteByUser(User user) {
+        log.info("Deletando refresh token para o usuário: {}", user.getEmail());
+        refreshTokenRepository.findByUser(user).ifPresent(refreshToken -> {
+            refreshTokenRepository.delete(refreshToken);
+            entityManager.flush(); // Força o Hibernate a sincronizar a deleção
+            log.info("Refresh token deletado com sucesso para o usuário: {}", user.getEmail());
+        });
+    }
+}
+
+```
+```java
+package br.com.legalconnect.auth.util;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.slf4j.Logger; // Importação para Logger
+import org.slf4j.LoggerFactory; // Importação para LoggerFactory
+
+/**
+ * @class PasswordEncoderUtil
+ * @brief Utilitário para criptografia e verificação de senhas usando BCrypt.
+ *
+ * Esta classe encapsula a funcionalidade do `BCryptPasswordEncoder` do
+ * Spring Security,
+ * garantindo que as senhas sejam armazenadas de forma segura (hashed) e
+ * possam ser
+ * verificadas corretamente. É um `@Service` para ser injetável em outras
+ * classes.
+ */
+@Service // Marca como um componente de serviço gerenciado pelo Spring
+public class PasswordEncoderUtil {
+
+    private static final Logger log = LoggerFactory.getLogger(PasswordEncoderUtil.class); // Instância do Logger
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        log.debug("Criando bean BCryptPasswordEncoder.");
+        return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * @brief Criptografa uma senha em texto puro (raw password).
+     *
+     * Utiliza o algoritmo BCrypt para gerar um hash seguro da senha.
+     *
+     * @param rawPassword A senha em texto puro fornecida pelo usuário.
+     * @return A representação criptografada (hashed) da senha.
+     */
+    public String encode(CharSequence rawPassword) {
+        log.debug("Criptografando senha.");
+        return passwordEncoder().encode(rawPassword);
+    }
+
+    /**
+     * @brief Verifica se uma senha em texto puro corresponde a uma senha
+     * criptografada (hashed).
+     *
+     * Compara o hash da senha fornecida com o hash armazenado, sem
+     * descriptografar.
+     *
+     * @param rawPassword     A senha em texto puro fornecida pelo usuário (ex: no
+     * login).
+     * @param encodedPassword A senha criptografada (hashed) armazenada no banco de
+     * dados.
+     * @return `true` se as senhas corresponderem, `false` caso contrário.
+     */
+    public boolean matches(CharSequence rawPassword, String encodedPassword) {
+        log.debug("Verificando correspondência de senha.");
+        return passwordEncoder().matches(rawPassword, encodedPassword);
+    }
+
+}
+```
+```java
+package br.com.legalconnect.config.security;
+
+import org.slf4j.Logger; // Importação para Logger
+import org.slf4j.LoggerFactory; // Importação para LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import br.com.legalconnect.auth.security.JwtAuthEntryPoint;
+import br.com.legalconnect.auth.security.JwtAuthFilter;
+
+/**
+ * @class SecurityConfig
+ * @brief Configuração de segurança principal para o microsserviço de
+ *        autenticação.
+ *
+ *        Esta classe configura o Spring Security para usar JWTs para
+ *        autenticação,
+ *        define as regras de autorização para endpoints públicos e protegidos,
+ *        e integra o filtro JWT personalizado.
+ */
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true) // Habilita segurança baseada em anotações como @PreAuthorize
+public class SecurityConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class); // Instância do Logger
+
+    @Autowired
+    private UserDetailsService userDetailsService; // Serviço para carregar detalhes do usuário
+    @Autowired
+    private JwtAuthFilter jwtAuthFilter; // Filtro JWT personalizado
+    @Autowired
+    private JwtAuthEntryPoint unauthorizedHandler; // Manipulador para requisições não autorizadas
+    @Autowired
+    private PasswordEncoder passwordEncoder; // Codificador de senhas
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/api/v1/auth/**",
+            "/api/v1/public/**",
+            "/api/v1/advogados/**",
+            "/api/v1/agendamentos/**",
+            "/api/v1/avaliacoes/**",
+            "/api/v1/depoimentos/**",
+            "/**",
+            // Endpoints para documentação da API (Swagger/OpenAPI)
+            "**/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html"
+    };
+
+    /**
+     * @brief Configura o provedor de autenticação.
+     *
+     *        Define o `UserDetailsService` e o `PasswordEncoder` a serem usados
+     *        pelo Spring Security para autenticar usuários.
+     *
+     * @return Uma instância de `DaoAuthenticationProvider`.
+     */
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        log.debug("Configurando DaoAuthenticationProvider.");
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder);
+        return authProvider;
+    }
+
+    /**
+     * @brief Obtém o `AuthenticationManager`.
+     *
+     *        O `AuthenticationManager` é usado para autenticar o objeto
+     *        `Authentication`
+     *        em métodos de login.
+     *
+     * @param authConfig A configuração de autenticação.
+     * @return Uma instância de `AuthenticationManager`.
+     * @throws Exception se ocorrer um erro ao obter o AuthenticationManager.
+     */
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        log.debug("Obtendo AuthenticationManager.");
+        return authConfig.getAuthenticationManager();
+    }
+
+    /**
+     * @brief Configura a cadeia de filtros de segurança HTTP.
+     *
+     *        Define as regras de autorização para diferentes endpoints,
+     *        configura a política de criação de sessão como `STATELESS` (essencial
+     *        para JWT),
+     *        e adiciona o filtro JWT personalizado antes do filtro de autenticação
+     *        padrão do Spring Security.
+     *
+     * @param http O objeto `HttpSecurity` para configurar a segurança.
+     * @return Uma instância de `SecurityFilterChain`.
+     * @throws Exception se ocorrer um erro durante a configuração.
+     */
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        log.info("Configurando SecurityFilterChain.");
+        http
+                .csrf(csrf -> csrf.disable()) // Desabilita CSRF (não necessário para APIs RESTful com JWT)
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // estado
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/public/**", "/actuator/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .anyRequest().authenticated() // Todas as outras requisições exigem autenticação
+                );
+
+        // Adiciona o provedor de autenticação personalizado
+        http.authenticationProvider(authenticationProvider());
+
+        // Adiciona o filtro JWT antes do filtro de autenticação de usuário e senha do
+        // Spring Security
+        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // Para H2 Console funcionar com Spring Security (necessário para frames)
+        http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
+
+        log.info("SecurityFilterChain configurada com sucesso.");
+        return http.build();
+    }
+}
+```
+```java
+package br.com.legalconnect.config.security;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import br.com.legalconnect.multitenancy.TenantInterceptor;
+
+// common/config/WebConfig.java
+/**
+ * @class WebConfig
+ * @brief Classe de configuração web geral para a aplicação Spring Boot.
+ *
+ *        Esta configuração é usada para definir regras de CORS (Cross-Origin
+ *        Resource Sharing),
+ *        permitindo que aplicações frontend em domínios diferentes acessem a
+ *        API de forma segura.
+ */
+@Configuration
+class WebConfig implements WebMvcConfigurer { // Removido 'public' para estar no mesmo arquivo
+
+    private final TenantInterceptor tenantInterceptor;
+
+    public WebConfig(TenantInterceptor tenantInterceptor) {
+        this.tenantInterceptor = tenantInterceptor;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(tenantInterceptor);
+    }
+
+    /**
+     * @brief Configura as regras de CORS para a aplicação.
+     *
+     *        Permite requisições de qualquer origem (em ambiente de
+     *        desenvolvimento),
+     *        define os métodos HTTP permitidos, os cabeçalhos permitidos e o tempo
+     *        de cache para preflight requests. Em produção, `allowedOrigins` deve
+     *        ser restrito aos domínios do frontend.
+     *
+     * @param registry O registro de CORS para adicionar as configurações.
+     */
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**") // Aplica as regras de CORS a todos os endpoints da API
+                .allowedOrigins("*") // Em produção, substituir por domínios específicos (ex:
+                                     // "https://meufrontend.com")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH") // Métodos HTTP permitidos
+                .allowedHeaders("*") // Permite todos os cabeçalhos na requisição
+                .allowCredentials(false) // Não permite o envio de cookies de credenciais (para a maioria das APIs
+                                         // RESTful com JWT)
+                .maxAge(3600); // Tempo máximo (em segundos) que os resultados do preflight request (OPTIONS)
+                               // podem ser cacheados pelo navegador
+    }
+}
+
+```
+```java
+package br.com.legalconnect.tenant.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * @class TenantCreationRequest
+ * @brief DTO para a requisição de criação de um novo Tenant.
+ *
+ *        Contém os dados necessários para registrar um novo ambiente isolado na
+ *        plataforma,
+ *        incluindo validações para garantir a integridade dos dados.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class TenantCreationRequest {
+
+    @NotBlank(message = "O nome do tenant é obrigatório.")
+    @Size(max = 255, message = "O nome do tenant deve ter no máximo 255 caracteres.")
+    private String nome;
+
+    @NotBlank(message = "O nome do esquema é obrigatório.")
+    @Size(min = 3, max = 63, message = "O nome do esquema deve ter entre 3 e 63 caracteres.")
+    @Pattern(regexp = "^[a-z0-9_]+$", message = "O nome do esquema deve conter apenas letras minúsculas, números e underscores.")
+    private String schemaName;
+
+    @NotBlank(message = "O e-mail do administrador do tenant é obrigatório.")
+    @Size(max = 255, message = "O e-mail do administrador deve ter no máximo 255 caracteres.")
+    @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$", message = "Formato de e-mail do administrador inválido.")
+    private String adminEmail; // E-mail do administrador inicial do tenant
+}
+```
+```java
+package br.com.legalconnect.tenant.dto;
+
+import java.time.Instant;
+import java.util.UUID;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * @class TenantResponseDTO
+ * @brief DTO para a resposta de um Tenant.
+ *
+ *        Representa os dados de um Tenant que são retornados pela API,
+ *        incluindo seu ID, nome, nome do esquema e status.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class TenantResponseDTO {
+    private UUID id;
+    private String nome;
+    private String schemaName;
+    private String status; // Representação em String do enum TenantStatus
+    private Instant createdAt;
+    private Instant updatedAt;
+}
+```
+```java
+package br.com.legalconnect.tenant.repository;
+
+import br.com.legalconnect.auth.entity.Tenant;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * @interface TenantRepository
+ * @brief Repositório JPA para a entidade Tenant.
+ *
+ * Gerencia os tenants (ambientes isolados) na arquitetura de multitenancy da aplicação.
+ */
+@Repository
+public interface TenantRepository extends JpaRepository<Tenant, UUID> {
+
+    /**
+     * @brief Busca um Tenant pelo nome do seu esquema.
+     * @param schemaName O nome do esquema do banco de dados.
+     * @return Um Optional contendo o Tenant, se encontrado.
+     */
+    Optional<Tenant> findBySchemaName(String schemaName);
+
+    /**
+     * @brief Busca um Tenant pelo seu nome.
+     * @param nome O nome descritivo do tenant.
+     * @return Um Optional contendo o Tenant, se encontrado.
+     */
+    Optional<Tenant> findByNome(String nome);
+}
+```
+```java
+package br.com.legalconnect.tenant.service;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+// Removidas as importações de java.sql.Connection, java.sql.Statement, javax.sql.DataSource, org.flywaydb.core.Flyway
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.com.legalconnect.auth.entity.Tenant;
+import br.com.legalconnect.auth.mapper.TenantMapper;
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.tenant.dto.TenantCreationRequest;
+import br.com.legalconnect.tenant.dto.TenantResponseDTO;
+import br.com.legalconnect.tenant.repository.TenantRepository;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * @class TenantService
+ * @brief Serviço responsável pelo gerenciamento de Tenants.
+ *
+ *        Gerencia a criação, ativação e desativação de tenants, que são
+ *        ambientes
+ *        isolados para diferentes escritórios ou grupos de usuários.
+ *
+ *        ATENÇÃO: As funcionalidades de migração de banco de dados (Flyway)
+ *        foram
+ *        removidas deste serviço, conforme solicitado. A criação e migração de
+ *        schemas
+ *        para novos tenants devem ser gerenciadas por um serviço externo ou
+ *        ferramenta
+ *        de orquestração em um ambiente de produção.
+ */
+@Service
+@Slf4j // Anotação para logging
+public class TenantService {
+
+    @Autowired
+    private TenantRepository tenantRepository; /// < Repositório para tenants.
+
+    @Autowired
+    private TenantMapper tenantMapper; /// < Mapper para tenants.
+    // @Autowired // Removido: DataSource não é mais necessário aqui após a remoção
+    // do Flyway
+    // private DataSource dataSource;
+
+    /**
+     * @brief Cria um novo tenant.
+     *
+     * @param request DTO com os detalhes do tenant a ser criado.
+     * @return O DTO do tenant criado.
+     * @throws BusinessException se o nome do esquema já estiver em uso.
+     */
+    @Transactional
+    public TenantResponseDTO createTenant(TenantCreationRequest request) {
+        log.info("Iniciando criação de novo tenant com schemaName: {}", request.getSchemaName());
+        if (tenantRepository.findBySchemaName(request.getSchemaName()).isPresent()) {
+            log.warn("Falha na criação do tenant: Nome do esquema '{}' já em uso.", request.getSchemaName());
+
+            throw new BusinessException(ErrorCode.ACCOUNT_LOCKED, "Nome do esquema já em uso.");
+        }
+
+        Tenant tenant = tenantMapper.toEntity(request);
+        tenant.setStatus(Tenant.TenantStatus.PENDING_ACTIVATION); // Novo tenant começa como pendente de ativação
+        tenant = tenantRepository.save(tenant);
+        log.info("Tenant '{}' salvo no banco de dados global com ID: {}. Status: PENDING_ACTIVATION.", tenant.getNome(),
+                tenant.getId());
+
+        // A criação e migração do schema para o novo tenant NÃO são mais
+        // responsabilidade
+        // deste serviço. Em um ambiente de produção, isso seria orquestrado por um
+        // serviço de provisionamento de tenants ou uma ferramenta externa.
+        log.info("Criação de tenant concluída. A migração do schema '{}' deve ser orquestrada externamente.",
+                tenant.getSchemaName());
+
+        // TODO: [PRODUÇÃO] Enviar e-mail de ativação com um token para o administrador
+        // do novo tenant
+        // notificationService.sendTenantActivationEmail(tenant.getAdminEmail(),
+        // tenant.getId(), activationToken);
+        return tenantMapper.toDto(tenant);
+    }
+
+    /**
+     * @brief Ativa um tenant usando um token de ativação.
+     *
+     * @param token O token de ativação.
+     * @return O DTO do tenant ativado.
+     * @throws BusinessException se o token for inválido ou o tenant não for
+     *                           encontrado/já ativo.
+     */
+    @Transactional
+    public TenantResponseDTO activateTenant(String token) {
+        log.info("Tentativa de ativação de tenant com token.");
+        // Em um cenário real, o token seria validado (ex: JWT com ID do tenant e
+        // expiração)
+        // Por simplicidade, vamos usar um mock de token.
+        UUID tenantId = parseTenantIdFromActivationToken(token); // Método fictício para extrair ID do token
+
+        Tenant tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> {
+                    log.warn("Falha na ativação do tenant: Token de ativação inválido ou expirado. Tenant ID: {}",
+                            tenantId);
+
+                    return new BusinessException(ErrorCode.TENANT_NOT_FOUND,
+                            "Token de ativação inválido ou expirado.");
+                });
+        if (tenant.getStatus() == Tenant.TenantStatus.ACTIVE) {
+            log.warn("Falha na ativação do tenant: Tenant '{}' já está ativo.", tenant.getNome());
+
+            throw new BusinessException(ErrorCode.TENANT_DISABLED, "Tenant já está ativo.");
+        }
+
+        tenant.setStatus(Tenant.TenantStatus.ACTIVE);
+        tenantRepository.save(tenant);
+
+        log.info(
+                "Tenant '{}' (ID: {}) ativado com sucesso. Presume-se que o schema '{}' já foi migrado ou será no primeiro acesso.",
+                tenant.getNome(), tenant.getId(), tenant.getSchemaName());
+
+        return tenantMapper.toDto(tenant);
+    }
+
+    /**
+     * @brief Desativa um tenant.
+     *
+     * @param tenantId O ID do tenant a ser desativado.
+     * @throws BusinessException se o tenant não for encontrado ou já estiver
+     *                           inativo.
+     */
+    @Transactional
+    public void deactivateTenant(UUID tenantId) {
+        log.info("Tentativa de desativação do tenant com ID: {}", tenantId);
+        Tenant tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> {
+                    log.warn("Falha na desativação do tenant: Tenant não encontrado com ID: {}", tenantId);
+
+                    return new BusinessException(ErrorCode.TENANT_NOT_FOUND);
+                });
+        if (tenant.getStatus() == Tenant.TenantStatus.INACTIVE) {
+            log.warn("Falha na desativação do tenant: Tenant '{}' (ID: {}) já está inativo.", tenant.getNome(),
+                    tenantId);
+            throw new BusinessException(ErrorCode.TENANT_DISABLED, "Tenant já está inativo.");
+        }
+
+        tenant.setStatus(Tenant.TenantStatus.INACTIVE);
+        tenantRepository.save(tenant);
+        log.info("Tenant '{}' (ID: {}) desativado com sucesso.", tenant.getNome(), tenantId);
+        // TODO: [PRODUÇÃO] Em um ambiente de produção, considere desativar ou arquivar
+        // o esquema físico
+        // no banco de dados (se for esquema-por-tenant e desejar remover dados).
+    }
+
+    /**
+     * @brief Obtém um tenant pelo seu ID.
+     * @param tenantId O ID do tenant.
+     * @return O DTO do tenant.
+     * @throws BusinessException se o tenant não for encontrado.
+     */
+    public TenantResponseDTO getTenantById(UUID tenantId) {
+        log.debug("Buscando tenant pelo ID: {}", tenantId);
+        Tenant tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> {
+                    log.warn("Tenant não encontrado com ID: {}", tenantId);
+
+                    return new BusinessException(ErrorCode.TENANT_NOT_FOUND);
+                });
+        log.debug("Tenant encontrado: {} (ID: {})", tenant.getNome(), tenant.getId());
+        return tenantMapper.toDto(tenant);
+    }
+
+    /**
+     * @brief Obtém todos os tenants.
+     * @return Uma lista de `TenantResponseDTO`.
+     */
+    public List<TenantResponseDTO> getAllTenants() {
+        log.info("Buscando todos os tenants.");
+        List<TenantResponseDTO> tenants = tenantRepository.findAll().stream()
+                .map(tenantMapper::toDto)
+                .collect(Collectors.toList());
+        log.info("Encontrados {} tenants.", tenants.size());
+        return tenants;
+    }
+
+    /**
+     * @brief Método fictício para simular a extração do ID do tenant de um token de
+     *        ativação.
+     *        Em um ambiente real, este token seria um JWT ou um UUID gerado e
+     *        armazenado temporariamente
+     *        para ativação. Por simplicidade, vamos assumir que o token é o próprio
+     *        UUID do tenant.
+     *
+     * @param token O token de ativação.
+     * @return O UUID do tenant.
+     * @throws BusinessException se o token não for um UUID válido.
+     */
+    private UUID parseTenantIdFromActivationToken(String token) {
+        try {
+            UUID parsedId = UUID.fromString(token);
+            log.debug("Token de ativação parseado para UUID: {}", parsedId);
+            return parsedId;
+        } catch (IllegalArgumentException e) {
+            log.error("Erro ao parsear token de ativação inválido: {}", token, e);
+
+            throw new BusinessException(ErrorCode.INVALID_TOKEN, "Token de ativação inválido.");
+        }
+    }
+
+    // Removido o método migrateSchemaForNewTenant, pois a responsabilidade de
+    // migração
+    // de banco de dados não é deste microsserviço.
+    // private void migrateSchemaForNewTenant(...) { ... }
+}
+```
+```java
+package br.com.legalconnect.user.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * @class UserProfileUpdate
+ * @brief DTO para a requisição de atualização de perfil de usuário.
+ *
+ *        Contém os campos que podem ser atualizados no perfil de um usuário,
+ *        incluindo validações para garantir a integridade dos dados.
+ *        Os campos são opcionais, permitindo atualizações parciais.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserProfileUpdate {
+
+    @Size(max = 255, message = "O nome completo deve ter no máximo 255 caracteres.")
+    private String nomeCompleto;
+
+    @Email(message = "Formato de e-mail inválido.")
+    @Size(max = 255, message = "O e-mail deve ter no máximo 255 caracteres.")
+    private String email;
+
+    @Size(max = 20, message = "O telefone deve ter no máximo 20 caracteres.")
+    private String telefone;
+
+    @Size(max = 255, message = "A URL da foto deve ter no máximo 255 caracteres.")
+    private String fotoUrl;
+
+    // Campos para alteração de senha (opcionais, mas devem ser fornecidos juntos)
+    private String senhaAtual;
+    @Size(min = 8, message = "A nova senha deve ter no mínimo 8 caracteres.")
+    private String novaSenha;
+    // Adicione regex para complexidade de senha se necessário
+}
+```
+```java
+package br.com.legalconnect.user.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * @class UserRegistrationRequest
+ * @brief DTO para a requisição de registro de um novo usuário.
+ *
+ *        Contém os dados necessários para registrar um novo usuário na
+ *        plataforma,
+ *        incluindo validações para garantir a integridade dos dados.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserRegistrationRequest {
+
+    @NotBlank(message = "O nome completo é obrigatório.")
+    @Size(max = 255, message = "O nome completo deve ter no máximo 255 caracteres.")
+    private String nomeCompleto;
+
+    @NotBlank(message = "O e-mail é obrigatório.")
+    @Email(message = "Formato de e-mail inválido.")
+    @Size(max = 255, message = "O e-mail deve ter no máximo 255 caracteres.")
+    private String email;
+
+    @NotBlank(message = "O CPF é obrigatório.")
+    @Pattern(regexp = "^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$", message = "Formato de CPF inválido. Use XXX.XXX.XXX-XX")
+    private String cpf;
+
+    @Size(max = 20, message = "O telefone deve ter no máximo 20 caracteres.")
+    private String telefone;
+
+    @NotBlank(message = "A senha é obrigatória.")
+    @Size(min = 8, message = "A senha deve ter no mínimo 8 caracteres.")
+    // Adicione regex para complexidade de senha se necessário (ex: maiúscula,
+    // minúscula, número, caractere especial)
+    private String senha;
+}
+```
+```java
+package br.com.legalconnect.user.dto;
+
+import java.time.Instant;
+import java.util.Set;
+import java.util.UUID;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * @class UserResponseDTO
+ * @brief DTO para a resposta de um usuário.
+ *
+ *        Representa os dados de um usuário que são retornados pela API,
+ *        incluindo informações básicas, tipo de usuário, status e roles.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserResponseDTO {
+    private UUID id;
+    private String nomeCompleto;
+    private String email;
+    private String cpf;
+    private String telefone;
+    private String fotoUrl;
+    private String userType; // Representação em String do enum UserType
+    private String status; // Representação em String do enum UserStatus
+    private Set<String> roles; // Nomes das roles associadas ao usuário
+    private UUID tenantId; // ID do tenant ao qual o usuário pertence
+    private Instant createdAt;
+    private Instant updatedAt;
+}
+
+```
+```java
+package br.com.legalconnect.user.entity;
+
+import br.com.legalconnect.common.dto.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class Role
+ * @brief Entidade para definir os papéis de acesso do usuário no sistema.
+ *
+ *        Esta tabela de roles agora reside nos schemas de tenant, o que
+ *        significa
+ *        que cada tenant pode ter seus próprios conjuntos de roles ou roles com
+ *        IDs diferentes.
+ */
+@Entity
+@Table(name = "tb_role") // A tabela tb_role agora reside no schema do tenant
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class Role extends BaseEntity {
+
+    @Column(name = "nome", nullable = false, unique = true, length = 100)
+    private String nome; // Nome descritivo e único do papel (ex: CLIENTE, ADVOGADO)
+
+    @Column(name = "descricao", columnDefinition = "TEXT")
+    private String descricao; // Uma descrição detalhada do papel
+}
+```
+```java
+package br.com.legalconnect.user.entity;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import br.com.legalconnect.auth.entity.Tenant;
+import br.com.legalconnect.common.dto.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class User
+ * @brief Entidade base para todos os usuários (clientes, advogados,
+ *        administradores de tenant, etc.).
+ *
+ *        Esta entidade representa um usuário na plataforma e está associada a
+ *        um tenant
+ *        específico. A tabela de usuário reside nos schemas de tenant.
+ */
+@Entity
+@Table(name = "tb_user") // A tabela tb_user agora reside no schema do tenant
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class User extends BaseEntity {
+
+    @ManyToOne(fetch = FetchType.LAZY) // Relacionamento muitos-para-um com Tenant
+    // Referencia a tabela tb_tenant que está no schema public (global)
+    @JoinColumn(name = "tenant_id", nullable = false, referencedColumnName = "id")
+    private Tenant tenant; // Identificador do tenant ao qual o usuário pertence
+
+    @Column(name = "nome_completo", nullable = false, length = 255)
+    private String nomeCompleto; // Nome completo do usuário
+
+    @Column(name = "email", nullable = false, unique = true, length = 255)
+    private String email; // Endereço de e-mail principal do usuário (único por schema de tenant)
+
+    @Column(name = "cpf", nullable = false, unique = true, length = 14)
+    private String cpf; // Número do Cadastro de Pessoa Física do usuário (único por schema de tenant)
+
+    @Column(name = "telefone", length = 20)
+    private String telefone; // Número de telefone de contato do usuário
+
+    @Column(name = "senha_hash", nullable = false, columnDefinition = "TEXT")
+    private String senhaHash; // Representação criptografada (hashed) da senha do usuário
+
+    @Column(name = "foto_url", columnDefinition = "TEXT")
+    private String fotoUrl; // URL da foto de perfil do usuário no S3
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_type", nullable = false, length = 50)
+    private UserType userType; // Categoria principal do usuário (ex: CLIENTE, ADVOGADO)
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 50)
+    private UserStatus status; // Status atual da conta do usuário (ex: ACTIVE, PENDING_APPROVAL)
+
+    @ManyToMany(fetch = FetchType.EAGER) // Relacionamento muitos-para-muitos com Role
+    @JoinTable(name = "tb_user_role", // Tabela de junção
+            joinColumns = @JoinColumn(name = "user_id"), // Coluna que referencia User
+            inverseJoinColumns = @JoinColumn(name = "role_id") // Coluna que referencia Role
+    )
+    private Set<Role> roles = new HashSet<>(); // Papéis/perfil de acesso do usuário
+
+    /**
+     * @enum UserType
+     * @brief Enumeração para categorizar o tipo principal de um usuário.
+     *        Define se o usuário é um cliente, advogado ou administrador da
+     *        plataforma.
+     */
+    public enum UserType {
+        CLIENTE, // Usuário final que busca serviços jurídicos
+        ADVOGADO, // Profissional do direito que oferece serviços
+        PLATAFORMA_ADMIN // Administrador da plataforma com privilégios totais
+    }
+
+    /**
+     * @enum UserStatus
+     * @brief Enumeração para representar o status atual da conta de um usuário.
+     *        Define o estado operacional da conta do usuário na plataforma.
+     */
+    public enum UserStatus {
+        ACTIVE, INACTIVE, PENDING_APPROVAL, REJECTED
+    }
+}
+```
+```java
+package br.com.legalconnect.user.mapper;
+
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Named;
+import org.mapstruct.ReportingPolicy;
+
+import br.com.legalconnect.user.entity.Role;
+
+/**
+ * @interface RoleMapper
+ * @brief Mapper para conversão entre a entidade `Role` e suas representações em
+ *        String.
+ *
+ *        Esta interface utiliza MapStruct para gerar automaticamente o código
+ *        de mapeamento.
+ *        É usada principalmente para converter um `Set<Role>` em um
+ *        `Set<String>` contendo
+ *        os nomes das roles, o que é útil para DTOs de resposta de usuário.
+ */
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public interface RoleMapper {
+
+    /**
+     * @brief Mapeia uma entidade Role para o seu nome (String).
+     * @param role A entidade Role.
+     * @return O nome da role.
+     */
+    String toRoleName(Role role);
+
+    /**
+     * @brief Mapeia um conjunto de entidades Role para um conjunto de nomes de
+     *        roles (String).
+     * @param roles O conjunto de entidades Role.
+     * @return Um conjunto de Strings contendo os nomes das roles.
+     */
+    @Named("roleSetToStringSet") // Nomeia este método para ser referenciado em outros mappers (ex: UserMapper)
+    default Set<String> roleSetToStringSet(Set<Role> roles) {
+        if (roles == null) {
+            return null;
+        }
+        return roles.stream()
+                .map(Role::getNome) // Mapeia cada Role para o seu nome
+                .collect(Collectors.toSet()); // Coleta os nomes em um Set
+    }
+}
+```
+```java
+package br.com.legalconnect.user.mapper;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.ReportingPolicy;
+
+import br.com.legalconnect.user.dto.UserProfileUpdate;
+import br.com.legalconnect.user.dto.UserRegistrationRequest;
+import br.com.legalconnect.user.dto.UserResponseDTO;
+import br.com.legalconnect.user.entity.User;
+
+/**
+ * @interface UserMapper
+ * @brief Mapper para conversão entre a entidade `User` e seus DTOs.
+ *
+ *        Utiliza MapStruct para gerar automaticamente o código de mapeamento,
+ *        incluindo a conversão de `UserType`, `UserStatus` e `Set<Role>` para
+ *        Strings.
+ */
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = { RoleMapper.class })
+public interface UserMapper {
+    // @Mapping(source = "roles", target = "roles", qualifiedByName =
+    // "roleSetToStringSet")
+    @Mapping(source = "userType", target = "userType")
+    @Mapping(source = "status", target = "status")
+    UserResponseDTO toDto(User entity);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "tenant", ignore = true) // Tenant é definido no serviço
+    @Mapping(target = "roles", ignore = true) // Roles são definidas no serviço
+    @Mapping(target = "senhaHash", ignore = true) // Senha é criptografada no serviço
+    User toEntity(UserRegistrationRequest dto);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "tenant", ignore = true)
+    @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "senhaHash", ignore = true)
+    @Mapping(target = "userType", ignore = true)
+    @Mapping(target = "cpf", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    void updateEntityFromDto(UserProfileUpdate dto, @MappingTarget User entity);
+
+    default String mapUserType(User.UserType userType) {
+        return userType != null ? userType.name() : null;
+    }
+
+    default String mapUserStatus(User.UserStatus userStatus) {
+        return userStatus != null ? userStatus.name() : null;
+    }
+
+    // @Named("roleSetToStringSet")
+    // default Set<String> roleSetToStringSet(Set<Role> roles) {
+    // if (roles == null) {
+    // return null;
+    // }
+    // return roles.stream()
+    // .map(Role::getNome)
+    // .collect(Collectors.toSet());
+    // }
+}
+```
+```java
+package br.com.legalconnect.user.repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.user.entity.Role;
+
+/**
+ * @interface RoleRepository
+ * @brief Repositório JPA para a entidade Role.
+ */
+@Repository
+public interface RoleRepository extends JpaRepository<Role, UUID> {
+    /**
+     * @brief Busca uma Role pelo seu nome.
+     * @param nome O nome da role (ex: "CLIENTE", "ADVOGADO").
+     * @return Um Optional contendo a Role, se encontrada.
+     */
+    Optional<Role> findByNome(String nome);
+}
+```
+```java
+package br.com.legalconnect.user.repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.user.entity.User;
+
+/**
+ * @interface UserRepository
+ * @brief Repositório JPA para a entidade User.
+ *
+ * Fornece operações CRUD e métodos de consulta personalizados para
+ * gerenciar
+ * todos os usuários da plataforma (clientes, advogados, administradores,
+ * etc.).
+ */
+@Repository
+public interface UserRepository extends JpaRepository<User, UUID> {
+
+    /**
+     * @brief Busca um User pelo seu endereço de e-mail.
+     * @param email O endereço de e-mail do usuário.
+     * @return Um Optional contendo o User, se encontrado.
+     */
+    Optional<User> findByEmail(String email);
+
+    /**
+     * @brief Busca um User pelo seu número de CPF.
+     * @param cpf O número de CPF do usuário.
+     * @return Um Optional contendo o User, se encontrado.
+     */
+    Optional<User> findByCpf(String cpf);
+
+    /**
+     * @brief Verifica se um usuário com um determinado e-mail já existe.
+     * @param email O e-mail a ser verificado.
+     * @return true se um usuário com este e-mail já existe, false caso contrário.
+     */
+    boolean existsByEmail(String email);
+
+    /**
+     * @brief Verifica se um usuário com um determinado CPF já existe.
+     * @param cpf O CPF a ser verificado.
+     * @return true se um usuário com este CPF já existe, false caso contrário.
+     */
+    boolean existsByCpf(String cpf);
+
+    /**
+     * @brief Busca um User pelo seu endereço de e-mail e status.
+     * @param email  O endereço de e-mail do usuário.
+     * @param status O status do usuário (ex: ACTIVE, INACTIVE).
+     * @return Um Optional contendo o User, se encontrado.
+     */
+    Optional<User> findByEmailAndStatus(String email, User.UserStatus status);
+
+    /**
+     * @brief Busca um User pelo seu número de CPF e status.
+     * @param cpf    O número de CPF do usuário.
+     * @param status O status do usuário (ex: ACTIVE, INACTIVE).
+     * @return Um Optional contendo o User, se encontrado.
+     */
+    Optional<User> findByCpfAndStatus(String cpf, User.UserStatus status);
+}
+```
+```java
+package br.com.legalconnect.user.service;
+
+import java.util.UUID;
+
+import org.slf4j.Logger; // Importação para Logger
+import org.slf4j.LoggerFactory; // Importação para LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.com.legalconnect.auth.entity.Tenant;
+import br.com.legalconnect.auth.service.RefreshTokenService;
+import br.com.legalconnect.auth.util.PasswordEncoderUtil;
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.common.exception.Roles;
+import br.com.legalconnect.tenant.repository.TenantRepository; // Importar TenantRepository
+import br.com.legalconnect.user.dto.UserProfileUpdate;
+import br.com.legalconnect.user.dto.UserRegistrationRequest;
+import br.com.legalconnect.user.dto.UserResponseDTO;
+import br.com.legalconnect.user.entity.Role;
+import br.com.legalconnect.user.entity.User;
+import br.com.legalconnect.user.entity.User.UserStatus;
+import br.com.legalconnect.user.entity.User.UserType;
+import br.com.legalconnect.user.mapper.UserMapper;
+import br.com.legalconnect.user.repository.RoleRepository;
+import br.com.legalconnect.user.repository.UserRepository;
+
+/**
+ * @class UserService
+ * @brief Serviço responsável pela lógica de negócio relacionada aos usuários.
+ *
+ *        Gerencia operações como registro de clientes e advogados, atualização
+ *        de perfil,
+ *        e recuperação/redefinição de senha.
+ */
+@Service
+public class UserService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class); // Instância do Logger
+
+    @Autowired
+    private UserRepository userRepository; /// < Repositório para acesso a dados de usuários.
+    @Autowired
+    private RoleRepository roleRepository; /// < Repositório para acesso a dados de roles.
+    @Autowired
+    private PasswordEncoderUtil passwordEncoderUtil; /// < Utilitário para criptografia de senhas.
+    @Autowired
+    private UserMapper userMapper; /// < Mapper para converter entidades User em DTOs.
+    @Autowired
+    private TenantRepository tenantRepository; /// < Repositório para acesso a dados de tenants.
+    @Autowired
+    private RefreshTokenService refreshTokenService; // Para invalidar tokens ao mudar senha
+
+    @Value("${application.tenant.default-id:00000000-0000-0000-0000-000000000001}")
+    private String defaultTenantId; // ID do tenant padrão injetado do application.properties
+
+    /**
+     * @brief Registra um novo cliente na plataforma (RF048).
+     * @param request DTO contendo os dados de registro do cliente.
+     * @return DTO do usuário registrado.
+     * @throws BusinessException se o e-mail ou CPF já estiverem cadastrados.
+     */
+    @Transactional
+    public UserResponseDTO registerClient(UserRegistrationRequest request) {
+        log.info("Iniciando registro de novo cliente com e-mail: {}", request.getEmail());
+        // 1. Valida unicidade de e-mail e CPF
+        if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Falha no registro de cliente: E-mail '{}' já cadastrado.", request.getEmail());
+
+            throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED);
+        }
+        if (userRepository.existsByCpf(request.getCpf())) {
+            log.warn("Falha no registro de cliente: CPF '{}' já cadastrado.", request.getCpf());
+            throw new BusinessException(ErrorCode.INVALID_CPF);
+        }
+
+        // 2. Busca o tenant padrão
+        Tenant defaultTenant = tenantRepository.findById(UUID.fromString(defaultTenantId))
+                .orElseThrow(() -> {
+                    log.error("Falha no registro de cliente: Tenant padrão '{}' não encontrado.", defaultTenantId);
+                    return new BusinessException(ErrorCode.TENANT_NOT_FOUND, "Tenant padrão não encontrado.");
+                });
+
+        // 3. Cria a entidade User
+        User user = userMapper.toEntity(request);
+        user.setSenhaHash(passwordEncoderUtil.encode(request.getSenha())); // Criptografa a senha
+        user.setUserType(UserType.CLIENTE);
+        user.setStatus(UserStatus.ACTIVE); // Clientes são ativos por padrão
+        user.setTenant(defaultTenant); // Associa ao tenant padrão
+        log.debug("Usuário cliente criado DTO para e-mail: {}", user.getEmail());
+
+        // 4. Atribui a role de CLIENTE
+        Role clientRole = roleRepository.findByNome(Roles.ROLE_CLIENT)
+                .orElseThrow(
+                        () -> {
+                            log.error("Falha no registro de cliente: Role CLIENTE não encontrada no banco de dados.");
+                            return new BusinessException(ErrorCode.USER_NOT_FOUND,
+                                    "Role CLIENTE não encontrada.");
+                        });
+        user.getRoles().add(clientRole);
+        log.debug("Role CLIENTE atribuída ao usuário: {}", user.getEmail());
+
+        // 5. Salva o usuário no banco de dados
+        user = userRepository.save(user);
+        log.info("Cliente registrado com sucesso: {} (ID: {})", user.getEmail(), user.getId());
+
+        // Disparar evento para NotificationService para enviar e-mail de boas-vindas
+
+        log.debug("E-mail de boas-vindas enviado para: {}", user.getEmail());
+
+        return userMapper.toDto(user);
+    }
+
+    /**
+     * @brief Realiza o pré-cadastro de um novo advogado na plataforma (RF001).
+     * @param request DTO contendo os dados de pré-registro do advogado.
+     * @return DTO do usuário advogado pré-registrado.
+     * @throws BusinessException se o e-mail, CPF ou número da OAB já estiverem
+     *                           cadastrados.
+     */
+    @Transactional
+    public UserResponseDTO registerAdvogado(UserRegistrationRequest request) {
+        log.info("Iniciando pré-cadastro de novo advogado com e-mail: {}", request.getEmail());
+        // Este microsserviço de autenticação não deve lidar com a criação completa do
+        // perfil de advogado,
+        // apenas com o registro do usuário base e sua associação a um tenant e role
+        // inicial.
+        // A criação do perfil de advogado (Advogado entity) e suas associações
+        // complexas
+        // devem ser responsabilidade do microsserviço de Marketplace/Advogado.
+
+        // 1. Valida unicidade de e-mail e CPF
+        if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Falha no pré-cadastro de advogado: E-mail '{}' já cadastrado.", request.getEmail());
+            throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED);
+        }
+        if (userRepository.existsByCpf(request.getCpf())) {
+            log.warn("Falha no pré-cadastro de advogado: CPF '{}' já cadastrado.", request.getCpf());
+            throw new BusinessException(ErrorCode.INVALID_CPF);
+        }
+        // A validação de OAB e outras informações específicas de advogado
+        // deve ser feita no microsserviço de Marketplace.
+
+        // 2. Busca o tenant padrão
+        Tenant defaultTenant = tenantRepository.findById(UUID.fromString(defaultTenantId))
+                .orElseThrow(() -> {
+                    log.error("Falha no pré-cadastro de advogado: Tenant padrão '{}' não encontrado.", defaultTenantId);
+                    return new BusinessException(ErrorCode.TENANT_NOT_FOUND, "Tenant padrão não encontrado.");
+                });
+
+        // 3. Cria a entidade User
+        User user = userMapper.toEntity(request);
+        user.setSenhaHash(passwordEncoderUtil.encode(request.getSenha())); // Criptografa a senha
+        user.setUserType(UserType.ADVOGADO); // Define o tipo como ADVOGADO
+        user.setStatus(UserStatus.PENDING_APPROVAL); // Advogados aguardam aprovação inicial
+        user.setTenant(defaultTenant); // Associa ao tenant padrão
+        log.debug("Usuário advogado criado DTO para e-mail: {}", user.getEmail());
+
+        // 4. Atribui a role de ADVOGADO
+        Role advocateRole = roleRepository.findByNome(Roles.ROLE_ADVOCATE)
+                .orElseThrow(
+                        () -> {
+                            log.error(
+                                    "Falha no pré-cadastro de advogado: Role ADVOGADO não encontrada no banco de dados.");
+
+                            return new BusinessException(ErrorCode.ADVOCATE_NOT_AVAILABLE,
+                                    "Role ADVOGADO não encontrada.");
+                        });
+        user.getRoles().add(advocateRole);
+        log.debug("Role ADVOGADO atribuída ao usuário: {}", user.getEmail());
+
+        // 5. Salva o usuário no banco de dados
+        user = userRepository.save(user);
+        log.info("Advogado pré-registrado com sucesso: {} (ID: {})", user.getEmail(), user.getId());
+
+        // Disparar evento para NotificationService para enviar e-mail de confirmação de
+        // pré-cadastro
+        log.debug("E-mail de confirmação de pré-cadastro enviado para: {}", user.getEmail());
+
+        // Retorna o DTO do usuário registrado. O perfil de advogado será criado
+        // separadamente.
+        return userMapper.toDto(user);
+    }
+
+    /**
+     * @brief Inicia o processo de recuperação de senha (RF053).
+     *
+     *        Gera um token temporário e envia um e-mail com o link de redefinição.
+     *
+     * @param email O e-mail do usuário que solicitou a recuperação.
+     */
+    @Transactional
+    public void recoverPassword(String email) {
+        log.info("Solicitação de recuperação de senha para o e-mail: {}", email);
+        User user = userRepository.findByEmail(email)
+                .orElse(null); // Não lançar exceção aqui por segurança, para não vazar informações de e-mails
+                               // cadastrados.
+
+        if (user != null) {
+            log.debug("Usuário encontrado para recuperação de senha: {}", email);
+            // TODO: [PRODUÇÃO] Implementar a geração e persistência de um token de
+            // redefinição de senha real.
+            // Ex: PasswordResetToken resetToken =
+            // passwordResetTokenService.createPasswordResetToken(user);
+
+            // Envia e-mail com o link de redefinição de senha contendo o token
+            // Em produção, o link seria para o frontend:
+            // "[http://frontend.com/reset-password?token=](http://frontend.com/reset-password?token=)"
+            // + resetToken.getToken()
+            log.info("E-mail de recuperação de senha enviado para: {}", user.getEmail());
+
+        } else {
+            log.info(
+                    "Solicitação de recuperação de senha para e-mail não encontrado: {}. Retornando sucesso para evitar enumeração de usuários.",
+                    email);
+            // Logar a tentativa de recuperação para um e-mail não existente, mas sem expor
+            // a informação
+
+        }
+    }
+
+    /**
+     * @brief Redefine a senha do usuário utilizando um token de recuperação
+     *        (RF053).
+     * @param token     O token de redefinição de senha.
+     * @param novaSenha A nova senha a ser definida.
+     * @throws BusinessException se o token for inválido/expirado ou a senha for
+     *                           fraca.
+     */
+    @Transactional
+    public void resetPassword(String token, String novaSenha) {
+        log.info("Tentativa de redefinição de senha com token.");
+        // TODO: [PRODUÇÃO] Validar o token de redefinição de senha real (não o mock).
+        // Isso envolveria buscar o token no banco de dados e verificar sua validade e
+        // expiração.
+        if (!"mock-reset-token-123".equals(token)) {
+            log.warn("Falha na redefinição de senha: Token inválido.");
+
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        }
+
+        // TODO: [PRODUÇÃO] Buscar o usuário associado ao token real, não um e-mail
+        // fixo.
+        User user = userRepository.findByEmail("social.user@gmail.com") // Exemplo: buscar o usuário do token real
+                .orElseThrow(() -> {
+                    log.error("Falha na redefinição de senha: Usuário associado ao token não encontrado.");
+
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND,
+                            "Usuário associado ao token não encontrado.");
+                });
+
+        // 2. Criptografa e atualiza a nova senha
+        user.setSenhaHash(passwordEncoderUtil.encode(novaSenha));
+        userRepository.save(user);
+        log.info("Senha redefinida com sucesso para o usuário: {}", user.getEmail());
+
+        // Invalida todos os refresh tokens do usuário para forçar novo login
+        refreshTokenService.deleteByUser(user);
+        log.debug("Refresh tokens invalidados para o usuário: {}", user.getEmail());
+
+        // Envia e-mail de confirmação de redefinição de senha
+
+        log.debug("E-mail de confirmação de redefinição de senha enviado para: {}", user.getEmail());
+
+    }
+
+    /**
+     * @brief Atualiza o perfil de um usuário (RF055).
+     * @param userId        O ID do usuário a ser atualizado.
+     * @param updateRequest DTO com os dados de atualização.
+     * @return DTO do usuário atualizado.
+     * @throws BusinessException se o usuário não for encontrado, e-mail/CPF já em
+     *                           uso, ou senha atual inválida.
+     */
+    @Transactional
+    public UserResponseDTO updateUserProfile(UUID userId, UserProfileUpdate updateRequest) {
+        log.info("Tentativa de atualização de perfil para o usuário ID: {}", userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.warn("Falha na atualização de perfil: Usuário não encontrado com ID: {}", userId);
+
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND);
+                });
+
+        // Valida unicidade de e-mail, se o e-mail for alterado
+        if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(user.getEmail())) {
+            if (userRepository.existsByEmail(updateRequest.getEmail())) {
+                log.warn("Falha na atualização de perfil: Novo e-mail '{}' já em uso.", updateRequest.getEmail());
+
+                throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED);
+            }
+            user.setEmail(updateRequest.getEmail());
+            log.debug("E-mail do usuário {} atualizado para: {}", userId, updateRequest.getEmail());
+        }
+
+        // Atualiza outros campos do usuário
+        userMapper.updateEntityFromDto(updateRequest, user);
+        log.debug("Outros campos do perfil do usuário {} atualizados.", userId);
+
+        // Lógica para alteração de senha
+        if (updateRequest.getSenhaAtual() != null && updateRequest.getNovaSenha() != null) {
+            log.info("Tentativa de alteração de senha para o usuário ID: {}", userId);
+            if (!passwordEncoderUtil.matches(updateRequest.getSenhaAtual(), user.getSenhaHash())) {
+                log.warn("Falha na alteração de senha: Senha atual inválida para o usuário ID: {}", userId);
+
+                throw new BusinessException(ErrorCode.PASSWORD_TOO_WEAK);
+            }
+            user.setSenhaHash(passwordEncoderUtil.encode(updateRequest.getNovaSenha()));
+            // Invalida todos os refresh tokens do usuário para forçar novo login após a
+            // mudança de senha
+            refreshTokenService.deleteByUser(user);
+            log.info("Senha do usuário {} alterada com sucesso. Refresh tokens invalidados.", userId);
+        }
+
+        user = userRepository.save(user);
+        log.info("Perfil do usuário {} atualizado com sucesso.", userId);
+        return userMapper.toDto(user);
+    }
+}
+```
+```java
+# ===================================================================
+# Configurações Gerais da Aplicação Spring Boot
+# ===================================================================
+
+# Nome da aplicação (usado em logs e monitoramento)
+spring.application.name=auth-service
+
+# Porta em que a aplicação será executada
+server.port=8082
+# Desabilita o management server caso esteja ativo e conflitando (opcional)
+# management.endpoints.web.exposure.include=*
+
+# Configurações do SpringDoc OpenAPI
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.api-docs.path=/v3/api-docs
+springdoc.packagesToScan=br.com.legalconnect
+springdoc.pathsToMatch=/api/v1/**
+# ===================================================================
+# Configurações do Banco de Dados PostgreSQL
+# ===================================================================
+
+# URL de conexão com o banco de dados PostgreSQL
+# O microsserviço de autenticação se conecta ao banco de dados global (public)
+spring.datasource.url=jdbc:postgresql://localhost:5432/jusplatform_db
+
+# Nome de usuário do banco de dados
+spring.datasource.username=jususer
+
+# Senha do banco de dados
+spring.datasource.password=juspassword
+
+# Driver JDBC para PostgreSQL
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# Configurações do pool de conexões (HikariCP é o padrão no Spring Boot)
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.connection-timeout=30000
+spring.datasource.hikari.idle-timeout=600000
+spring.datasource.hikari.max-lifetime=1800000
+
+# ===================================================================
+# Configurações do JPA e Hibernate
+# ===================================================================
+
+# Dialeto do Hibernate para PostgreSQL
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+
+# Exibir queries SQL no console (para desenvolvimento)
+# Desabilita a geração automática de DDL pelo Hibernate na inicialização principal.
+# A criação de DDL para os esquemas de tenant será feita programaticamente pelo TenantSchemaService.
+spring.jpa.hibernate.ddl-auto=none
+spring.jpa.show-sql=true
+# Removido: spring.jpa.properties.hibernate.default_schema=public
+# Esta configuração forçava o Hibernate a usar o schema 'public' para DDL, o que não é desejado para entidades multi-tenant.
+
+
+# ===================================================================
+# Configurações do Flyway (Migrações de Banco de Dados)
+# ===================================================================
+
+# Desabilita o Flyway neste microsserviço, pois as migrações serão orquestradas externamente
+spring.flyway.enabled=false
+
+# ===================================================================
+# Configurações de Segurança (JWT)
+# ===================================================================
+
+# Chave secreta para assinar e verificar os JWTs.
+# **IMPORTANTE**: Esta chave deve ser longa, complexa e armazenada de forma segura (ex: HashiCorp Vault, variáveis de ambiente).
+# Nunca exponha esta chave em um repositório público!
+application.security.jwt.secret-key=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+
+# Tempo de expiração do JWT em milissegundos (ex: 3600000ms = 1 hora)
+application.security.jwt.expiration=3600000
+
+# Tempo de expiração do Refresh Token em milissegundos (ex: 7 dias = 604800000ms)
+application.security.jwt.refresh-expiration=604800000
+
+# Força do encoder de senha (cost factor para BCrypt, padrão é 10)
+# Um valor maior aumenta a segurança, mas também o tempo de hash.
+application.security.password-encoder.strength=12
+
+# ===================================================================
+# Configurações de Logging (Logback)
+# ===================================================================
+
+# Nível de log padrão para a aplicação
+logging.level.br.com.legalconnect=INFO
+# Nível de log para o Spring Framework
+logging.level.org.springframework=WARN
+
+# Nível de log para Hibernate (queries SQL) - Desabilite em produção
+logging.level.org.hibernate.SQL=WARN
+logging.level.org.hibernate.type.descriptor.sql.BasicExtractor=WARN
+
+# Nível de log para o processo de DDL do Hibernate (agora menos relevante com Flyway)
+logging.level.org.hibernate.hbm2ddl=WARN
+
+# Nível de log para as conexões JDBC do Hibernate
+logging.level.org.hibernate.engine.jdbc.connections=WARN
+
+# Nível de log para o Flyway (muito importante para depurar migrações)
+logging.level.org.flywaydb=INFO
+
+# Adicione logs específicos para a configuração do JPA e Multi-Tenancy
+logging.level.org.hibernate.jpa=INFO
+logging.level.org.springframework.orm.jpa=INFO
+logging.level.org.springframework.data.jpa=INFO
+logging.level.org.hibernate.engine.jdbc.connections.spi=INFO
+
+# ===================================================================
+# Configurações de Multitenancy Específicas do Aplicativo
+# ===================================================================
+
+# ID do tenant padrão para usuários que não estão associados a um tenant específico (ex: clientes gerais)
+# Este UUID deve corresponder a um registro na tabela tb_tenant no schema global (public).
+application.tenant.default-id=00000000-0000-0000-0000-000000000002
+
+# ===================================================================
+# Configurações do Spring Boot Actuator
+# ===================================================================
+
+# Habilita todos os endpoints do Actuator (para monitoramento)
+management.endpoints.web.exposure.include=*
+# Define o caminho base para os endpoints do Actuator
+management.endpoints.web.base-path=/actuator
+
+# ===================================================================
+# Configurações de CORS (Cross-Origin Resource Sharing)
+# ===================================================================
+
+# Configuração de CORS global (pode ser mais específica nos controladores)
+# Esta configuração é um exemplo e pode ser ajustada conforme a necessidade.
+# Em produção, 'allowed-origins' deve ser restrito aos domínios do seu frontend.
+# spring.web.cors.allowed-origins=http://localhost:3000,https://seufrontend.com
+# spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS,PATCH
+# spring.web.cors.allowed-headers=*
+# spring.web.cors.allow-credentials=false
+# spring.web.cors.max-age=3600
+
+# ===================================================================
+# Configurações de Cache (Exemplo com Caffeine, adicione a dependência se usar)
+# ===================================================================
+
+# spring.cache.type=caffeine
+# spring.cache.cache-names=users,refreshTokens
+# spring.cache.caffeine.spec=expireAfterWrite=60m,maximumSize=500
+
+# ===================================================================
+# Propriedades de Aplicação Customizadas
+# ===================================================================
+
+# Exemplo de uma propriedade customizada
+# app.feature.new-registration-enabled=true
+
+# ===================================================================
+# Configurações para Proxy Reverso (Nginx)
+# ===================================================================
+
+# Habilita o processamento dos cabeçalhos X-Forwarded-* enviados por proxies.
+# Isso garante que a aplicação veja o IP real do cliente, o protocolo original (HTTP/HTTPS)
+# e o host original, em vez dos detalhes do proxy (Nginx).
+server.forward-headers-strategy=FRAMEWORK
+spring.main.allow-bean-definition-overriding=true
+
+```
+```java
+package br.com.legalconnect.auth.auth_service;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class AuthServiceApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
+
+```

@@ -1,6 +1,7 @@
 package br.com.legalconnect.common.common_lib;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,6 +19,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class BaseResponse<T> {
     protected Integer codigoErro; // Código de erro padronizado, se houver
     protected String mensagemErro; // Mensagem descritiva do erro, se houver

@@ -13,6 +13,9 @@ public class TenantSchemaResolver implements CurrentTenantIdentifierResolver {
     @Override
     public String resolveCurrentTenantIdentifier() {
         String tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) {
+            TenantContext.setCurrentTenant(defaultTenantId);
+        }
         return tenantId != null ? tenantId : defaultTenantId;
     }
 

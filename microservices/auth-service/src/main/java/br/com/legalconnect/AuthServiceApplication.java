@@ -34,15 +34,14 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 		"br.com.legalconnect.auth.security",
 		"br.com.legalconnect.auth.controller",
 		"br.com.legalconnect.auth.service",
-		"br.com.legalconnect.user.repository", // Para UserRepository
+		"br.com.legalconnect.multitenancy",
 		"br.com.legalconnect.user.entity", // Para User entity
 		"br.com.legalconnect.user.mapper", // Para UserMapper (se usado em AuthService)
 		"br.com.legalconnect.common.constants", // Para ErrorCode, Roles
 		"br.com.legalconnect.common.exception", // Para BusinessException, GlobalExceptionHandler
 		"br.com.legalconnect.common.service", // Para AuditLogService, NotificationService (mocks)
 		"br.com.legalconnect.common.util", // Para ValidatorUtil
-		"br.com.legalconnect.tenant.repository", // Para TenantRepository
-		"br.com.legalconnect.tenant.service", // Para TenantService (se necessário para social login ou criação de
+		"br.com.legalconnect.tenant.service", // Para TenantService (se necessário para social login ou criação de //
 												// usuário)
 		"br.com.legalconnect.config.security" // Configuração de segurança
 })

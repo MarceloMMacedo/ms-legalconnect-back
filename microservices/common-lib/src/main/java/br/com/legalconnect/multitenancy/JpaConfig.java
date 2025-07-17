@@ -37,7 +37,10 @@ public class JpaConfig {
 
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
-        em.setPackagesToScan("br.com.legalconnect.auth.auth_service");
+        em.setPackagesToScan(
+                "br.com.legalconnect.auth.entity",
+                "br.com.legalconnect.user.entity",
+                "br.com.legalconnect.common.entity");
         em.setJpaVendorAdapter(jpaVendorAdapter());
 
         Map<String, Object> properties = new HashMap<>();
@@ -48,9 +51,16 @@ public class JpaConfig {
         properties.put("hibernate.tenant_identifier_resolver", tenantIdentifierResolver);
         properties.put("hibernate.multi_tenant_connection_provider", multiTenantConnectionProvider);
 
-        // Configurações recomendadas para PostgreSQL
+        // Configurações para PostgreSQL e criação de tabelas
         properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        properties.put("hibernate.hbm2ddl.auto", "none");
+
+        // Estratégia de atualização do schema
+        // properties.put("hibernate.hbm2ddl.auto", "create"); // Ou "validate" em
+        // produção
+
+        // Configurações adicionais recomendadas
+        // properties.put("hibernate.temp.use_jdbc_metadata_defaults", "false");
+        // properties.put("hibernate.jdbc.lob.non_contextual_creation", "true");
 
         em.setJpaPropertyMap(properties);
         return em;

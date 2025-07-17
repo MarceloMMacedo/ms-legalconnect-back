@@ -2,7 +2,10 @@ package br.com.legalconnect.config.security;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import br.com.legalconnect.multitenancy.TenantInterceptor;
 
 // common/config/WebConfig.java
 /**
@@ -16,6 +19,17 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 class WebConfig implements WebMvcConfigurer { // Removido 'public' para estar no mesmo arquivo
+
+    private final TenantInterceptor tenantInterceptor;
+
+    public WebConfig(TenantInterceptor tenantInterceptor) {
+        this.tenantInterceptor = tenantInterceptor;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(tenantInterceptor);
+    }
 
     /**
      * @brief Configura as regras de CORS para a aplicação.

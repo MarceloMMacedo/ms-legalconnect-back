@@ -22,7 +22,7 @@
         <lombok.version>1.18.30</lombok.version> <!-- Versão explícita para Lombok -->
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version> <!-- Versão explícita para
         MapStruct -->
-        <springdoc.version>2.5.0</springdoc.version> <!-- Versão explícita para SpringDoc -->
+        <springdoc.version>2.3.0</springdoc.version> <!-- Versão explícita para SpringDoc -->
         <flyway.version>9.22.3</flyway.version> <!-- Versão explícita para Flyway -->
     </properties>
 
@@ -32,6 +32,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <!-- Para Spring Boot 2 -->
+        <!-- <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>1.7.0</version>
+        </dependency> -->
+
+
         <!-- Spring Boot Starter Web para classes de configuração web e DTOs de resposta.
              Exclui Tomcat para não trazer dependências desnecessárias para uma lib. -->
         <dependency>
@@ -82,11 +90,11 @@
             <version>6.0.0</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
+        <!-- <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.5.0</version>
-        </dependency>
+        </dependency> -->
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -110,7 +118,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>${springdoc.version}</version> <!-- Usando a versão definida nas propriedades -->
+            <version>${springdoc.version}</version>
         </dependency>
     </dependencies>
 

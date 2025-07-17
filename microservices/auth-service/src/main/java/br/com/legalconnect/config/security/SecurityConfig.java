@@ -54,7 +54,7 @@ public class SecurityConfig {
             "/api/v1/depoimentos/**",
             "/**",
             // Endpoints para documentação da API (Swagger/OpenAPI)
-            "/v3/api-docs/**",
+            "**/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html"
     };
@@ -67,6 +67,7 @@ public class SecurityConfig {
      *
      * @return Uma instância de `DaoAuthenticationProvider`.
      */
+    @SuppressWarnings("deprecation")
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         log.debug("Configurando DaoAuthenticationProvider.");
