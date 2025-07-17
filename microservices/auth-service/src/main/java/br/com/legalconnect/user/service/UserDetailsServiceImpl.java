@@ -1,4 +1,4 @@
-package br.com.legalconnect.auth.security;
+package br.com.legalconnect.user.service;
 
 import org.slf4j.Logger; // Importação para Logger
 import org.slf4j.LoggerFactory; // Importação para LoggerFactory
@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.legalconnect.auth.security.CustomUserDetails;
 import br.com.legalconnect.user.entity.User;
 import br.com.legalconnect.user.repository.UserRepository;
 

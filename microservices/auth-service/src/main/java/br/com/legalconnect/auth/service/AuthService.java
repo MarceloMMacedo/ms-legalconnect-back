@@ -56,7 +56,7 @@ public class AuthService {
         log.info("Tentativa de login para o e-mail: {}", request.getEmail());
 
         // 1. Busca o usuário pelo e-mail
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailAndStatus(request.getEmail(), User.UserStatus.ACTIVE)
                 .orElseThrow(() -> {
                     log.warn("Falha no login: Usuário não encontrado para o e-mail: {}", request.getEmail());
                     // auditLogService.logError(ErrorCode.USER_NOT_FOUND.getCode(),
