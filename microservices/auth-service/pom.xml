@@ -80,11 +80,11 @@
             <artifactId>mapstruct</artifactId>
             <version>${org.mapstruct.version}</version>
         </dependency>
-        <!-- <dependency>
+        <dependency>
             <groupId>br.com.legalconnect.common</groupId>
             <artifactId>common-lib</artifactId>
             <version>1.0.0</version>
-        </dependency> -->
+        </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>

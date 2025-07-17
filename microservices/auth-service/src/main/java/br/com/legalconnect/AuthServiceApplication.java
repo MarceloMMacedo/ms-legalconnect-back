@@ -22,12 +22,12 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 // REMOVA COMPLETAMENTE ESTE @ComponentScan, a menos que você tenha um motivo
 // muito específico e saiba o que está fazendo
 // @ComponentScan(basePackages = { "br.com.legalconnect.auth.service" })
-public class LegalConnectApplication {
+public class AuthServiceApplication {
 
-    private static final Logger log = LoggerFactory.getLogger(LegalConnectApplication.class);
+    private static final Logger log = LoggerFactory.getLogger(AuthServiceApplication.class);
 
     public static void main(String[] args) {
-        SpringApplication.run(LegalConnectApplication.class, args);
+        SpringApplication.run(AuthServiceApplication.class, args);
         log.info("LegalConnectApplication iniciada com sucesso!");
     }
 }

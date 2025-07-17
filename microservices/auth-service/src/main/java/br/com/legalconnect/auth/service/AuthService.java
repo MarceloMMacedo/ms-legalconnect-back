@@ -1,6 +1,5 @@
 package br.com.legalconnect.auth.service;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,9 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import br.com.legalconnect.auth.dto.AuthResponse;
-import br.com.legalconnect.auth.dto.BaseResponse;
 import br.com.legalconnect.auth.dto.LoginRequestDTO;
 import br.com.legalconnect.auth.dto.RefreshTokenRequestDTO;
+import br.com.legalconnect.common.common_lib.BaseResponse;
 import br.com.legalconnect.user.entity.User;
 import br.com.legalconnect.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -91,9 +90,9 @@ public class AuthService {
         }
 
         return BaseResponse.<AuthResponse>builder()
-                .status("SUCCESS")
-                .message("Autenticação realizada com sucesso.")
-                .timestamp(LocalDateTime.now())
+                // .status("SUCCESS")
+                // .message("Autenticação realizada com sucesso.")
+                // .timestamp(LocalDateTime.now())
                 .data(AuthResponse.builder()
                         .accessToken(jwtToken)
                         .refreshToken(refreshToken)
@@ -147,9 +146,9 @@ public class AuthService {
             }
 
             return BaseResponse.<AuthResponse>builder()
-                    .status("SUCCESS")
-                    .message("Token atualizado com sucesso.")
-                    .timestamp(LocalDateTime.now())
+                    // .status("SUCCESS")
+                    // .message("Token atualizado com sucesso.")
+                    // .timestamp(LocalDateTime.now())
                     .data(AuthResponse.builder()
                             .accessToken(accessToken)
                             .refreshToken(request.getRefreshToken()) // Mantém o mesmo refresh token
