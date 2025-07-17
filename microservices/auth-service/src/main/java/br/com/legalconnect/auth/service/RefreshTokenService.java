@@ -5,8 +5,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.slf4j.Logger; // Importação para Logger
-import org.slf4j.LoggerFactory; // Importação para LoggerFactory
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,6 +17,7 @@ import br.com.legalconnect.auth.repository.RefreshTokenRepository;
 import br.com.legalconnect.common.exception.BusinessException;
 import br.com.legalconnect.common.exception.ErrorCode;
 import br.com.legalconnect.user.entity.User;
+import jakarta.persistence.EntityManager; // Importar EntityManager
 
 /**
  * @class RefreshTokenService
@@ -29,13 +30,16 @@ import br.com.legalconnect.user.entity.User;
 @Service
 public class RefreshTokenService {
 
-    private static final Logger log = LoggerFactory.getLogger(RefreshTokenService.class); // Instância do Logger
+    private static final Logger log = LoggerFactory.getLogger(RefreshTokenService.class);
 
     @Autowired
-    private RefreshTokenRepository refreshTokenRepository; /// < Repositório para acesso a dados de usuários.
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired // Injetar EntityManager
+    private EntityManager entityManager;
 
     @Value("${application.security.jwt.refresh-expiration}")
-    private long refreshTokenExpirationMs; // Tempo de expiração do Refresh Token em milissegundos
+    private long refreshTokenExpirationMs;
 
     /**
      * @brief Cria e salva um novo Refresh Token para um usuário.
@@ -51,6 +55,8 @@ public class RefreshTokenService {
         refreshTokenRepository.findByUser(user).ifPresent(existingToken -> {
             log.debug("Deletando refresh token existente para o usuário: {}", user.getEmail());
             refreshTokenRepository.delete(existingToken);
+            // Força o Hibernate a sincronizar a deleção com o banco de dados imediatamente
+            entityManager.flush();
         });
 
         // Gera um novo token único
@@ -90,6 +96,7 @@ public class RefreshTokenService {
         log.debug("Verificando expiração do refresh token para o usuário: {}", token.getUser().getEmail());
         if (token.getExpiraEm().isBefore(Instant.now())) {
             refreshTokenRepository.delete(token); // Remove o token expirado
+            entityManager.flush(); // Força o Hibernate a sincronizar a deleção
             log.warn("Refresh token expirado para o usuário: {}. Token deletado.", token.getUser().getEmail());
 
             throw new BusinessException(ErrorCode.REFRESH_TOKEN_EXPIRED,
@@ -115,6 +122,7 @@ public class RefreshTokenService {
                     return new BusinessException(ErrorCode.INVALID_TOKEN, "Refresh token não encontrado.");
                 });
         refreshTokenRepository.delete(refreshToken);
+        entityManager.flush(); // Força o Hibernate a sincronizar a deleção
         log.info("Refresh token deletado com sucesso para o usuário: {}", refreshToken.getUser().getEmail());
     }
 
@@ -128,6 +136,7 @@ public class RefreshTokenService {
         log.info("Deletando refresh token para o usuário: {}", user.getEmail());
         refreshTokenRepository.findByUser(user).ifPresent(refreshToken -> {
             refreshTokenRepository.delete(refreshToken);
+            entityManager.flush(); // Força o Hibernate a sincronizar a deleção
             log.info("Refresh token deletado com sucesso para o usuário: {}", user.getEmail());
         });
     }

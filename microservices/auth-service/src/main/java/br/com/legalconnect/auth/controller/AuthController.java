@@ -34,15 +34,7 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping("/api/v1/public/auth") // Endpoints públicos para autenticação
-@Tag(name = "Autenticação", description = "Gerencia o fluxo de login, refresh e logout de usuários na aplicação LegalConnect.") // Anotação
-                                                                                                                                // para
-                                                                                                                                // o
-                                                                                                                                // nome
-                                                                                                                                // do
-                                                                                                                                // grupo
-                                                                                                                                // no
-                                                                                                                                // Swagger
-                                                                                                                                // UI
+@Tag(name = "Autenticação", description = "Gerencia o fluxo de login, refresh e logout de usuários na aplicação LegalConnect.")
 public class AuthController {
 
         private static final Logger log = LoggerFactory.getLogger(AuthController.class); // Instância do Logger
@@ -57,19 +49,11 @@ public class AuthController {
          *         refresh token).
          */
         @Operation(summary = "Realiza o login de um usuário", // Resumo da operação
-                        description = "Autentica o usuário com e-mail e senha e retorna tokens de acesso e refresh (RF049).", // Descrição
-                                                                                                                              // detalhada
-                        tags = { "Autenticação" } // Opcional, mas útil para agrupar
+                        description = "Autentica o usuário com e-mail e senha e retorna tokens de acesso e refresh (RF049).", tags = {
+                                        "Autenticação" } // Opcional, mas útil para agrupar
         )
         @ApiResponses(value = { // Definição das possíveis respostas da API
-                        @ApiResponse(responseCode = "200", description = "Login bem-sucedido. Retorna o access token e refresh token.", content = @Content(schema = @Schema(implementation = AuthResponse.class)) // Define
-                                                                                                                                                                                                                  // o
-                                                                                                                                                                                                                  // schema
-                                                                                                                                                                                                                  // da
-                                                                                                                                                                                                                  // resposta
-                                                                                                                                                                                                                  // de
-                                                                                                                                                                                                                  // sucesso
-                        ),
+                        @ApiResponse(responseCode = "200", description = "Login bem-sucedido. Retorna o access token e refresh token.", content = @Content(schema = @Schema(implementation = AuthResponse.class))),
                         @ApiResponse(responseCode = "400", description = "Requisição inválida (e.g., e-mail ou senha ausentes).", content = @Content(schema = @Schema(implementation = BaseResponse.class))),
                         @ApiResponse(responseCode = "401", description = "Credenciais inválidas (e.g., e-mail ou senha incorretos).", content = @Content(schema = @Schema(implementation = BaseResponse.class))),
                         @ApiResponse(responseCode = "500", description = "Erro interno do servidor.")

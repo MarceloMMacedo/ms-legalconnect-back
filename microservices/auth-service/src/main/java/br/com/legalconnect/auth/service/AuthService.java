@@ -89,10 +89,11 @@ public class AuthService {
         log.debug("Refresh Token gerado para o usuário: {}", user.getEmail());
 
         log.info("Login bem-sucedido para o usuário: {}", user.getEmail());
-        return AuthResponse.builder()
+        AuthResponse response = AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken.getToken())
                 .build();
+        return response;
     }
 
     /**
