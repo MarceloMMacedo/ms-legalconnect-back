@@ -1,4 +1,4 @@
-package br.com.legalconnect.config.multitenancy;
+package br.com.legalconnect.common.config.multitenancy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

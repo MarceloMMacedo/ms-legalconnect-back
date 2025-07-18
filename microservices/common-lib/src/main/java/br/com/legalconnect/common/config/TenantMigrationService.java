@@ -1,9 +1,8 @@
-package br.com.legalconnect.config;
+package br.com.legalconnect.common.config;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
 import java.util.UUID; // Import UUID
 
 import javax.sql.DataSource;
@@ -14,9 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import br.com.legalconnect.auth.entity.Tenant;
-import br.com.legalconnect.auth.repository.TenantRepository;
-import br.com.legalconnect.config.multitenancy.TenantContext;
+import br.com.legalconnect.common.config.multitenancy.TenantContext;
 import jakarta.annotation.PostConstruct;
 
 /**
@@ -32,7 +29,7 @@ public class TenantMigrationService {
     private static final Logger log = LoggerFactory.getLogger(TenantMigrationService.class);
 
     private final DataSource dataSource;
-    private final TenantRepository tenantRepository;
+    // private final TenantRepository tenantRepository;
 
     @Value("${spring.flyway.locations}")
     private String[] flywayLocations; // Localização dos scripts de migração (ex: classpath:db/migration)
@@ -48,9 +45,9 @@ public class TenantMigrationService {
 
     private UUID defaultTenantId; // Para armazenar o UUID parseado
 
-    public TenantMigrationService(DataSource dataSource, TenantRepository tenantRepository) {
+    public TenantMigrationService(DataSource dataSource) {
         this.dataSource = dataSource;
-        this.tenantRepository = tenantRepository;
+        // this.tenantRepository = tenantRepository;
     }
 
     @PostConstruct
@@ -79,11 +76,11 @@ public class TenantMigrationService {
         TenantContext.setCurrentTenant(defaultTenantId.toString()); // Ou o schema onde tb_tenant está.
         migrateTenant(defaultTenantId.toString());
         try {
-            List<Tenant> tenants = tenantRepository.findAll();
-            for (Tenant tenant : tenants) {
-                log.info("Migrando esquema para o tenant: {}", tenant.getSchemaName());
-                migrateTenant(tenant.getSchemaName());
-            }
+            // List<Tenant> tenants = tenantRepository.findAll();
+            // for (Tenant tenant : tenants) {
+            // log.info("Migrando esquema para o tenant: {}", tenant.getSchemaName());
+            // migrateTenant(tenant.getSchemaName());
+            // }
             log.info("Migrações do Flyway para todos os tenants concluídas.");
         } catch (Exception e) {
             log.error("Erro ao executar migrações do Flyway para tenants: {}", e.getMessage(), e);

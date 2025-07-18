@@ -1,4 +1,4 @@
-package br.com.legalconnect.config.multitenancy;
+package br.com.legalconnect.common.config.multitenancy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,10 +6,12 @@ import org.slf4j.MDC;
 
 /**
  * @class TenantContext
- * @brief Contexto de Tenant usando ThreadLocal para armazenar o ID do tenant atual.
- * Permite que o ID do tenant seja acessado em qualquer parte da aplicação
- * dentro do mesmo thread de execução.
- * Adiciona o tenantId ao MDC para logging contextual.
+ * @brief Contexto de Tenant usando ThreadLocal para armazenar o ID do tenant
+ *        atual.
+ *        Permite que o ID do tenant seja acessado em qualquer parte da
+ *        aplicação
+ *        dentro do mesmo thread de execução.
+ *        Adiciona o tenantId ao MDC para logging contextual.
  */
 public class TenantContext {
 
@@ -19,6 +21,7 @@ public class TenantContext {
 
     /**
      * Define o ID do tenant atual para o thread e o adiciona ao MDC.
+     * 
      * @param tenantId O ID do tenant a ser definido.
      */
     public static void setCurrentTenant(String tenantId) {
@@ -29,6 +32,7 @@ public class TenantContext {
 
     /**
      * Obtém o ID do tenant atual do thread.
+     * 
      * @return O ID do tenant atual.
      */
     public static String getCurrentTenant() {
@@ -37,7 +41,8 @@ public class TenantContext {
 
     /**
      * Limpa o ID do tenant do thread e remove do MDC.
-     * Deve ser chamado ao final de cada requisição para evitar vazamentos de contexto.
+     * Deve ser chamado ao final de cada requisição para evitar vazamentos de
+     * contexto.
      */
     public static void clear() {
         currentTenant.remove();

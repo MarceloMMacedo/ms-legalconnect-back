@@ -1,17 +1,19 @@
-package br.com.legalconnect.config;
+package br.com.legalconnect.common.config;
 
-import br.com.legalconnect.config.multitenancy.TenantInterceptor;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import br.com.legalconnect.common.config.multitenancy.TenantInterceptor;
+import lombok.RequiredArgsConstructor;
+
 /**
  * @class WebConfig
  * @brief Configuração web para registrar interceptores.
- * Adiciona o TenantInterceptor para gerenciar o contexto do tenant em cada requisição.
+ *        Adiciona o TenantInterceptor para gerenciar o contexto do tenant em
+ *        cada requisição.
  */
 @Configuration
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     /**
      * Adiciona interceptores à lista de interceptores do Spring MVC.
+     * 
      * @param registry O registro de interceptores.
      */
     @Override

@@ -1,4 +1,4 @@
-package br.com.legalconnect.config;
+package br.com.legalconnect.common.config;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,8 +15,8 @@ import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 
-import br.com.legalconnect.config.multitenancy.CurrentTenantIdentifierResolverImpl;
-import br.com.legalconnect.config.multitenancy.MultiTenantConnectionProviderImpl;
+import br.com.legalconnect.common.config.multitenancy.CurrentTenantIdentifierResolverImpl;
+import br.com.legalconnect.common.config.multitenancy.MultiTenantConnectionProviderImpl;
 
 /**
  * @class HibernateConfig

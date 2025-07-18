@@ -5,6 +5,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import br.com.legalconnect.auth.entity.Tenant;
 import br.com.legalconnect.common.dto.BaseEntity;
 import jakarta.persistence.Column;
@@ -23,21 +29,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 /**
  * @class User
  * @brief Entidade base para todos os usuários (clientes, advogados,
- * administradores de tenant, etc.).
+ *        administradores de tenant, etc.).
  *
- * Esta entidade representa um usuário na plataforma e está associada a
- * um tenant
- * específico. A tabela de usuário reside nos schemas de tenant.
+ *        Esta entidade representa um usuário na plataforma e está associada a
+ *        um tenant
+ *        específico. A tabela de usuário reside nos schemas de tenant.
  */
 @Entity
 @Table(name = "tb_user") // A tabela tb_user agora reside no schema do tenant
@@ -92,8 +92,8 @@ public class User extends BaseEntity implements UserDetails { // Implementa User
     /**
      * @enum UserType
      * @brief Enumeração para categorizar o tipo principal de um usuário.
-     * Define se o usuário é um cliente, advogado ou administrador da
-     * plataforma.
+     *        Define se o usuário é um cliente, advogado ou administrador da
+     *        plataforma.
      */
     public enum UserType {
         CLIENTE, // Usuário final que busca serviços jurídicos
@@ -104,16 +104,17 @@ public class User extends BaseEntity implements UserDetails { // Implementa User
     /**
      * @enum UserStatus
      * @brief Enumeração para representar o status atual da conta de um usuário.
-     * Define o estado operacional da conta do usuário na plataforma.
+     *        Define o estado operacional da conta do usuário na plataforma.
      */
     public enum UserStatus {
-        ACTIVE, INACTIVE, PENDING_APPROVAL, REJECTED
+        ACTIVE, INACTIVE, PENDING_APPROVAL, REJECTED, PENDING
     }
 
     // --- Implementação de UserDetails ---
 
     /**
      * Retorna as autoridades concedidas ao usuário.
+     * 
      * @return Coleção de GrantedAuthority.
      */
     @Override
@@ -126,6 +127,7 @@ public class User extends BaseEntity implements UserDetails { // Implementa User
 
     /**
      * Retorna a senha usada para autenticar o usuário.
+     * 
      * @return A senha criptografada.
      */
     @Override
@@ -136,6 +138,7 @@ public class User extends BaseEntity implements UserDetails { // Implementa User
     /**
      * Retorna o nome de usuário usado para autenticar o usuário.
      * Neste caso, o e-mail do usuário.
+     * 
      * @return O e-mail do usuário.
      */
     @Override
@@ -145,15 +148,18 @@ public class User extends BaseEntity implements UserDetails { // Implementa User
 
     /**
      * Indica se a conta do usuário não expirou.
+     * 
      * @return True se a conta é válida (não expirada), false caso contrário.
      */
     @Override
     public boolean isAccountNonExpired() {
-        return true; // Adapte esta lógica conforme a necessidade do projeto (ex: baseado em data de expiração)
+        return true; // Adapte esta lógica conforme a necessidade do projeto (ex: baseado em data de
+                     // expiração)
     }
 
     /**
      * Indica se a conta do usuário não está bloqueada.
+     * 
      * @return True se a conta não está bloqueada, false caso contrário.
      */
     @Override
@@ -163,15 +169,19 @@ public class User extends BaseEntity implements UserDetails { // Implementa User
 
     /**
      * Indica se as credenciais do usuário (senha) não expiraram.
-     * @return True se as credenciais são válidas (não expiradas), false caso contrário.
+     * 
+     * @return True se as credenciais são válidas (não expiradas), false caso
+     *         contrário.
      */
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // Adapte esta lógica conforme a necessidade do projeto (ex: baseado em política de troca de senha)
+        return true; // Adapte esta lógica conforme a necessidade do projeto (ex: baseado em política
+                     // de troca de senha)
     }
 
     /**
      * Indica se o usuário está habilitado.
+     * 
      * @return True se o usuário está habilitado, false caso contrário.
      */
     @Override

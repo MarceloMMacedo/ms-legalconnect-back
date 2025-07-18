@@ -1,4 +1,4 @@
-package br.com.legalconnect.config.multitenancy;
+package br.com.legalconnect.common.config.multitenancy;
 
 import java.sql.Connection;
 import java.sql.SQLException;

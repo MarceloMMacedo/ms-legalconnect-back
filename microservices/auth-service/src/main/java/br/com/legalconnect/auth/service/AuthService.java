@@ -17,6 +17,8 @@ import br.com.legalconnect.auth.dto.AuthResponse;
 import br.com.legalconnect.auth.dto.LoginRequestDTO;
 import br.com.legalconnect.auth.dto.RefreshTokenRequestDTO;
 import br.com.legalconnect.common.common_lib.BaseResponse;
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
 import br.com.legalconnect.user.entity.User;
 import br.com.legalconnect.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -58,13 +60,13 @@ public class AuthService {
             log.info("Credenciais válidas para o e-mail: {}", request.getEmail());
         } catch (Exception e) {
             log.warn("Falha na autenticação para o e-mail: {}. Erro: {}", request.getEmail(), e.getMessage());
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciais inválidas.");
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "Credenciais inválidas.");
         }
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> {
                     log.error("Usuário não encontrado no banco de dados para o e-mail: {}", request.getEmail());
-                    return new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND,
                             "Usuário não encontrado com o e-mail: " + request.getEmail());
                 });
 

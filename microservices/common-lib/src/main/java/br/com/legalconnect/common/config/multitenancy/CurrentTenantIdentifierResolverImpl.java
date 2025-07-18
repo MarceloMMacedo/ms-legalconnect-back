@@ -1,4 +1,4 @@
-package br.com.legalconnect.config.multitenancy;
+package br.com.legalconnect.common.config.multitenancy;
 
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.slf4j.Logger;
@@ -8,7 +8,8 @@ import org.springframework.stereotype.Component;
 /**
  * @class CurrentTenantIdentifierResolverImpl
  * @brief Implementação de CurrentTenantIdentifierResolver do Hibernate.
- * Informa ao Hibernate qual é o tenant atual para rotear as operações de banco de dados.
+ *        Informa ao Hibernate qual é o tenant atual para rotear as operações de
+ *        banco de dados.
  */
 @Component
 public class CurrentTenantIdentifierResolverImpl implements CurrentTenantIdentifierResolver {
@@ -20,6 +21,7 @@ public class CurrentTenantIdentifierResolverImpl implements CurrentTenantIdentif
      * Resolve o identificador do tenant atual.
      * Se um tenant estiver definido no TenantContext, ele é retornado.
      * Caso contrário, o tenant padrão "public" é retornado.
+     * 
      * @return O identificador do tenant atual.
      */
     @Override
@@ -35,6 +37,7 @@ public class CurrentTenantIdentifierResolverImpl implements CurrentTenantIdentif
 
     /**
      * Indica se o identificador do tenant é validado.
+     * 
      * @return True se a validação é necessária, false caso contrário.
      */
     @Override
