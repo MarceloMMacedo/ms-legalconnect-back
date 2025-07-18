@@ -6,9 +6,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 // import org.springframework.context.annotation.ComponentScan; // REMOVA ESTA LINHA OU COMENTE-A
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+@EnableDiscoveryClient
 @SpringBootApplication(exclude = FlywayAutoConfiguration.class) // Remova o scanBasePackages aqui também, se já está no
                                                                 // pacote raiz
 @EntityScan(basePackages = {

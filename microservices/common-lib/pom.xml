@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.3</version> <!-- Usando a versão que você sugeriu -->
+        <version>3.2.12</version> <!-- Usando a versão que você sugeriu -->
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
 
@@ -97,6 +97,10 @@
         </dependency> -->
         <!-- Lombok -->
         <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version> <!-- Usando a versão definida nas propriedades -->
@@ -109,11 +113,11 @@
             <version>${org.mapstruct.version}</version> <!-- Usando a versão definida nas propriedades -->
         </dependency>
         <!-- Flyway Core para FlywayMultiTenantConfig -->
-        <dependency>
+        <!-- <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
-            <version>${flyway.version}</version> <!-- Usando a versão definida nas propriedades -->
-        </dependency>
+            <version>${flyway.version}</version>  
+        </dependency> -->
         <!-- OpenAPI/Swagger UI para OpenApiConfig -->
         <dependency>
             <groupId>org.springdoc</groupId>

@@ -6,23 +6,37 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.3</version>
+        <version>3.2.5</version> <!-- Mantendo 3.2.5 para consistência com o Gateway, mas você pode usar
+        3.2.12 se preferir -->
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
-    <groupId>br.com.legalconnect.auth</groupId>
-    <artifactId>auth-service</artifactId>
+    <groupId>br.com.legalconnect</groupId>
+    <artifactId>auth-service</artifactId> <!-- Certifique-se de que o artifactId está correto para o auth-service -->
     <version>0.0.1-SNAPSHOT</version>
-    <name>auth-service</name>
-    <description>Demo project for Spring Boot</description>
+    <name>legalconnect-auth-service</name>
+    <description>Authentication Microservice for LegalConnect</description>
 
     <properties>
         <java.version>17</java.version>
-        <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
-        <jjwt.version>0.11.5</jjwt.version>
+        <spring-cloud.version>2023.0.1</spring-cloud.version>
+
+        <jjwt.version>0.11.5</jjwt.version> <!-- Mantido 0.12.5 para compatibilidade com a classe
+        JwtUtil -->
+        <flyway.version>11.8.2</flyway.version> <!-- CORRIGIDO: Define a versão do Flyway para 11.8.2 -->
+        <lombok.version>1.18.30</lombok.version> <!-- Adicionado/Atualizado para garantir
+        compatibilidade -->
+        <org.mapstruct.version>1.5.5.Final</org.mapstruct.version> <!-- Adicionado/Atualizado para
+        garantir compatibilidade -->
+        <springdoc.version>2.5.0</springdoc.version> <!-- Atualizado para 2.5.0 para consistência com
+        o Gateway -->
     </properties>
 
     <dependencies>
         <!-- Spring Boot Starters -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -33,15 +47,15 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
 
         <!-- Database -->
@@ -50,11 +64,18 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
-        <!-- Flyway é desabilitado no microsserviço de auth, mas a dependência pode ser mantida se
-        houver planos futuros de migrações específicas -->
+        <!-- Flyway Core para migrações de banco de dados -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
+            <!-- A versão será gerenciada pela seção dependencyManagement -->
+        </dependency>
+        <!-- Flyway para PostgreSQL (necessário se você usa recursos específicos do PostgreSQL no
+        Flyway) -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+            <!-- A versão será gerenciada pela seção dependencyManagement -->
         </dependency>
 
         <!-- JWT Libraries -->
@@ -67,11 +88,13 @@
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
             <version>${jjwt.version}</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
             <version>${jjwt.version}</version>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- MapStruct for DTO-Entity mapping -->
@@ -81,38 +104,20 @@
             <version>${org.mapstruct.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>${org.mapstruct.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- common-lib (se aplicável, mantenha a versão correta) -->
+        <dependency>
             <groupId>br.com.legalconnect.common</groupId>
             <artifactId>common-lib</artifactId>
             <version>1.0.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
-            <version>11.8.2</version> <!-- Use a mesma versão do flyway-core -->
-        </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.3.0</version>
-        </dependency>
         <!-- Lombok for boilerplate code reduction -->
-        <!--
-        https://mvnrepository.com/artifact/org.hibernate.javax.persistence/hibernate-jpa-2.0-api -->
-        <dependency>
-            <groupId>org.hibernate.javax.persistence</groupId>
-            <artifactId>hibernate-jpa-2.0-api</artifactId>
-            <version>1.0.1.Final</version>
-        </dependency>
-        <!-- JPA API -->
-        <dependency>
-            <groupId>jakarta.persistence</groupId>
-            <artifactId>jakarta.persistence-api</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -135,7 +140,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.3.0</version>
+            <version>${springdoc.version}</version>
         </dependency>
 
         <!-- Jackson for JSON processing (used by JwtAuthEntryPoint) -->
@@ -143,7 +148,57 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
+
+        <!-- REMOVIDO: hibernate-jpa-2.0-api e jakarta.persistence-api.
+             spring-boot-starter-data-jpa já traz a Jakarta Persistence API correta para Spring Boot 3.x.
+             A dependência hibernate-jpa-2.0-api é para JPA 2.0 (Java EE 6), que é muito antiga para Java
+        17/Spring Boot 3.
+        -->
+        <!-- <dependency>
+            <groupId>org.hibernate.javax.persistence</groupId>
+            <artifactId>hibernate-jpa-2.0-api</artifactId>
+            <version>1.0.1.Final</version>
+        </dependency> -->
+        <!-- <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+        </dependency> -->
+
+        <!-- REMOVIDO: jakarta.servlet-api com scope provided.
+             spring-boot-starter-web já traz as dependências de servlet API necessárias. -->
+        <!-- <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.0.0</version>
+            <scope>provided</scope>
+        </dependency> -->
     </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Adicionado/Atualizado: Força a versão do flyway-core para evitar conflitos de
+            dependência transitiva -->
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-core</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <!-- Adicionado/Atualizado: Força a versão do flyway-database-postgresql para evitar
+            conflitos de dependência transitiva -->
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-database-postgresql</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>
@@ -159,13 +214,12 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <!-- Plugin para MapStruct -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -190,4 +244,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>
