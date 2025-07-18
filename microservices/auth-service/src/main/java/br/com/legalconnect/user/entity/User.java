@@ -99,6 +99,7 @@ public class User extends BaseEntity implements UserDetails { // Implementa User
         CLIENTE, // Usuário final que busca serviços jurídicos
         ADVOGADO, // Profissional do direito que oferece serviços
         PLATAFORMA_ADMIN // Administrador da plataforma com privilégios totais
+        , SOCIO
     }
 
     /**

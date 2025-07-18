@@ -37,6 +37,10 @@ public enum ErrorCode {
     USER_NOT_FOUND("2007", "Usuário não encontrado."),
     EMAIL_ALREADY_REGISTERED("2008", "Este e-mail já está cadastrado."),
     PASSWORD_RESET_FAILED("2009", "Falha ao redefinir a senha."),
+    INVALID_CURRENT_PASSWORD("2010", "A senha atual fornecida está incorreta."), // Novo erro
+    PASSWORD_RESET_TOKEN_INVALID("2011", "Token de redefinição de senha inválido."), // Novo erro
+    PASSWORD_RESET_TOKEN_EXPIRED("2012", "Token de redefinição de senha expirado."), // Novo erro
+    PASSWORD_RESET_TOKEN_USED("2013", "Token de redefinição de senha já utilizado."), // Novo erro
 
     // Erros de Negócio Específicos (3000-3999) - Exemplo
     TENANT_NOT_FOUND("3000", "Tenant não encontrado."),

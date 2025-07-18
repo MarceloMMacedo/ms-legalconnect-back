@@ -2,18 +2,18 @@ package br.com.legalconnect.common.dto;
 // common/BaseEntity.java
 
 import java.io.Serializable;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,33 +21,43 @@ import lombok.experimental.SuperBuilder;
 
 /**
  * @class BaseEntity
- * @brief Classe base para entidades persistentes, com campos comuns como
- *        createdAt, updatedAt.
- *
- *        Anotada com `@MappedSuperclass`, suas propriedades são herdadas por
- *        entidades que a estendem,
- *        mas ela própria não é uma entidade mapeada para uma tabela. Contém o
- *        ID e campos de auditoria.
+ * @brief Classe base abstrata para todas as entidades persistentes.
+ *        Fornece campos comuns como ID, data de criação e data de atualização.
  */
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @SuperBuilder
 @MappedSuperclass // Indica que esta classe é uma superclasse mapeada para outras entidades
 public abstract class BaseEntity implements Serializable {
 
+    private static final Logger log = LoggerFactory.getLogger(BaseEntity.class);
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) // Gera UUIDs para os IDs
-    @Column(name = "id", updatable = false, nullable = false)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    protected UUID id; // Identificador único da entidade
 
-    @CreationTimestamp // Preenche automaticamente a data de criação
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt; // Carimbo de data/hora (com fuso horário) exato em que o registro foi criado
+    protected LocalDateTime createdAt; // Data e hora de criação do registro
 
-    @UpdateTimestamp // Preenche automaticamente a data de atualização
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt; // Carimbo de data/hora (com fuso horário) da última vez que o registro foi
-                               // modificado
+    protected LocalDateTime updatedAt; // Data e hora da última atualização do registro
+
+    /**
+     * Define a data de criação antes de persistir a entidade.
+     */
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        log.debug("Criando entidade: {}. Data de criação: {}", this.getClass().getSimpleName(), createdAt);
+    }
+
+    /**
+     * Atualiza a data de atualização antes de atualizar a entidade.
+     */
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+        log.debug("Atualizando entidade: {}. ID: {}. Data de atualização: {}", this.getClass().getSimpleName(), id,
+                updatedAt);
+    }
 }

@@ -1,14 +1,20 @@
 package br.com.legalconnect.auth.service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,10 +22,22 @@ import org.springframework.web.server.ResponseStatusException;
 import br.com.legalconnect.auth.dto.AuthResponse;
 import br.com.legalconnect.auth.dto.LoginRequestDTO;
 import br.com.legalconnect.auth.dto.RefreshTokenRequestDTO;
-import br.com.legalconnect.common.common_lib.BaseResponse;
+import br.com.legalconnect.auth.dto.UserProfileUpdate;
+import br.com.legalconnect.auth.dto.UserRegistrationRequest;
+import br.com.legalconnect.auth.dto.UserResponseDTO;
+import br.com.legalconnect.auth.entity.Tenant;
+import br.com.legalconnect.auth.repository.TenantRepository;
+import br.com.legalconnect.common.dto.BaseResponse;
 import br.com.legalconnect.common.exception.BusinessException;
 import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.common.exception.Roles;
+import br.com.legalconnect.user.entity.PasswordResetToken;
+import br.com.legalconnect.user.entity.Role;
 import br.com.legalconnect.user.entity.User;
+import br.com.legalconnect.user.entity.User.UserStatus;
+import br.com.legalconnect.user.entity.User.UserType;
+import br.com.legalconnect.user.repository.PasswordResetTokenRepository;
+import br.com.legalconnect.user.repository.RoleRepository;
 import br.com.legalconnect.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -37,6 +55,22 @@ public class AuthService {
     private final JwtService jwtService;
 
     private final AuthenticationManager authenticationManager;
+
+    private final TenantRepository tenantRepository;
+
+    private final PasswordEncoder passwordEncoder;
+
+    private final RoleRepository roleRepository;
+
+    private final RefreshTokenService refreshTokenService;
+
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+
+    private final UserMapper userMapper;
+    private long passwordResetExpirationMinutes;
+
+    @Value("${application.tenant.default-id:00000000-0000-0000-0000-000000000001}")
+    private String defaultTenantId;
 
     /*
      * /
@@ -92,9 +126,9 @@ public class AuthService {
         }
 
         return BaseResponse.<AuthResponse>builder()
-                // .status("SUCCESS")
-                // .message("Autenticação realizada com sucesso.")
-                // .timestamp(LocalDateTime.now())
+                .status("SUCCESS")
+                .message("Autenticação realizada com sucesso.")
+                .timestamp(LocalDateTime.now())
                 .data(AuthResponse.builder()
                         .accessToken(jwtToken)
                         .refreshToken(refreshToken)
@@ -147,10 +181,10 @@ public class AuthService {
                 MDC.put("tenantId", String.valueOf(user.getTenant().getId()));
             }
 
-            return BaseResponse.<AuthResponse>builder()
-                    // .status("SUCCESS")
-                    // .message("Token atualizado com sucesso.")
-                    // .timestamp(LocalDateTime.now())
+            return br.com.legalconnect.common.dto.BaseResponse.<AuthResponse>builder()
+                    .status("SUCCESS")
+                    .message("Token atualizado com sucesso.")
+                    .timestamp(LocalDateTime.now())
                     .data(AuthResponse.builder()
                             .accessToken(accessToken)
                             .refreshToken(request.getRefreshToken()) // Mantém o mesmo refresh token
@@ -162,5 +196,298 @@ public class AuthService {
             log.warn("Refresh token inválido ou expirado para o usuário: {}", userEmail);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token inválido ou expirado.");
         }
+    }
+
+    /**
+     * @brief Registra um novo usuário na plataforma com base no tipo especificado.
+     * @param request  DTO contendo os dados de registro do usuário.
+     * @param userType O tipo de usuário a ser registrado (CLIENTE, ADVOGADO, SOCIO,
+     *                 PLATAFORMA_ADMIN).
+     * @return DTO do usuário registrado.
+     * @throws BusinessException se o e-mail ou CPF já estiverem cadastrados, ou se
+     *                           a role não for encontrada.
+     */
+    @Transactional
+    public UserResponseDTO registerUser(UserRegistrationRequest request, UserType userType) {
+        log.info("Iniciando registro de novo usuário do tipo {} com e-mail: {}", userType, request.getEmail());
+
+        // 1. Valida unicidade de e-mail e CPF
+        if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Falha no registro: E-mail '{}' já cadastrado.", request.getEmail());
+            throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED);
+        }
+        if (userRepository.existsByCpf(request.getCpf())) {
+            log.warn("Falha no registro: CPF '{}' já cadastrado.", request.getCpf());
+            throw new BusinessException(ErrorCode.INVALID_CPF);
+        }
+
+        // 2. Busca o tenant padrão
+        Tenant defaultTenant = tenantRepository.findById(UUID.fromString(defaultTenantId))
+                .orElseThrow(() -> {
+                    log.error("Falha no registro: Tenant padrão '{}' não encontrado.", defaultTenantId);
+                    return new BusinessException(ErrorCode.TENANT_NOT_FOUND, "Tenant padrão não encontrado.");
+                });
+
+        // 3. Cria a entidade User
+        User user = userMapper.toEntity(request);
+        user.setSenhaHash(passwordEncoder.encode(request.getSenha())); // Criptografa a senha
+        user.setUserType(userType);
+        user.setTenant(defaultTenant); // Associa ao tenant padrão
+
+        // 4. Define o status inicial e atribui a role com base no tipo de usuário
+        Role assignedRole;
+        switch (userType) {
+            case CLIENTE:
+                user.setStatus(UserStatus.ACTIVE); // Clientes são ativos por padrão
+                assignedRole = roleRepository.findByNome(Roles.ROLE_CLIENT)
+                        .orElseThrow(() -> {
+                            log.error("Falha no registro: Role CLIENTE não encontrada no banco de dados.");
+                            return new BusinessException(ErrorCode.USER_NOT_FOUND, "Role CLIENTE não encontrada.");
+                        });
+                break;
+            case ADVOGADO:
+                user.setStatus(UserStatus.PENDING_APPROVAL); // Advogados aguardam aprovação
+                assignedRole = roleRepository.findByNome(Roles.ROLE_ADVOCATE)
+                        .orElseThrow(() -> {
+                            log.error("Falha no registro: Role ADVOGADO não encontrada no banco de dados.");
+                            return new BusinessException(ErrorCode.ADVOCATE_NOT_AVAILABLE,
+                                    "Role ADVOGADO não encontrada.");
+                        });
+                break;
+            case SOCIO:
+                user.setStatus(UserStatus.PENDING); // Sócios aguardam aprovação inicial
+                assignedRole = roleRepository.findByNome(Roles.ROLE_TENANT_ADMIN) // Exemplo: Sócio pode ser um ADMIN do
+                                                                                  // Tenant
+                        .orElseThrow(() -> {
+                            log.error("Falha no registro: Role SOCIO (TENANT_ADMIN) não encontrada no banco de dados.");
+                            return new BusinessException(ErrorCode.USER_NOT_FOUND, "Role SOCIO não encontrada.");
+                        });
+                break;
+            case PLATAFORMA_ADMIN:
+                user.setStatus(UserStatus.PENDING); // Administradores da plataforma aguardam aprovação
+                assignedRole = roleRepository.findByNome(Roles.ROLE_ADMIN)
+                        .orElseThrow(() -> {
+                            log.error("Falha no registro: Role PLATAFORMA_ADMIN não encontrada no banco de dados.");
+                            return new BusinessException(ErrorCode.USER_NOT_FOUND,
+                                    "Role PLATAFORMA_ADMIN não encontrada.");
+                        });
+                break;
+            default:
+                log.error("Tipo de usuário inválido para registro: {}", userType);
+                throw new BusinessException(ErrorCode.INVALID_INPUT, "Tipo de usuário inválido.");
+        }
+        user.getRoles().add(assignedRole);
+        log.debug("Role {} atribuída ao usuário: {}", assignedRole.getNome(), user.getEmail());
+
+        // 5. Salva o usuário no banco de dados
+        user = userRepository.save(user);
+        log.info("Usuário do tipo {} registrado com sucesso: {} (ID: {})", userType, user.getEmail(), user.getId());
+
+        // TODO: Disparar evento para NotificationService para enviar e-mail de
+        // boas-vindas/confirmação
+        log.debug("E-mail de boas-vindas/confirmação enviado para: {}", user.getEmail());
+
+        return userMapper.toDto(user);
+    }
+
+    /**
+     * @brief Registra um novo cliente na plataforma (RF048).
+     * @param request DTO contendo os dados de registro do cliente.
+     * @return DTO do usuário registrado.
+     * @throws BusinessException se o e-mail ou CPF já estiverem cadastrados.
+     */
+    @Transactional
+    public UserResponseDTO registerClient(UserRegistrationRequest request) {
+        // Delega para o método genérico com UserType.CLIENTE
+        return registerUser(request, UserType.CLIENTE);
+    }
+
+    /**
+     * @brief Realiza o pré-cadastro de um novo advogado na plataforma (RF001).
+     * @param request DTO contendo os dados de pré-registro do advogado.
+     * @return DTO do usuário advogado pré-registrado.
+     * @throws BusinessException se o e-mail, CPF ou número da OAB já estiverem
+     *                           cadastrados.
+     */
+    @Transactional
+    public UserResponseDTO registerAdvogado(UserRegistrationRequest request) {
+        // Delega para o método genérico com UserType.ADVOGADO
+        return registerUser(request, UserType.ADVOGADO);
+    }
+
+    /**
+     * @brief Registra um novo sócio na plataforma.
+     * @param request DTO contendo os dados de registro do sócio.
+     * @return DTO do usuário sócio registrado.
+     * @throws BusinessException se o e-mail ou CPF já estiverem cadastrados.
+     */
+    @Transactional
+    public UserResponseDTO registerSocio(UserRegistrationRequest request) {
+        // Delega para o método genérico com UserType.SOCIO
+        return registerUser(request, User.UserType.CLIENTE);
+    }
+
+    /**
+     * @brief Registra um novo administrador da plataforma.
+     * @param request DTO contendo os dados de registro do administrador.
+     * @return DTO do usuário administrador registrado.
+     * @throws BusinessException se o e-mail ou CPF já estiverem cadastrados.
+     */
+    @Transactional
+    public UserResponseDTO registerAdmin(UserRegistrationRequest request) {
+        // Delega para o método genérico com UserType.PLATAFORMA_ADMIN
+        return registerUser(request, UserType.PLATAFORMA_ADMIN);
+    }
+
+    /**
+     * @brief Inicia o processo de recuperação de senha (RF053).
+     *
+     *        Gera um token temporário e envia um e-mail com o link de redefinição.
+     *
+     * @param email O e-mail do usuário que solicitou a recuperação.
+     * @throws BusinessException se o usuário não for encontrado.
+     */
+    @Transactional
+    public void recoverPassword(String email) {
+        log.info("Solicitação de recuperação de senha para o e-mail: {}", email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    log.warn("Falha na recuperação de senha: Usuário não encontrado para o e-mail: {}", email);
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND, "Usuário não encontrado.");
+                });
+
+        // 1. Invalida qualquer token de redefinição anterior para este usuário
+        passwordResetTokenRepository.findByUser(user).ifPresent(passwordResetTokenRepository::delete);
+
+        // 2. Gera um novo token único e define a expiração
+        String token = UUID.randomUUID().toString();
+        Instant expiryDate = Instant.now().plus(passwordResetExpirationMinutes, ChronoUnit.MINUTES);
+
+        PasswordResetToken resetToken = PasswordResetToken.builder()
+                .token(token)
+                .user(user)
+                .expiraEm(expiryDate)
+                .usado(false)
+                .build();
+
+        passwordResetTokenRepository.save(resetToken);
+        log.info("Token de redefinição de senha gerado e salvo para o usuário: {}", user.getEmail());
+
+        // TODO: [PRODUÇÃO] Enviar e-mail com o link de redefinição de senha
+        // O link deve apontar para o frontend, contendo o token:
+        // String resetLink =
+        // "[https://seufrontend.com/reset-password?token=](https://seufrontend.com/reset-password?token=)"
+        // + token;
+        // notificationService.sendPasswordResetEmail(user.getEmail(), resetLink);
+        log.info("E-mail de recuperação de senha enviado para: {} com token: {}", user.getEmail(), token);
+    }
+
+    /**
+     * @brief Redefine a senha do usuário utilizando um token de recuperação
+     *        (RF053).
+     * @param token     O token de redefinição de senha.
+     * @param novaSenha A nova senha a ser definida.
+     * @throws BusinessException se o token for inválido/expirado/usado ou a senha
+     *                           for
+     *                           fraca.
+     */
+    @Transactional
+    public void resetPassword(String token, String novaSenha) {
+        log.info("Tentativa de redefinição de senha com token.");
+
+        // 1. Busca e valida o token
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> {
+                    log.warn("Falha na redefinição de senha: Token inválido ou não encontrado.");
+                    return new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_INVALID);
+                });
+
+        if (resetToken.isUsado()) {
+            log.warn("Falha na redefinição de senha: Token já utilizado para o usuário: {}",
+                    resetToken.getUser().getEmail());
+            throw new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_USED);
+        }
+
+        if (resetToken.getExpiraEm().isBefore(Instant.now())) {
+            log.warn("Falha na redefinição de senha: Token expirado para o usuário: {}",
+                    resetToken.getUser().getEmail());
+            passwordResetTokenRepository.delete(resetToken); // Opcional: deletar tokens expirados
+            throw new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED);
+        }
+
+        // 2. Busca o usuário associado ao token
+        User user = resetToken.getUser();
+        log.debug("Usuário encontrado para redefinição de senha: {}", user.getEmail());
+
+        // 3. Criptografa e atualiza a nova senha
+        user.setSenhaHash(passwordEncoder.encode(novaSenha));
+        userRepository.save(user);
+        log.info("Senha redefinida com sucesso para o usuário: {}", user.getEmail());
+
+        // 4. Invalida o token de redefinição (marca como usado)
+        resetToken.setUsado(true);
+        passwordResetTokenRepository.save(resetToken);
+        log.debug("Token de redefinição de senha marcado como usado.");
+
+        // 5. Invalida todos os refresh tokens do usuário para forçar novo login
+        refreshTokenService.deleteByUser(user);
+        log.debug("Refresh tokens invalidados para o usuário: {}", user.getEmail());
+
+        // TODO: [PRODUÇÃO] Envia e-mail de confirmação de redefinição de senha
+        // notificationService.sendPasswordResetConfirmationEmail(user.getEmail());
+        log.debug("E-mail de confirmação de redefinição de senha enviado para: {}", user.getEmail());
+    }
+
+    /**
+     * @brief Atualiza o perfil de um usuário (RF055).
+     * @param userId        O ID do usuário a ser atualizado.
+     * @param updateRequest DTO com os dados de atualização.
+     * @return DTO do usuário atualizado.
+     * @throws BusinessException se o usuário não for encontrado, e-mail/CPF já em
+     *                           uso, ou senha atual inválida.
+     */
+    @Transactional
+    public UserResponseDTO updateUserProfile(UUID userId, UserProfileUpdate updateRequest) {
+        log.info("Tentativa de atualização de perfil para o usuário ID: {}", userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.warn("Falha na atualização de perfil: Usuário não encontrado com ID: {}", userId);
+
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND);
+                });
+
+        // Valida unicidade de e-mail, se o e-mail for alterado
+        if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(user.getEmail())) {
+            if (userRepository.existsByEmail(updateRequest.getEmail())) {
+                log.warn("Falha na atualização de perfil: Novo e-mail '{}' já em uso.", updateRequest.getEmail());
+
+                throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED);
+            }
+            user.setEmail(updateRequest.getEmail());
+            log.debug("E-mail do usuário {} atualizado para: {}", userId, updateRequest.getEmail());
+        }
+
+        // Atualiza outros campos do usuário
+        userMapper.updateEntityFromDto(updateRequest, user);
+        log.debug("Outros campos do perfil do usuário {} atualizados.", userId);
+
+        // Lógica para alteração de senha
+        if (updateRequest.getSenhaAtual() != null && updateRequest.getNovaSenha() != null) {
+            log.info("Tentativa de alteração de senha para o usuário ID: {}", userId);
+            if (!passwordEncoder.matches(updateRequest.getSenhaAtual(), user.getSenhaHash())) {
+                log.warn("Falha na alteração de senha: Senha atual inválida para o usuário ID: {}", userId);
+
+                throw new BusinessException(ErrorCode.PASSWORD_TOO_WEAK);
+            }
+            user.setSenhaHash(passwordEncoder.encode(updateRequest.getNovaSenha()));
+            // Invalida todos os refresh tokens do usuário para forçar novo login após a
+            // mudança de senha
+            refreshTokenService.deleteByUser(user);
+            log.info("Senha do usuário {} alterada com sucesso. Refresh tokens invalidados.", userId);
+        }
+
+        user = userRepository.save(user);
+        log.info("Perfil do usuário {} atualizado com sucesso.", userId);
+        return userMapper.toDto(user);
     }
 }

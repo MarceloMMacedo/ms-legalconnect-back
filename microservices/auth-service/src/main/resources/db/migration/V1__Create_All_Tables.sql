@@ -123,3 +123,52 @@ COMMENT ON COLUMN tb_refresh_token.expira_em IS 'Data e hora em que este refresh
 CREATE INDEX idx_refresh_token_user_id ON tb_refresh_token (user_id);
 CREATE INDEX idx_refresh_token_expira_em ON tb_refresh_token (expira_em);
 
+-- Tabela tb_password_reset_token
+CREATE TABLE tb_password_reset_token (
+    id UUID PRIMARY KEY,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    token TEXT NOT NULL UNIQUE,
+    user_id UUID NOT NULL,
+    expira_em TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    usado BOOLEAN NOT NULL DEFAULT FALSE,
+    CONSTRAINT fk_password_reset_user FOREIGN KEY (user_id) REFERENCES tb_user (id)
+);
+
+COMMENT ON TABLE tb_password_reset_token IS 'Entidade que representa um token de redefinição de senha.';
+COMMENT ON COLUMN tb_password_reset_token.id IS 'Identificador único do token de redefinição.';
+COMMENT ON COLUMN tb_password_reset_token.created_at IS 'Timestamp da criação do registro.';
+COMMENT ON COLUMN tb_password_reset_token.updated_at IS 'Timestamp da última atualização do registro.';
+COMMENT ON COLUMN tb_password_reset_token.token IS 'O valor real do token de redefinição.';
+COMMENT ON COLUMN tb_password_reset_token.user_id IS 'Usuário ao qual este token de redefinição está associado.';
+COMMENT ON COLUMN tb_password_reset_token.expira_em IS 'Data e hora em que este token se tornará inválido.';
+COMMENT ON COLUMN tb_password_reset_token.usado IS 'Indica se o token já foi utilizado para redefinir a senha.';
+
+-- Índices para tb_password_reset_token
+CREATE INDEX idx_password_reset_token_user_id ON tb_password_reset_token (user_id);
+CREATE INDEX idx_password_reset_token_expira_em ON tb_password_reset_token (expira_em);
+CREATE INDEX idx_password_reset_token_usado ON tb_password_reset_token (usado);
+
+-- -- Tabela tb_refresh_token
+-- CREATE TABLE tb_refresh_token (
+--     id UUID PRIMARY KEY,
+--     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+--     updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+--     user_id UUID NOT NULL UNIQUE,
+--     token TEXT NOT NULL UNIQUE,
+--     expira_em TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+--     CONSTRAINT fk_refresh_token_user FOREIGN KEY (user_id) REFERENCES tb_user (id)
+-- );
+
+-- COMMENT ON TABLE tb_refresh_token IS 'Entidade que representa o Refresh Token no banco de dados.';
+-- COMMENT ON COLUMN tb_refresh_token.id IS 'Identificador único do refresh token.';
+-- COMMENT ON COLUMN tb_refresh_token.created_at IS 'Timestamp da criação do registro.';
+-- COMMENT ON COLUMN tb_refresh_token.updated_at IS 'Timestamp da última atualização do registro.';
+-- COMMENT ON COLUMN tb_refresh_token.user_id IS 'Usuário ao qual este refresh token está associado.';
+-- COMMENT ON COLUMN tb_refresh_token.token IS 'O valor real do refresh token.';
+-- COMMENT ON COLUMN tb_refresh_token.expira_em IS 'Data e hora em que este refresh token se tornará inválido.';
+
+-- -- Índices para tb_refresh_token
+-- CREATE INDEX idx_refresh_token_user_id ON tb_refresh_token (user_id);
+-- CREATE INDEX idx_refresh_token_expira_em ON tb_refresh_token (expira_em);
+
