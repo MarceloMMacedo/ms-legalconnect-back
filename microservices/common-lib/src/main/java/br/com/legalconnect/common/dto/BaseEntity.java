@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -37,8 +38,10 @@ public abstract class BaseEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.UUID)
     protected UUID id; // Identificador único da entidade
 
+    @Column(name = "created_at", nullable = false)
     protected LocalDateTime createdAt; // Data e hora de criação do registro
 
+    @Column(name = "updated_at", nullable = false)
     protected LocalDateTime updatedAt; // Data e hora da última atualização do registro
 
     /**

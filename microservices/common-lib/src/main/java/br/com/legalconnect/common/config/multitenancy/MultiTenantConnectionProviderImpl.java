@@ -126,7 +126,7 @@ public class MultiTenantConnectionProviderImpl implements MultiTenantConnectionP
         if (unwrapType.isAssignableFrom(getClass())) {
             return (T) this;
         } else {
-            throw new BusinessException(ErrorCode.INVALID_PROMO_CODE, unwrapType);
+            throw new BusinessException(ErrorCode.INVALID_PROMO_CODE, unwrapType.getName() + " não é um proxy");
         }
     }
 }

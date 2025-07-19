@@ -19,6 +19,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource; // Importar CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import br.com.legalconnect.auth.service.JwtService; // Importar JwtService
 import br.com.legalconnect.user.repository.UserRepository; // Importar UserRepository
@@ -151,6 +154,8 @@ public class SecurityConfig {
         log.info("Configurando SecurityFilterChain.");
         http
                 .csrf(csrf -> csrf.disable())
+                // Adicionar configuração CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
@@ -168,5 +173,56 @@ public class SecurityConfig {
         log.info("SecurityFilterChain configurada com sucesso.");
         return http.build();
     }
+    // @Bean
+    // public SecurityFilterChain securityFilterChain(HttpSecurity http) throws
+    // Exception {
+    // log.info("Configurando SecurityFilterChain.");
+    // http
+    // .csrf(csrf -> csrf.disable())
+    // .exceptionHandling(exception ->
+    // exception.authenticationEntryPoint(unauthorizedHandler))
+    // .sessionManagement(session ->
+    // session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+    // .authorizeHttpRequests(auth -> auth
+    // .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+    // .anyRequest().authenticated());
 
+    // http.authenticationProvider(authenticationProvider(userDetailsService()));
+
+    // // Usa o bean jwtAuthFilter que foi definido acima
+    // http.addFilterBefore(jwtAuthFilter(jwtService, userDetailsService()),
+    // UsernamePasswordAuthenticationFilter.class);
+
+    // http.headers(headers -> headers.frameOptions(frameOptions ->
+    // frameOptions.sameOrigin()));
+
+    // log.info("SecurityFilterChain configurada com sucesso.");
+    // return http.build();
+    // }
+    /**
+     * @brief Configura o CorsConfigurationSource para permitir requisições CORS.
+     *
+     *        Define as origens permitidas, métodos HTTP, cabeçalhos e credenciais
+     *        para as requisições CORS.
+     * @return Uma instância de `CorsConfigurationSource`.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        log.debug("Configurando CorsConfigurationSource.");
+        CorsConfiguration configuration = new CorsConfiguration();
+        // Permitir todas as origens (em produção, especifique origens seguras, ex:
+        // "http://localhost:3000")
+        configuration.addAllowedOrigin("*");
+        // Permitir todos os métodos HTTP (GET, POST, PUT, DELETE, etc.)
+        configuration.addAllowedMethod("*");
+        // Permitir todos os cabeçalhos
+        configuration.addAllowedHeader("*");
+        // Permitir envio de credenciais (cookies, headers de autorização)
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // Aplicar esta configuração CORS a todos os caminhos (/**)
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 }

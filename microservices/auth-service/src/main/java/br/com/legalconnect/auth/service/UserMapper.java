@@ -25,11 +25,7 @@ import br.com.legalconnect.user.entity.User;
  */
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = { RoleMapper.class })
 public interface UserMapper {
-    @Mapping(source = "userType", target = "userType")
-    @Mapping(source = "status", target = "status")
-    @Mapping(source = "tenant.id", target = "tenantId")
-    @Mapping(source = "createdAt", target = "createdAt", qualifiedByName = "localDateTimeToInstant")
-    @Mapping(source = "updatedAt", target = "updatedAt", qualifiedByName = "localDateTimeToInstant")
+
     UserResponseDTO toDto(User entity);
 
     @Named("localDateTimeToInstant")
@@ -38,8 +34,6 @@ public interface UserMapper {
     }
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "tenant", ignore = true) // Tenant é definido no serviço
     @Mapping(target = "roles", ignore = true) // Roles são definidas no serviço
     @Mapping(target = "senhaHash", ignore = true) // Senha é criptografada no serviço

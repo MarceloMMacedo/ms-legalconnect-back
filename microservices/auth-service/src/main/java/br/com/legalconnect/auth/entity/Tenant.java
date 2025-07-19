@@ -14,7 +14,7 @@ import lombok.experimental.SuperBuilder;
 /**
  * @class Tenant
  * @brief Entidade que representa um tenant na arquitetura multi-tenant.
- * Esta tabela reside no schema 'public' (global).
+ *        Esta tabela reside no schema 'public' (global).
  */
 @Entity
 @Table(name = "tb_tenant") // A tabela tb_tenant reside no schema public (global)

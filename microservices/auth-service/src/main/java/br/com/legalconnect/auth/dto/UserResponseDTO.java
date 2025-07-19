@@ -1,7 +1,5 @@
 package br.com.legalconnect.auth.dto;
 
-import java.time.Instant;
-import java.util.Set;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
@@ -29,10 +27,6 @@ public class UserResponseDTO {
     private String cpf;
     private String telefone;
     private String fotoUrl;
-    private String userType; // Representação em String do enum UserType
     private String status; // Representação em String do enum UserStatus
-    private Set<String> roles; // Nomes das roles associadas ao usuário
-    private UUID tenantId; // ID do tenant ao qual o usuário pertence
-    private Instant createdAt;
-    private Instant updatedAt;
+
 }

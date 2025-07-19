@@ -1,4 +1,4 @@
-package br.com.legalconnect.common.exception;
+package br.com.legalconnect.auth.config;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -9,10 +9,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
 import br.com.legalconnect.common.dto.BaseResponse;
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -26,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  *        Lida com {@link BusinessException} e exceções de validação do Spring,
  *        além de capturar exceções genéricas.
  */
-// @ControllerAdvice
+@ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 

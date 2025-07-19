@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
@@ -70,7 +71,7 @@ public class AuthService {
     private long passwordResetExpirationMinutes;
 
     @Value("${application.tenant.default-id:00000000-0000-0000-0000-000000000001}")
-    private String defaultTenantId;
+    private String defaultTenantIds;
 
     /*
      * /
@@ -207,7 +208,7 @@ public class AuthService {
      * @throws BusinessException se o e-mail ou CPF já estiverem cadastrados, ou se
      *                           a role não for encontrada.
      */
-    @Transactional
+    // @Transactional
     public UserResponseDTO registerUser(UserRegistrationRequest request, UserType userType) {
         log.info("Iniciando registro de novo usuário do tipo {} com e-mail: {}", userType, request.getEmail());
 
@@ -220,12 +221,17 @@ public class AuthService {
             log.warn("Falha no registro: CPF '{}' já cadastrado.", request.getCpf());
             throw new BusinessException(ErrorCode.INVALID_CPF);
         }
-
         // 2. Busca o tenant padrão
-        Tenant defaultTenant = tenantRepository.findById(UUID.fromString(defaultTenantId))
-                .orElseThrow(() -> {
-                    log.error("Falha no registro: Tenant padrão '{}' não encontrado.", defaultTenantId);
-                    return new BusinessException(ErrorCode.TENANT_NOT_FOUND, "Tenant padrão não encontrado.");
+        // 2. Busca o tenant padrão ou cria um novo se não existir
+        Tenant defaultTenant = tenantRepository.findBySchemaName(defaultTenantIds)
+                .orElseGet(() -> {
+                    log.info("Tenant padrão não encontrado. Criando novo tenant com schema: {}", defaultTenantIds);
+                    return tenantRepository.save(Tenant.builder()
+                            .schemaName(defaultTenantIds)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .nome("Tenant Padrão")
+                            .build());
                 });
 
         // 3. Cria a entidade User
@@ -268,13 +274,17 @@ public class AuthService {
                 assignedRole = roleRepository.findByNome(Roles.ROLE_ADMIN)
                         .orElseThrow(() -> {
                             log.error("Falha no registro: Role PLATAFORMA_ADMIN não encontrada no banco de dados.");
-                            return new BusinessException(ErrorCode.USER_NOT_FOUND,
+                            return new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
                                     "Role PLATAFORMA_ADMIN não encontrada.");
                         });
                 break;
             default:
                 log.error("Tipo de usuário inválido para registro: {}", userType);
                 throw new BusinessException(ErrorCode.INVALID_INPUT, "Tipo de usuário inválido.");
+        }
+
+        if (user.getRoles() == null) {
+            user.setRoles(new HashSet<>());
         }
         user.getRoles().add(assignedRole);
         log.debug("Role {} atribuída ao usuário: {}", assignedRole.getNome(), user.getEmail());
@@ -286,7 +296,7 @@ public class AuthService {
         // TODO: Disparar evento para NotificationService para enviar e-mail de
         // boas-vindas/confirmação
         log.debug("E-mail de boas-vindas/confirmação enviado para: {}", user.getEmail());
-
+        user = userRepository.save(user);
         return userMapper.toDto(user);
     }
 
@@ -333,7 +343,7 @@ public class AuthService {
      * @return DTO do usuário administrador registrado.
      * @throws BusinessException se o e-mail ou CPF já estiverem cadastrados.
      */
-    @Transactional
+    // @Transactional
     public UserResponseDTO registerAdmin(UserRegistrationRequest request) {
         // Delega para o método genérico com UserType.PLATAFORMA_ADMIN
         return registerUser(request, UserType.PLATAFORMA_ADMIN);

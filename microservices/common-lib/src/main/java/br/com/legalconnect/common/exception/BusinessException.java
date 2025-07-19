@@ -17,8 +17,15 @@ import lombok.Getter;
 public class BusinessException extends RuntimeException {
 
     private final ErrorCode errorCode; // O código de erro padronizado
-    private final Object[] args; // Argumentos para formatar a mensagem do erro
+    private final String[] args; // Argumentos para formatar a mensagem do erro
     private final HttpStatus httpStatus; // Status HTTP associado a esta exceção
+
+    public BusinessException(ErrorCode errorCode, HttpStatus httpStatus, String args) {
+        super(args);
+        this.errorCode = errorCode;
+        this.args = new String[] { args, errorCode.getMessage() };
+        this.httpStatus = httpStatus;
+    }
 
     /**
      * Construtor para BusinessException com um ErrorCode e status HTTP padrão
@@ -27,7 +34,7 @@ public class BusinessException extends RuntimeException {
      * @param errorCode O código de erro que define o tipo de exceção de negócio.
      * @param args      Argumentos opcionais para formatar a mensagem do erro.
      */
-    public BusinessException(ErrorCode errorCode, Object... args) {
+    public BusinessException(ErrorCode errorCode, String... args) {
         this(errorCode, HttpStatus.BAD_REQUEST, args); // Por padrão, erros de negócio são BAD_REQUEST
     }
 
@@ -39,12 +46,13 @@ public class BusinessException extends RuntimeException {
      * @param httpStatus O status HTTP a ser retornado na resposta da API.
      * @param args       Argumentos opcionais para formatar a mensagem do erro.
      */
-    public BusinessException(ErrorCode errorCode, HttpStatus httpStatus, Object... args) {
+    public BusinessException(ErrorCode errorCode, HttpStatus httpStatus, String... args) {
         super(errorCode.getFormattedMessage(args)); // Define a mensagem da exceção usando a mensagem formatada do
                                                     // ErrorCode
         this.errorCode = errorCode;
         this.args = args;
         this.httpStatus = httpStatus;
+
     }
 
     /**
