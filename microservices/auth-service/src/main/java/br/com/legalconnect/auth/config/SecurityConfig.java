@@ -42,8 +42,8 @@ import br.com.legalconnect.user.repository.UserRepository; // Importar UserRepos
 public class SecurityConfig {
 
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
-    @Autowired
-    private JwtAuthEntryPoint unauthorizedHandler;
+    // @Autowired
+    // private JwtAuthEntryPoint unauthorizedHandler;
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -156,7 +156,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 // Adicionar configuração CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                // .exceptionHandling(exception ->
+                // exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
