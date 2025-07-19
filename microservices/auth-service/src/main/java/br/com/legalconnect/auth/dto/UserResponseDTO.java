@@ -1,7 +1,5 @@
 package br.com.legalconnect.auth.dto;
 
-import java.util.UUID;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,7 +19,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class UserResponseDTO {
-    private UUID id;
+    // private UUID id;
     private String nomeCompleto;
     private String email;
     private String cpf;

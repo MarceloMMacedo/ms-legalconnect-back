@@ -17,6 +17,7 @@ import br.com.legalconnect.auth.dto.UserRegistrationRequest;
 import br.com.legalconnect.auth.dto.UserResponseDTO;
 import br.com.legalconnect.auth.service.AuthService;
 import br.com.legalconnect.common.dto.BaseResponse;
+import br.com.legalconnect.enums.StatusResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -88,7 +89,7 @@ public class AuthController {
                 return ResponseEntity.ok(BaseResponse.<UserResponseDTO>builder()
                                 .data(registeredUser)
                                 .message("Cliente registrado com sucesso!")
-                                .status("SUCCESS")
+                                .status(StatusResponse.SUCESSO)
                                 .build());
         }
 
@@ -111,7 +112,7 @@ public class AuthController {
                 return ResponseEntity.ok(BaseResponse.<UserResponseDTO>builder()
                                 .data(registeredUser)
                                 .message("Advogado pré-registrado com sucesso! Aguardando aprovação.")
-                                .status("SUCCESS")
+                                .status(StatusResponse.SUCESSO)
                                 .build());
         }
 
@@ -134,7 +135,7 @@ public class AuthController {
                 return ResponseEntity.ok(BaseResponse.<UserResponseDTO>builder()
                                 .data(registeredUser)
                                 .message("Sócio registrado com sucesso! Aguardando aprovação.")
-                                .status("SUCCESS")
+                                .status(StatusResponse.SUCESSO)
                                 .build());
         }
 
@@ -156,7 +157,7 @@ public class AuthController {
                 return ResponseEntity.ok(BaseResponse.<UserResponseDTO>builder()
                                 .data(registeredUser)
                                 .message("Administrador registrado com sucesso! Aguardando aprovação.")
-                                .status("SUCCESS")
+                                .status(StatusResponse.SUCESSO)
                                 .build());
         }
 
@@ -176,7 +177,7 @@ public class AuthController {
                                 request.getEmail(), (endTime - startTime));
                 return ResponseEntity.ok(BaseResponse.<Void>builder()
                                 .message("Se o e-mail estiver cadastrado, um link de redefinição de senha foi enviado.")
-                                .status("SUCCESS")
+                                .status(StatusResponse.SUCESSO)
                                 .build());
         }
 
@@ -195,7 +196,7 @@ public class AuthController {
                 log.info("Redefinição de senha processada em {} ms. Status: Sucesso", (endTime - startTime));
                 return ResponseEntity.ok(BaseResponse.<Void>builder()
                                 .message("Senha redefinida com sucesso!")
-                                .status("SUCCESS")
+                                .status(StatusResponse.SUCESSO)
                                 .build());
         }
 }

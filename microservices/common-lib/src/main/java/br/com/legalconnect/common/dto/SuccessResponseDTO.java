@@ -2,6 +2,7 @@ package br.com.legalconnect.common.dto;
 
 import java.time.LocalDateTime;
 
+import br.com.legalconnect.enums.StatusResponse;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -19,10 +20,10 @@ public class SuccessResponseDTO extends BaseResponse {
 
     /**
      * Construtor padrão para uma resposta de sucesso.
-     * Define o status como "SUCCESS" e o timestamp atual.
+     * Define o status como StatusResponse.SUCESSO e o timestamp atual.
      */
     public SuccessResponseDTO() {
-        this.setStatus("SUCCESS");
+        this.setStatus(StatusResponse.SUCESSO);
         this.setTimestamp(LocalDateTime.now());
     }
 

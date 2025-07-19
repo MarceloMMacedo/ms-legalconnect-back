@@ -2,6 +2,7 @@ package br.com.legalconnect.auth.service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +33,7 @@ import br.com.legalconnect.common.dto.BaseResponse;
 import br.com.legalconnect.common.exception.BusinessException;
 import br.com.legalconnect.common.exception.ErrorCode;
 import br.com.legalconnect.common.exception.Roles;
+import br.com.legalconnect.enums.StatusResponse;
 import br.com.legalconnect.user.entity.PasswordResetToken;
 import br.com.legalconnect.user.entity.Role;
 import br.com.legalconnect.user.entity.User;
@@ -40,6 +42,7 @@ import br.com.legalconnect.user.entity.User.UserType;
 import br.com.legalconnect.user.repository.PasswordResetTokenRepository;
 import br.com.legalconnect.user.repository.RoleRepository;
 import br.com.legalconnect.user.repository.UserRepository;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -67,7 +70,13 @@ public class AuthService {
 
     private final PasswordResetTokenRepository passwordResetTokenRepository;
 
+    private final EmailService emailService;
+
     private final UserMapper userMapper;
+
+    @Value("${app.frontend.url}") // INJETAR A URL DO FRONTEND
+    private String frontendBaseUrl;
+
     private long passwordResetExpirationMinutes;
 
     @Value("${application.tenant.default-id:00000000-0000-0000-0000-000000000001}")
@@ -87,6 +96,14 @@ public class AuthService {
     @Transactional
     public BaseResponse<AuthResponse> authenticate(LoginRequestDTO request) {
         log.debug("Iniciando autenticação para o e-mail: {}", request.getEmail());
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> {
+                    log.error("Usuário não encontrado no banco de dados para o e-mail: {}", request.getEmail());
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND,
+                            "Usuário não encontrado com o e-mail: " + request.getEmail());
+                });
+
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -97,13 +114,6 @@ public class AuthService {
             log.warn("Falha na autenticação para o e-mail: {}. Erro: {}", request.getEmail(), e.getMessage());
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "Credenciais inválidas.");
         }
-
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> {
-                    log.error("Usuário não encontrado no banco de dados para o e-mail: {}", request.getEmail());
-                    return new BusinessException(ErrorCode.USER_NOT_FOUND,
-                            "Usuário não encontrado com o e-mail: " + request.getEmail());
-                });
 
         // Adiciona id do usuário e id do tenant aos claims do JWT
         Map<String, Object> claims = new HashMap<>();
@@ -127,7 +137,7 @@ public class AuthService {
         }
 
         return BaseResponse.<AuthResponse>builder()
-                .status("SUCCESS")
+                .status(StatusResponse.SUCESSO)
                 .message("Autenticação realizada com sucesso.")
                 .timestamp(LocalDateTime.now())
                 .data(AuthResponse.builder()
@@ -183,7 +193,7 @@ public class AuthService {
             }
 
             return br.com.legalconnect.common.dto.BaseResponse.<AuthResponse>builder()
-                    .status("SUCCESS")
+                    .status(StatusResponse.SUCESSO)
                     .message("Token atualizado com sucesso.")
                     .timestamp(LocalDateTime.now())
                     .data(AuthResponse.builder()
@@ -357,7 +367,7 @@ public class AuthService {
      * @param email O e-mail do usuário que solicitou a recuperação.
      * @throws BusinessException se o usuário não for encontrado.
      */
-    @Transactional
+    // @Transactional
     public void recoverPassword(String email) {
         log.info("Solicitação de recuperação de senha para o e-mail: {}", email);
         User user = userRepository.findByEmail(email)
@@ -371,18 +381,31 @@ public class AuthService {
 
         // 2. Gera um novo token único e define a expiração
         String token = UUID.randomUUID().toString();
-        Instant expiryDate = Instant.now().plus(passwordResetExpirationMinutes, ChronoUnit.MINUTES);
+        Instant expiryDate = Instant.now().plus(60 * 12, ChronoUnit.MINUTES);
 
-        PasswordResetToken resetToken = PasswordResetToken.builder()
-                .token(token)
-                .user(user)
-                .expiraEm(expiryDate)
-                .usado(false)
-                .build();
-
-        passwordResetTokenRepository.save(resetToken);
+        final PasswordResetToken resetToken = passwordResetTokenRepository.findByUserAndUsado(user, true)
+                .orElseGet(() -> {
+                    PasswordResetToken newToken = PasswordResetToken.builder()
+                            .token(token)
+                            .user(user)
+                            .expiraEm(expiryDate)
+                            .usado(false)
+                            .build();
+                    return passwordResetTokenRepository.save(newToken);
+                });
         log.info("Token de redefinição de senha gerado e salvo para o usuário: {}", user.getEmail());
 
+        // CONSTRUIR O LINK DE REDEFINIÇÃO DE SENHA
+        String resetLink = frontendBaseUrl + "/reset-password?token=" + token; // Adapte a rota do seu frontend
+
+        // CHAMAR O NOVO MÉTODO PARA ENVIAR O EMAIL
+        try {
+            // sendPasswordResetEmail(user.getEmail(), user.getNomeCompleto(), resetLink);
+            // // Assumindo que User tem
+            // getNome()
+        } finally {
+            log.error("Erro ao enviar e-mail de recuperação de senha para: {}", user.getEmail());
+        }
         // TODO: [PRODUÇÃO] Enviar e-mail com o link de redefinição de senha
         // O link deve apontar para o frontend, contendo o token:
         // String resetLink =
@@ -401,7 +424,7 @@ public class AuthService {
      *                           for
      *                           fraca.
      */
-    @Transactional
+    // @Transactional
     public void resetPassword(String token, String novaSenha) {
         log.info("Tentativa de redefinição de senha com token.");
 
@@ -417,11 +440,15 @@ public class AuthService {
                     resetToken.getUser().getEmail());
             throw new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_USED);
         }
-
-        if (resetToken.getExpiraEm().isBefore(Instant.now())) {
+        var inspiracao = resetToken.getExpiraEm();
+        var inspiracao2 = Instant.now();
+        if (inspiracao.isBefore(inspiracao2)) {
             log.warn("Falha na redefinição de senha: Token expirado para o usuário: {}",
                     resetToken.getUser().getEmail());
-            passwordResetTokenRepository.delete(resetToken); // Opcional: deletar tokens expirados
+            resetToken.setUsado(true);
+            passwordResetTokenRepository.save(resetToken);
+            // passwordResetTokenRepository.delete(resetToken); // Opcional: deletar tokens
+            // expirados
             throw new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED);
         }
 
@@ -499,5 +526,41 @@ public class AuthService {
         user = userRepository.save(user);
         log.info("Perfil do usuário {} atualizado com sucesso.", userId);
         return userMapper.toDto(user);
+    }
+
+    /**
+     * Método dedicado ao envio do e-mail de recuperação de senha.
+     * Utiliza o template HTML e variáveis dinâmicas.
+     *
+     * @param to        Endereço de e-mail do destinatário.
+     * @param userName  Nome do usuário para personalização do e-mail.
+     * @param resetLink Link completo para a página de redefinição de senha no
+     *                  frontend.
+     */
+    public void sendPasswordResetEmail(String to, String userName, String resetLink) {
+        // PREPARAR VARIÁVEIS PARA O TEMPLATE DO EMAIL
+        Map<String, Object> templateVariables = new HashMap<>();
+        templateVariables.put("userName", userName);
+        templateVariables.put("resetLink", resetLink);
+        templateVariables.put("expirationMinutes", passwordResetExpirationMinutes);
+        templateVariables.put("currentYear", Instant.now().atZone(ZoneId.of("America/Sao_Paulo")).getYear()); // Pega o
+                                                                                                              // ano
+                                                                                                              // atual
+                                                                                                              // para
+                                                                                                              // Parnaíba
+
+        try {
+            // ENVIAR O E-MAIL USANDO O SERVIÇO DE E-MAIL COM TEMPLATE
+            emailService.sendTemplatedEmail(
+                    to,
+                    "Recuperação de Senha - [Seu Nome de Aplicação]", // Assunto do e-mail
+                    "password-reset-email", // Nome do template HTML (sem .html)
+                    templateVariables);
+            log.info("E-mail de recuperação de senha enviado com sucesso para: {}", to);
+        } catch (MessagingException e) {
+            log.error("Erro ao enviar e-mail de recuperação de senha para {}: {}", to, e.getMessage(), e);
+            // Opcional: Você pode relançar uma BusinessException ou tratar de outra forma
+            throw new BusinessException(ErrorCode.INVALID_EMAIL, "Falha ao enviar e-mail de recuperação de senha.");
+        }
     }
 }

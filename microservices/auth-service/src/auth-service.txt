@@ -3555,7 +3555,7 @@ import java.util.List;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL) // Inclui apenas campos não nulos na serialização JSON
 public class BaseResponse<T> {
-    private String status; // Status da resposta (ex: "SUCCESS", "ERROR", "WARNING")
+    private String status; // Status da resposta (ex: StatusResponse.SUCESSO, StatusResponse.ERRO, "WARNING")
     private String message; // Mensagem descritiva da resposta
     private LocalDateTime timestamp; // Data e hora da resposta
     private List<String> errors; // Lista de mensagens de erro, se houver
@@ -3760,7 +3760,7 @@ public class AuthService {
         }
 
         return BaseResponse.<AuthResponse>builder()
-                .status("SUCCESS")
+                .status(StatusResponse.SUCESSO)
                 .message("Autenticação realizada com sucesso.")
                 .timestamp(LocalDateTime.now())
                 .data(AuthResponse.builder()
@@ -3816,7 +3816,7 @@ public class AuthService {
             }
 
             return BaseResponse.<AuthResponse>builder()
-                    .status("SUCCESS")
+                    .status(StatusResponse.SUCESSO)
                     .message("Token atualizado com sucesso.")
                     .timestamp(LocalDateTime.now())
                     .data(AuthResponse.builder()
@@ -4334,7 +4334,7 @@ public class GlobalExceptionHandler {
                 log.warn("Business Exception: {} - Path: {}", ex.getMessage(), request.getDescription(false));
 
                 BaseResponse errorResponse = BaseResponse.builder()
-                                .status("ERROR")
+                                .status(StatusResponse.ERRO)
                                 .message(ex.getMessage())
                                 .errors(List.of(ex.getCode())) // Adiciona o código de erro como parte dos erros
                                 .timestamp(LocalDateTime.now())
@@ -4373,7 +4373,7 @@ public class GlobalExceptionHandler {
                                 request.getDescription(false));
 
                 BaseResponse errorResponse = BaseResponse.builder()
-                                .status("ERROR")
+                                .status(StatusResponse.ERRO)
                                 .message(ErrorCode.VALIDATION_ERROR.getMessage())
                                 .errors(errors)
                                 .timestamp(LocalDateTime.now())
@@ -4399,7 +4399,7 @@ public class GlobalExceptionHandler {
                 log.error("Unhandled Exception: {} - Path: {}", ex.getMessage(), request.getDescription(false), ex);
 
                 BaseResponse errorResponse = BaseResponse.builder()
-                                .status("ERROR")
+                                .status(StatusResponse.ERRO)
                                 .message(ErrorCode.GENERIC_ERROR.getMessage())
                                 .errors(List.of(ErrorCode.GENERIC_ERROR.getCode())) // Adiciona o código de erro
                                                                                     // genérico
@@ -5913,7 +5913,7 @@ import java.util.List;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL) // Inclui apenas campos não nulos na serialização JSON
 public class BaseResponse<T> {
-    private String status; // Status da resposta (ex: "SUCCESS", "ERROR", "WARNING")
+    private String status; // Status da resposta (ex: StatusResponse.SUCESSO, StatusResponse.ERRO, "WARNING")
     private String message; // Mensagem descritiva da resposta
     private LocalDateTime timestamp; // Data e hora da resposta
     private List<String> errors; // Lista de mensagens de erro, se houver
@@ -6118,7 +6118,7 @@ public class AuthService {
         }
 
         return BaseResponse.<AuthResponse>builder()
-                .status("SUCCESS")
+                .status(StatusResponse.SUCESSO)
                 .message("Autenticação realizada com sucesso.")
                 .timestamp(LocalDateTime.now())
                 .data(AuthResponse.builder()
@@ -6174,7 +6174,7 @@ public class AuthService {
             }
 
             return BaseResponse.<AuthResponse>builder()
-                    .status("SUCCESS")
+                    .status(StatusResponse.SUCESSO)
                     .message("Token atualizado com sucesso.")
                     .timestamp(LocalDateTime.now())
                     .data(AuthResponse.builder()
@@ -6692,7 +6692,7 @@ public class GlobalExceptionHandler {
                 log.warn("Business Exception: {} - Path: {}", ex.getMessage(), request.getDescription(false));
 
                 BaseResponse errorResponse = BaseResponse.builder()
-                                .status("ERROR")
+                                .status(StatusResponse.ERRO)
                                 .message(ex.getMessage())
                                 .errors(List.of(ex.getCode())) // Adiciona o código de erro como parte dos erros
                                 .timestamp(LocalDateTime.now())
@@ -6731,7 +6731,7 @@ public class GlobalExceptionHandler {
                                 request.getDescription(false));
 
                 BaseResponse errorResponse = BaseResponse.builder()
-                                .status("ERROR")
+                                .status(StatusResponse.ERRO)
                                 .message(ErrorCode.VALIDATION_ERROR.getMessage())
                                 .errors(errors)
                                 .timestamp(LocalDateTime.now())
@@ -6757,7 +6757,7 @@ public class GlobalExceptionHandler {
                 log.error("Unhandled Exception: {} - Path: {}", ex.getMessage(), request.getDescription(false), ex);
 
                 BaseResponse errorResponse = BaseResponse.builder()
-                                .status("ERROR")
+                                .status(StatusResponse.ERRO)
                                 .message(ErrorCode.GENERIC_ERROR.getMessage())
                                 .errors(List.of(ErrorCode.GENERIC_ERROR.getCode())) // Adiciona o código de erro
                                                                                     // genérico
@@ -8268,7 +8268,7 @@ public class AuthController {
                 return ResponseEntity.ok(BaseResponse.<UserResponseDTO>builder()
                                 .data(registeredUser)
                                 .message("Cliente registrado com sucesso!")
-                                .status("SUCCESS")
+                                .status(StatusResponse.SUCESSO)
                                 .build());
         }
 
@@ -8291,7 +8291,7 @@ public class AuthController {
                 return ResponseEntity.ok(BaseResponse.<UserResponseDTO>builder()
                                 .data(registeredUser)
                                 .message("Advogado pré-registrado com sucesso! Aguardando aprovação.")
-                                .status("SUCCESS")
+                                .status(StatusResponse.SUCESSO)
                                 .build());
         }
 
@@ -8314,7 +8314,7 @@ public class AuthController {
                 return ResponseEntity.ok(BaseResponse.<UserResponseDTO>builder()
                                 .data(registeredUser)
                                 .message("Sócio registrado com sucesso! Aguardando aprovação.")
-                                .status("SUCCESS")
+                                .status(StatusResponse.SUCESSO)
                                 .build());
         }
 
@@ -8336,7 +8336,7 @@ public class AuthController {
                 return ResponseEntity.ok(BaseResponse.<UserResponseDTO>builder()
                                 .data(registeredUser)
                                 .message("Administrador registrado com sucesso! Aguardando aprovação.")
-                                .status("SUCCESS")
+                                .status(StatusResponse.SUCESSO)
                                 .build());
         }
 
@@ -8356,7 +8356,7 @@ public class AuthController {
                                 request.getEmail(), (endTime - startTime));
                 return ResponseEntity.ok(BaseResponse.<Void>builder()
                                 .message("Se o e-mail estiver cadastrado, um link de redefinição de senha foi enviado.")
-                                .status("SUCCESS")
+                                .status(StatusResponse.SUCESSO)
                                 .build());
         }
 
@@ -8375,7 +8375,7 @@ public class AuthController {
                 log.info("Redefinição de senha processada em {} ms. Status: Sucesso", (endTime - startTime));
                 return ResponseEntity.ok(BaseResponse.<Void>builder()
                                 .message("Senha redefinida com sucesso!")
-                                .status("SUCCESS")
+                                .status(StatusResponse.SUCESSO)
                                 .build());
         }
 }
@@ -8837,7 +8837,7 @@ public class AuthService {
         }
 
         return BaseResponse.<AuthResponse>builder()
-                .status("SUCCESS")
+                .status(StatusResponse.SUCESSO)
                 .message("Autenticação realizada com sucesso.")
                 .timestamp(LocalDateTime.now())
                 .data(AuthResponse.builder()
@@ -8893,7 +8893,7 @@ public class AuthService {
             }
 
             return br.com.legalconnect.common.dto.BaseResponse.<AuthResponse>builder()
-                    .status("SUCCESS")
+                    .status(StatusResponse.SUCESSO)
                     .message("Token atualizado com sucesso.")
                     .timestamp(LocalDateTime.now())
                     .data(AuthResponse.builder()

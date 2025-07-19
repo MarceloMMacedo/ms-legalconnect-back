@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.legalconnect.common.dto.BaseResponse; // Assumindo que BaseResponse está na common-lib
 import br.com.legalconnect.common.exception.ErrorCode; // Assumindo ErrorCode está na common-lib
+import br.com.legalconnect.enums.StatusResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -65,7 +66,7 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
 
         // Constrói o objeto de resposta padronizado
         BaseResponse<Void> errorResponse = BaseResponse.<Void>builder()
-                .status("ERROR") // Ou "UNAUTHORIZED"
+                .status(StatusResponse.ERRO) // Ou "UNAUTHORIZED"
                 .message(ErrorCode.UNAUTHORIZED_ACCESS.getMessage() + ": " + authException.getMessage())
                 .errors(List.of(ErrorCode.UNAUTHORIZED_ACCESS.getCode()))
                 .build();

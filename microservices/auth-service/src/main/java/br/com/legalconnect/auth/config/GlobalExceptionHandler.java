@@ -9,13 +9,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
 import br.com.legalconnect.common.dto.BaseResponse;
 import br.com.legalconnect.common.exception.BusinessException;
 import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.enums.StatusResponse;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  *        Lida com {@link BusinessException} e exceções de validação do Spring,
  *        além de capturar exceções genéricas.
  */
-@ControllerAdvice
+// @ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
@@ -49,7 +49,7 @@ public class GlobalExceptionHandler {
                 log.warn("Business Exception: {} - Path: {}", ex.getMessage(), request.getDescription(false));
 
                 BaseResponse errorResponse = BaseResponse.builder()
-                                .status("ERROR")
+                                .status(StatusResponse.ERRO)
                                 .message(ex.getMessage())
                                 .errors(List.of(ex.getCode())) // Adiciona o código de erro como parte dos erros
                                 .timestamp(LocalDateTime.now())
@@ -89,7 +89,7 @@ public class GlobalExceptionHandler {
                                 request.getDescription(false));
 
                 BaseResponse errorResponse = BaseResponse.builder()
-                                .status("ERROR")
+                                .status(StatusResponse.ERRO)
                                 .message(ErrorCode.VALIDATION_ERROR.getMessage())
                                 .errors(errors)
                                 .timestamp(LocalDateTime.now())
@@ -115,7 +115,7 @@ public class GlobalExceptionHandler {
                 log.error("Unhandled Exception: {} - Path: {}", ex.getMessage(), request.getDescription(false), ex);
 
                 BaseResponse errorResponse = BaseResponse.builder()
-                                .status("ERROR")
+                                .status(StatusResponse.ERRO)
                                 .message(ErrorCode.GENERIC_ERROR.getMessage())
                                 .errors(List.of(ErrorCode.GENERIC_ERROR.getCode())) // Adiciona o código de erro
                                                                                     // genérico
