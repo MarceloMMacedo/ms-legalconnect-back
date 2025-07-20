@@ -11,7 +11,7 @@
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
     <groupId>br.com.legalconnect</groupId>
-    <artifactId>auth-service</artifactId> <!-- Certifique-se de que o artifactId está correto para o auth-service -->
+    <artifactId>legalconnect-auth-service</artifactId> <!-- Certifique-se de que o artifactId está correto para o auth-service -->
     <version>0.0.1-SNAPSHOT</version>
     <name>legalconnect-auth-service</name>
     <description>Authentication Microservice for LegalConnect</description>
@@ -157,29 +157,7 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
-        <!-- REMOVIDO: hibernate-jpa-2.0-api e jakarta.persistence-api.
-             spring-boot-starter-data-jpa já traz a Jakarta Persistence API correta para Spring Boot 3.x.
-             A dependência hibernate-jpa-2.0-api é para JPA 2.0 (Java EE 6), que é muito antiga para Java
-        17/Spring Boot 3.
-        -->
-        <!-- <dependency>
-            <groupId>org.hibernate.javax.persistence</groupId>
-            <artifactId>hibernate-jpa-2.0-api</artifactId>
-            <version>1.0.1.Final</version>
-        </dependency> -->
-        <!-- <dependency>
-            <groupId>jakarta.persistence</groupId>
-            <artifactId>jakarta.persistence-api</artifactId>
-        </dependency> -->
 
-        <!-- REMOVIDO: jakarta.servlet-api com scope provided.
-             spring-boot-starter-web já traz as dependências de servlet API necessárias. -->
-        <!-- <dependency>
-            <groupId>jakarta.servlet</groupId>
-            <artifactId>jakarta.servlet-api</artifactId>
-            <version>6.0.0</version>
-            <scope>provided</scope>
-        </dependency> -->
     </dependencies>
 
     <dependencyManagement>

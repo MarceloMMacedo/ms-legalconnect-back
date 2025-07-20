@@ -1,10 +1,10 @@
-package br.com.legalconnect.common.common_lib;
+package br.com.legalconnect.auth.auth_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class CommonLibApplicationTests {
+class AuthServiceApplicationTests {
 
 	@Test
 	void contextLoads() {

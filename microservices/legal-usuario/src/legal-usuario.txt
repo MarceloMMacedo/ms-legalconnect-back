@@ -1,0 +1,1779 @@
+```java
+package br.com.legalconnect;
+
+public class implents {
+
+}
+
+```
+```java
+package br.com.legalconnect;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@EnableDiscoveryClient
+@SpringBootApplication(exclude = FlywayAutoConfiguration.class) // Remova o scanBasePackages aqui também, se já está no
+                                                                // pacote raiz
+@EntityScan(basePackages = {
+        // "br.com.legalconnect.entity",
+        "br.com.legalconnect.entity"
+})
+// @EnableJpaRepositories(basePackages = {
+// "br.com.legalconnect.user.repository",
+// "br.com.legalconnect.auth.repository"
+// })
+// REMOVA COMPLETAMENTE ESTE @ComponentScan, a menos que você tenha um motivo
+// muito específico e saiba o que está fazendo
+// @ComponentScan(basePackages = { "br.com.legalconnect.auth.service" })
+public class LegalUsuarioApplication {
+
+    private static final Logger log = LoggerFactory.getLogger(LegalUsuarioApplication.class);
+
+    public static void main(String[] args) {
+        SpringApplication.run(LegalUsuarioApplication.class, args);
+        log.info("LegalUsuarioApplication iniciada com sucesso!");
+    }
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class AdministradorRequestDTO
+ * @brief DTO para requisições de criação ou atualização de Administrador.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class AdministradorRequestDTO extends PessoaRequestDTO {
+    private String status;
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class AdministradorResponseDTO
+ * @brief DTO para respostas de Administrador.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class AdministradorResponseDTO extends PessoaResponseDTO {
+    private String status;
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class ClienteRequestDTO
+ * @brief DTO para requisições de criação ou atualização de Cliente.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class ClienteRequestDTO extends PessoaRequestDTO {
+    private String status;
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class ClienteResponseDTO
+ * @brief DTO para respostas de Cliente.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class ClienteResponseDTO extends PessoaResponseDTO {
+    private String status;
+    private String tipo;
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * @class EmpresaRequestDTO
+ * @brief DTO para requisições de criação ou atualização de Empresa.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class EmpresaRequestDTO {
+    private UUID id; // Para atualizações, pode ser necessário o ID
+
+    @NotBlank(message = "O nome fantasia não pode estar em branco.")
+    @Size(max = 255, message = "O nome fantasia deve ter no máximo 255 caracteres.")
+    private String nomeFantasia;
+
+    @NotBlank(message = "A razão social não pode estar em branco.")
+    @Size(max = 255, message = "A razão social deve ter no máximo 255 caracteres.")
+    private String razaoSocial;
+
+    @NotBlank(message = "O CNPJ não pode estar em branco.")
+    @Pattern(regexp = "\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}", message = "Formato de CNPJ inválido. Use XX.XXX.XXX/XXXX-XX.")
+    private String cnpj;
+
+    @Email(message = "Formato de email de contato inválido.")
+    @Size(max = 255, message = "O email de contato deve ter no máximo 255 caracteres.")
+    private String emailContato;
+
+    @Valid // Valida a lista de DTOs aninhados
+    private List<EnderecoRequestDTO> enderecos;
+
+    private Set<String> telefones; // Lista de números de telefone como strings
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * @class EmpresaResponseDTO
+ * @brief DTO para respostas de Empresa.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class EmpresaResponseDTO {
+    private UUID id;
+    private String nomeFantasia;
+    private String razaoSocial;
+    private String cnpj;
+    private String emailContato;
+    private List<EnderecoResponseDTO> enderecos;
+    private Set<String> telefones;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import java.util.UUID;
+
+import br.com.legalconnect.entity.Endereco.TipoEndereco;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * @class EnderecoRequestDTO
+ * @brief DTO para requisições de criação ou atualização de Endereco.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class EnderecoRequestDTO {
+    private UUID id; // Para atualizações, pode ser necessário o ID
+
+    @NotBlank(message = "O logradouro não pode estar em branco.")
+    @Size(max = 255, message = "O logradouro deve ter no máximo 255 caracteres.")
+    private String logradouro;
+
+    @NotBlank(message = "O número não pode estar em branco.")
+    @Size(max = 20, message = "O número deve ter no máximo 20 caracteres.")
+    private String numero;
+
+    @Size(max = 255, message = "O complemento deve ter no máximo 255 caracteres.")
+    private String complemento;
+
+    @NotBlank(message = "O bairro não pode estar em branco.")
+    @Size(max = 100, message = "O bairro deve ter no máximo 100 caracteres.")
+    private String bairro;
+
+    @NotBlank(message = "A cidade não pode estar em branco.")
+    @Size(max = 100, message = "A cidade deve ter no máximo 100 caracteres.")
+    private String cidade;
+
+    @NotBlank(message = "O estado não pode estar em branco.")
+    @Size(min = 2, max = 2, message = "O estado deve ter 2 caracteres (UF).")
+    private String estado;
+
+    @NotBlank(message = "O CEP não pode estar em branco.")
+    @Pattern(regexp = "\\d{5}-\\d{3}", message = "Formato de CEP inválido. Use XXXXX-XXX.")
+    private String cep;
+
+    @NotBlank(message = "O país não pode estar em branco.")
+    @Size(max = 50, message = "O país deve ter no máximo 50 caracteres.")
+    private String pais;
+
+    @NotNull(message = "O tipo de endereço não pode ser nulo.")
+    private TipoEndereco tipoEndereco;
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import br.com.legalconnect.entity.Endereco.TipoEndereco;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * @class EnderecoResponseDTO
+ * @brief DTO para respostas de Endereco.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class EnderecoResponseDTO {
+    private UUID id;
+    private String logradouro;
+    private String numero;
+    private String complemento;
+    private String bairro;
+    private String cidade;
+    private String estado;
+    private String cep;
+    private String pais;
+    private TipoEndereco tipoEndereco;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import java.time.LocalDate;
+import java.util.List; // Usar List para Enderecos para manter a ordem se necessário
+import java.util.Set;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class PessoaRequestDTO
+ * @brief DTO base para requisições de criação ou atualização de Pessoa.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class PessoaRequestDTO {
+    // Não incluir o ID aqui, pois ele será definido pela entidade base (BaseEntity)
+    // e retornado no ResponseDTO.
+
+    @NotNull(message = "Os dados do usuário não podem ser nulos.")
+    @Valid // Valida o DTO aninhado
+    private UserRequestDTO usuario;
+
+    @NotBlank(message = "O nome completo não pode estar em branco.")
+    @Size(max = 255, message = "O nome completo deve ter no máximo 255 caracteres.")
+    private String nomeCompleto;
+
+    @NotBlank(message = "O CPF não pode estar em branco.")
+    @Pattern(regexp = "\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}", message = "Formato de CPF inválido. Use XXX.XXX.XXX-XX.")
+    private String cpf;
+
+    @PastOrPresent(message = "A data de nascimento não pode ser futura.")
+    private LocalDate dataNascimento;
+
+    @Valid // Valida a lista de DTOs aninhados
+    private List<EnderecoRequestDTO> enderecos; // Usar List para manter a ordem se necessário
+
+    private Set<String> telefones; // Lista de números de telefone como strings
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class PessoaResponseDTO
+ * @brief DTO base para respostas de Pessoa.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class PessoaResponseDTO {
+    private UUID id;
+    private UserResponseDTO usuario;
+    private String nomeCompleto;
+    private String cpf;
+    private LocalDate dataNascimento;
+    private List<EnderecoResponseDTO> enderecos;
+    private Set<String> telefones;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import br.com.legalconnect.entity.Plano.VisibilidadeDestaque;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * @class PlanoResponseDTO
+ * @brief DTO para respostas de Plano.
+ *        Esta classe é um DTO simplificado para ser usado em outros
+ *        microsserviços.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class PlanoResponseDTO {
+    private UUID id;
+    private String nome;
+    private String descricao;
+    private BigDecimal precoMensal;
+    private BigDecimal precoAnual;
+    private Integer limiteServicosAgendaveis;
+    private VisibilidadeDestaque visibilidadeDestaque;
+    private Boolean acessoRelatoriosAvancados;
+    private Boolean permitePedidosOrcamento;
+    private Integer periodoTesteDias;
+    private Boolean isDefault;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import java.util.UUID;
+
+import br.com.legalconnect.entity.Profissional.StatusProfissional;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class ProfissionalRequestDTO
+ * @brief DTO para requisições de criação ou atualização de Profissional.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class ProfissionalRequestDTO extends PessoaRequestDTO {
+    @NotBlank(message = "O número da OAB não pode estar em branco.")
+    @Size(max = 50, message = "O número da OAB deve ter no máximo 50 caracteres.")
+    private String numeroOab;
+
+    @NotNull(message = "O status profissional não pode ser nulo.")
+    private StatusProfissional statusProfissional;
+
+    @NotNull(message = "A indicação de uso do marketplace não pode ser nula.")
+    private Boolean usaMarketplace;
+
+    @NotNull(message = "A indicação de participação em plano não pode ser nula.")
+    private Boolean fazParteDePlano;
+
+    private UUID empresaId; // ID da empresa associada (opcional)
+
+    @NotNull(message = "O ID do plano não pode ser nulo.")
+    private UUID planoId; // ID do plano de assinatura
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import br.com.legalconnect.entity.Profissional.StatusProfissional;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class ProfissionalResponseDTO
+ * @brief DTO para respostas de Profissional.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class ProfissionalResponseDTO extends PessoaResponseDTO {
+    private String numeroOab;
+    private StatusProfissional statusProfissional;
+    private Boolean usaMarketplace;
+    private Boolean fazParteDePlano;
+    private EmpresaResponseDTO empresa; // DTO da empresa associada (simplificado)
+    private PlanoResponseDTO plano; // DTO do plano de assinatura
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * @class UserRequestDTO
+ * @brief DTO para requisições de criação ou atualização de User.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserRequestDTO {
+    @NotBlank(message = "O email não pode estar em branco.")
+    @Email(message = "Formato de email inválido.")
+    private String email;
+
+    @NotBlank(message = "A senha não pode estar em branco.")
+    @Size(min = 8, message = "A senha deve ter no mínimo 8 caracteres.")
+    private String password;
+
+    // O papel (Role) pode ser definido aqui ou inferido pelo serviço de
+    // autenticação/usuário
+    // dependendo da lógica de negócio. Para simplificar, pode ser incluído se for
+    // um input direto.
+    // private String role;
+}
+```
+```java
+package br.com.legalconnect.dto;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * @class UserResponseDTO
+ * @brief DTO para respostas de User.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserResponseDTO {
+    private UUID id;
+    private String email;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    // private String role; // Incluir se o papel for relevante na resposta
+}
+```
+```java
+package br.com.legalconnect.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class Administrador
+ * @brief Entidade que representa um administrador da plataforma.
+ *        Estende a entidade Pessoa. Atualmente não possui campos adicionais,
+ *        mas pode ser expandido.
+ *        Mapeado para a tabela 'tb_administrador' que se junta a 'tb_pessoa'
+ *        pela chave primária.
+ */
+@Entity
+@Table(name = "tb_administrador")
+@PrimaryKeyJoinColumn(name = "id")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class Administrador extends Pessoa {
+    private String status;
+
+    // Atualmente, não há campos adicionais específicos para Administrador além dos
+    // herdados de Pessoa.
+    // Pode ser expandido no futuro com, por exemplo, nível de acesso
+    // administrativo, etc.
+}
+```
+```java
+package br.com.legalconnect.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class Cliente
+ * @brief Entidade que representa um cliente.
+ *        Estende a entidade Pessoa. Atualmente não possui campos adicionais,
+ *        mas pode ser expandido.
+ *        Mapeado para a tabela 'tb_cliente' que se junta a 'tb_pessoa' pela
+ *        chave primária.
+ */
+@Entity
+@Table(name = "tb_cliente")
+@PrimaryKeyJoinColumn(name = "id")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class Cliente extends Pessoa {
+    private String status;
+    private String tipo;
+
+    // Atualmente, não há campos adicionais específicos para Cliente além dos
+    // herdados de Pessoa.
+    // Pode ser expandido no futuro com, por exemplo, histórico de preferências,
+    // etc.
+}
+```
+```java
+package br.com.legalconnect.entity;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import br.com.legalconnect.common.dto.BaseEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class Empresa
+ * @brief Entidade que representa uma empresa que pode contratar planos na
+ *        plataforma.
+ *        Esta entidade não estende Pessoa, pois representa uma pessoa jurídica.
+ *        Mapeada para a tabela 'tb_empresa'.
+ */
+@Entity
+@Table(name = "tb_empresa")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class Empresa extends BaseEntity {
+
+    @Column(name = "nome_fantasia", nullable = false, length = 255)
+    private String nomeFantasia; // Nome fantasia da empresa
+
+    @Column(name = "razao_social", nullable = false, length = 255)
+    private String razaoSocial; // Razão social da empresa
+
+    @Column(name = "cnpj", nullable = false, unique = true, length = 18) // CNPJ com máscara
+    private String cnpj; // Número do Cadastro Nacional de Pessoas Jurídicas (CNPJ), único por empresa
+
+    @Column(name = "email_contato", length = 255)
+    private String emailContato; // E-mail de contato da empresa
+
+    /**
+     * @brief Relacionamento um-para-muitos com a entidade Endereco.
+     *        Uma empresa pode ter múltiplos endereços (sede, filiais, etc.).
+     *        CascadeType.ALL garante que operações nos Enderecos se propaguem para
+     *        Empresa.
+     *        mappedBy indica que o relacionamento é gerenciado pelo campo 'empresa'
+     *        na entidade Endereco.
+     */
+    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<Endereco> enderecos = new HashSet<>(); // Conjunto de endereços da empresa
+
+    /**
+     * @brief Coleção de strings para armazenar múltiplos números de telefone.
+     *        Será mapeada para uma tabela separada 'tb_empresa_telefones'.
+     */
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "tb_empresa_telefones", joinColumns = @JoinColumn(name = "empresa_id"))
+    @Column(name = "numero_telefone", length = 20)
+    private Set<String> telefones = new HashSet<>(); // Conjunto de números de telefone da empresa
+}
+```
+```java
+package br.com.legalconnect.entity;
+
+import br.com.legalconnect.common.dto.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class Endereco
+ * @brief Entidade que representa um endereço detalhado.
+ *        Pode ser associada a Pessoas ou Empresas.
+ *        Mapeada para a tabela 'tb_endereco'.
+ */
+@Entity
+@Table(name = "tb_endereco")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class Endereco extends BaseEntity {
+
+    @Column(name = "logradouro", nullable = false, length = 255)
+    private String logradouro; // Nome da rua, avenida, etc.
+
+    @Column(name = "numero", nullable = false, length = 20)
+    private String numero; // Número do imóvel
+
+    @Column(name = "complemento", length = 255)
+    private String complemento; // Complemento (ex: apto, sala, bloco)
+
+    @Column(name = "bairro", nullable = false, length = 100)
+    private String bairro; // Bairro
+
+    @Column(name = "cidade", nullable = false, length = 100)
+    private String cidade; // Cidade
+
+    @Column(name = "estado", nullable = false, length = 2)
+    private String estado; // Estado (UF)
+
+    @Column(name = "cep", nullable = false, length = 9) // CEP com máscara
+    private String cep; // Código de Endereçamento Postal
+
+    @Column(name = "pais", nullable = false, length = 50)
+    private String pais = "Brasil"; // País (valor padrão "Brasil")
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_endereco", nullable = false, length = 50)
+    private TipoEndereco tipoEndereco; // Tipo de endereço (ex: RESIDENCIAL, COMERCIAL, ESCRITORIO)
+
+    /**
+     * @brief Relacionamento muitos-para-um com a entidade Pessoa (opcional).
+     *        Um endereço pode pertencer a uma pessoa.
+     *        Somente um dos campos (pessoa ou empresa) deve ser preenchido.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pessoa_id")
+    private Pessoa pessoa;
+
+    /**
+     * @brief Relacionamento muitos-para-um com a entidade Empresa (opcional).
+     *        Um endereço pode pertencer a uma empresa.
+     *        Somente um dos campos (pessoa ou empresa) deve ser preenchido.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empresa_id")
+    private Empresa empresa;
+
+    /**
+     * @enum TipoEndereco
+     * @brief Enumeração para representar o tipo de endereço.
+     */
+    public enum TipoEndereco {
+        RESIDENCIAL,
+        COMERCIAL,
+        ESCRITORIO,
+        COBRANCA,
+        ENTREGA,
+        OUTRO
+    }
+}
+```
+```java
+package br.com.legalconnect.entity;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set; // Usaremos Set para evitar duplicatas e garantir unicidade
+
+import br.com.legalconnect.common.dto.BaseEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class Pessoa
+ * @brief Entidade base abstrata para todas as pessoas no sistema (Profissional,
+ *        Cliente, Administrador).
+ *        Contém dados comuns a todos os tipos de pessoas e um relacionamento
+ *        OneToOne com a entidade User.
+ *        Utiliza estratégia de herança JOINED para mapear subclasses em tabelas
+ *        separadas.
+ */
+@Entity
+@Table(name = "tb_pessoa")
+@Inheritance(strategy = InheritanceType.JOINED)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public abstract class Pessoa extends BaseEntity {
+
+    /**
+     * @brief Relacionamento um-para-um com a entidade User.
+     *        Este lado é o dono do relacionamento, e a coluna 'user_id' será criada
+     *        em 'tb_pessoa'.
+     *        O CascadeType.ALL garante que operações no User (como deleção) se
+     *        propaguem para Pessoa.
+     */
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, unique = true)
+    private User usuario; // O usuário associado a esta pessoa
+
+    @Column(name = "nome_completo", nullable = false, length = 255)
+    private String nomeCompleto; // Nome completo da pessoa
+
+    @Column(name = "cpf", nullable = false, unique = true, length = 14)
+    private String cpf; // Número do Cadastro de Pessoa Física (CPF), único por pessoa
+
+    @Column(name = "data_nascimento")
+    private LocalDate dataNascimento; // Data de nascimento da pessoa
+
+    /**
+     * @brief Relacionamento um-para-muitos com a entidade Endereco.
+     *        Uma pessoa pode ter múltiplos endereços (residencial, comercial,
+     *        etc.).
+     *        CascadeType.ALL garante que operações nos Enderecos se propaguem para
+     *        Pessoa.
+     *        mappedBy indica que o relacionamento é gerenciado pelo campo 'pessoa'
+     *        na entidade Endereco.
+     */
+    @OneToMany(mappedBy = "pessoa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<Endereco> enderecos = new HashSet<>(); // Conjunto de endereços da pessoa
+
+    /**
+     * @brief Coleção de strings para armazenar múltiplos números de telefone.
+     *        Será mapeada para uma tabela separada 'tb_pessoa_telefones'.
+     */
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "tb_pessoa_telefones", joinColumns = @JoinColumn(name = "pessoa_id"))
+    @Column(name = "numero_telefone", length = 20)
+    private Set<String> telefones = new HashSet<>(); // Conjunto de números de telefone da pessoa
+}
+```
+```java
+package br.com.legalconnect.entity;
+
+import java.math.BigDecimal;
+
+import br.com.legalconnect.common.dto.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class Plano
+ * @brief Entidade que representa um plano de assinatura oferecido na
+ *        plataforma.
+ *        Esta classe é um placeholder e deve ser definida em seu próprio
+ *        microsserviço (marketplace).
+ *        Mapeada para a tabela 'tb_plano'.
+ */
+@Entity
+@Table(name = "tb_plano")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class Plano extends BaseEntity {
+
+    @Column(name = "nome", nullable = false, unique = true, length = 100)
+    private String nome; // Nome do plano (ex: Free, Premium)
+
+    @Column(name = "descricao", columnDefinition = "TEXT")
+    private String descricao; // Descrição detalhada do plano
+
+    @Column(name = "preco_mensal", nullable = false, precision = 10, scale = 2)
+    private BigDecimal precoMensal; // Preço mensal do plano
+
+    @Column(name = "preco_anual", nullable = false, precision = 10, scale = 2)
+    private BigDecimal precoAnual; // Preço anual do plano
+
+    @Column(name = "limite_servicos_agendaveis")
+    private Integer limiteServicosAgendaveis; // Limite de serviços que podem ser agendados
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibilidade_destaque", nullable = false, length = 50)
+    private VisibilidadeDestaque visibilidadeDestaque; // Nível de destaque no marketplace
+
+    @Column(name = "acesso_relatorios_avancados", nullable = false)
+    private Boolean acessoRelatoriosAvancados; // Indica se o plano dá acesso a relatórios avançados
+
+    @Column(name = "permite_pedidos_orcamento", nullable = false)
+    private Boolean permitePedidosOrcamento; // Indica se o plano permite pedidos de orçamento
+
+    @Column(name = "periodo_teste_dias")
+    private Integer periodoTesteDias; // Período de teste gratuito em dias
+
+    @Column(name = "is_default", nullable = false)
+    private Boolean isDefault; // Indica se é o plano padrão para novos cadastros
+
+    /**
+     * @enum VisibilidadeDestaque
+     * @brief Enumeração para representar o nível de visibilidade/destaque de um
+     *        plano no marketplace.
+     */
+    public enum VisibilidadeDestaque {
+        PADRAO,
+        PREMIUM,
+        DESTAQUE_MAXIMO
+    }
+}
+```
+```java
+package br.com.legalconnect.entity;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class Profissional
+ * @brief Entidade que representa um profissional do direito.
+ *        Estende a entidade Pessoa e adiciona campos específicos de um
+ *        profissional.
+ *        Mapeado para a tabela 'tb_profissional' que se junta a 'tb_pessoa'
+ *        pela chave primária.
+ */
+@Entity
+@Table(name = "tb_profissional")
+@PrimaryKeyJoinColumn(name = "id")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class Profissional extends Pessoa {
+
+    @Column(name = "numero_oab", nullable = false, unique = true, length = 50)
+    private String numeroOab; // Número de registro na OAB, único por profissional
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_profissional", nullable = false, length = 50)
+    private StatusProfissional statusProfissional; // Status específico do profissional (ex: ATIVO, LICENCIADO)
+
+    @Column(name = "usa_marketplace", nullable = false)
+    private Boolean usaMarketplace = false; // Indica se o profissional deseja aparecer no marketplace
+
+    @Column(name = "faz_parte_de_plano", nullable = false)
+    private Boolean fazParteDePlano = false; // Indica se o profissional está associado a um plano pago
+
+    /**
+     * @brief Relacionamento muitos-para-um com a entidade Empresa (opcional).
+     *        Um profissional pode pertencer a uma empresa.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empresa_id") // Coluna de chave estrangeira para a empresa
+    private Empresa empresa; // A empresa à qual o profissional está associado (se houver)
+
+    /**
+     * @brief Relacionamento muitos-para-um com a entidade Plano.
+     *        Um profissional está associado a um plano de assinatura.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "plano_id", nullable = false) // Coluna de chave estrangeira para o plano
+    private Plano plano; // O plano de assinatura do advogado
+    @ManyToMany(fetch = FetchType.EAGER) // Relacionamento muitos-para-muitos com Role
+    @JoinTable(name = "tb_user_profissionals_role", // Tabela de junção
+            joinColumns = @JoinColumn(name = "profissional_profissionals_id"), // Coluna que referencia User
+            inverseJoinColumns = @JoinColumn(name = "role_id") // Coluna que referencia Role
+    )
+    private Set<RoleProfissional> roleProfissionals = new HashSet<>(); // Papéis/perfil de acesso do usuário
+
+    /**
+     * @enum StatusProfissional
+     * @brief Enumeração para representar o status específico de um Profissional.
+     */
+    public enum StatusProfissional {
+        ATIVO, // Profissional ativo e em dia
+        LICENCIADO, // Profissional com licença temporariamente suspensa
+        SUSPENSO, // Profissional suspenso (ex: por infração)
+        EM_ANALISE // Profissional aguardando aprovação/verificação
+    }
+}
+```
+```java
+package br.com.legalconnect.entity;
+
+import br.com.legalconnect.common.dto.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class Role
+ * @brief Entidade para definir os papéis de acesso do usuário no sistema.
+ *
+ *        Esta tabela de roles agora reside nos schemas de tenant, o que
+ *        significa
+ *        que cada tenant pode ter seus próprios conjuntos de roles ou roles com
+ *        IDs diferentes.
+ */
+@Entity
+@Table(name = "tb_role") // A tabela tb_role agora reside no schema do tenant
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class RoleProfissional extends BaseEntity {
+
+    @Column(name = "nome", nullable = false, unique = true, length = 100)
+    private String nome; // Nome descritivo e único do papel (ex: CLIENTE, ADVOGADO)
+
+    @Column(name = "descricao", columnDefinition = "TEXT")
+    private String descricao; // Uma descrição detalhada do papel
+}
+```
+```java
+package br.com.legalconnect.entity;
+
+import br.com.legalconnect.common.dto.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class User
+ * @brief Entidade base para todos os usuários (clientes, advogados,
+ *        administradores de tenant, etc.).
+ *
+ *        Esta entidade representa um usuário na plataforma e está associada a
+ *        um tenant
+ *        específico. A tabela de usuário reside nos schemas de tenant.
+ */
+@Entity
+@Table(name = "tb_user") // A tabela tb_user agora reside no schema do tenant
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class User extends BaseEntity { // Implementa UserDetails
+
+    @Column(name = "nome_completo", nullable = false, length = 255)
+    private String nomeCompleto; // Nome completo do usuário
+
+    @Column(name = "email", nullable = false, unique = true, length = 255)
+    private String email; // Endereço de e-mail principal do usuário (único por schema de tenant)
+
+    @Column(name = "cpf", nullable = false, unique = true, length = 14)
+    private String cpf; // Número do Cadastro de Pessoa Física do usuário (único por schema de tenant)
+
+    @Column(name = "telefone", length = 20)
+    private String telefone; // Número de telefone de contato do usuário
+
+    @Column(name = "senha_hash", nullable = false, columnDefinition = "TEXT")
+    private String senhaHash; // Representação criptografada (hashed) da senha do usuário
+
+    @Column(name = "foto_url", columnDefinition = "TEXT")
+    private String fotoUrl; // URL da foto de perfil do usuário no S3
+
+    /**
+     * @enum UserType
+     * @brief Enumeração para categorizar o tipo principal de um usuário.
+     *        Define se o usuário é um cliente, advogado ou administrador da
+     *        plataforma.
+     */
+    public enum UserType {
+        CLIENTE, // Usuário final que busca serviços jurídicos
+        ADVOGADO, // Profissional do direito que oferece serviços
+        PLATAFORMA_ADMIN, // Administrador da plataforma com privilégios totais
+        SOCIO
+    }
+
+    /**
+     * @enum UserStatus
+     * @brief Enumeração para representar o status atual da conta de um usuário.
+     *        Define o estado operacional da conta do usuário na plataforma.
+     */
+    public enum UserStatus {
+        ACTIVE, INACTIVE, PENDING_APPROVAL, REJECTED, PENDING
+    }
+
+    // --- Implementação de UserDetails ---
+
+}
+```
+```java
+package br.com.legalconnect.mapper;
+
+import br.com.legalconnect.dto.AdministradorRequestDTO;
+import br.com.legalconnect.dto.AdministradorResponseDTO;
+import br.com.legalconnect.entity.Administrador;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+
+/**
+ * @interface AdministradorMapper
+ * @brief Mapper MapStruct para conversão entre Administrador e seus DTOs.
+ */
+@Mapper(componentModel = "spring", uses = {PessoaMapper.class, EnderecoMapper.class, UserMapper.class})
+public interface AdministradorMapper extends PessoaMapper {
+
+    AdministradorMapper INSTANCE = Mappers.getMapper(AdministradorMapper.class);
+
+    /**
+     * @brief Mapeia um AdministradorRequestDTO para uma entidade Administrador.
+     * @param dto O DTO de requisição do administrador.
+     * @return A entidade Administrador.
+     */
+    Administrador toEntity(AdministradorRequestDTO dto);
+
+    /**
+     * @brief Mapeia uma entidade Administrador para um AdministradorResponseDTO.
+     * @param entity A entidade Administrador.
+     * @return O DTO de resposta do administrador.
+     */
+    @Mapping(source = "status", target = "status")
+    AdministradorResponseDTO toResponseDTO(Administrador entity);
+}
+```
+```java
+package br.com.legalconnect.mapper;
+
+import br.com.legalconnect.dto.ClienteRequestDTO;
+import br.com.legalconnect.dto.ClienteResponseDTO;
+import br.com.legalconnect.entity.Cliente;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+
+/**
+ * @interface ClienteMapper
+ * @brief Mapper MapStruct para conversão entre Cliente e seus DTOs.
+ */
+@Mapper(componentModel = "spring", uses = {PessoaMapper.class, EnderecoMapper.class, UserMapper.class})
+public interface ClienteMapper extends PessoaMapper {
+
+    ClienteMapper INSTANCE = Mappers.getMapper(ClienteMapper.class);
+
+    /**
+     * @brief Mapeia um ClienteRequestDTO para uma entidade Cliente.
+     * @param dto O DTO de requisição do cliente.
+     * @return A entidade Cliente.
+     */
+    Cliente toEntity(ClienteRequestDTO dto);
+
+    /**
+     * @brief Mapeia uma entidade Cliente para um ClienteResponseDTO.
+     * @param entity A entidade Cliente.
+     * @return O DTO de resposta do cliente.
+     */
+    @Mapping(source = "status", target = "status")
+    @Mapping(target = "tipo", ignore = true) // O campo 'tipo' não existe na entidade Cliente, apenas no DTO de resposta
+    ClienteResponseDTO toResponseDTO(Cliente entity);
+}
+```
+```java
+package br.com.legalconnect.mapper;
+
+import br.com.legalconnect.dto.EmpresaRequestDTO;
+import br.com.legalconnect.dto.EmpresaResponseDTO;
+import br.com.legalconnect.entity.Empresa;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+
+import java.util.List;
+import java.util.Set;
+
+/**
+ * @interface EmpresaMapper
+ * @brief Mapper MapStruct para conversão entre Empresa e seus DTOs.
+ */
+@Mapper(componentModel = "spring", uses = {EnderecoMapper.class})
+public interface EmpresaMapper {
+
+    EmpresaMapper INSTANCE = Mappers.getMapper(EmpresaMapper.class);
+
+    /**
+     * @brief Converte um EmpresaRequestDTO para uma entidade Empresa.
+     * @param dto O DTO de requisição da empresa.
+     * @return A entidade Empresa.
+     */
+    @Mapping(target = "id", ignore = true) // ID é gerado, não vem do DTO de requisição
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(source = "enderecos", target = "enderecos")
+    @Mapping(source = "telefones", target = "telefones")
+    Empresa toEntity(EmpresaRequestDTO dto);
+
+    /**
+     * @brief Converte uma entidade Empresa para um EmpresaResponseDTO.
+     * @param entity A entidade Empresa.
+     * @return O DTO de resposta da empresa.
+     */
+    @Mapping(source = "enderecos", target = "enderecos")
+    @Mapping(source = "telefones", target = "telefones")
+    EmpresaResponseDTO toResponseDTO(Empresa entity);
+}
+```
+```java
+package br.com.legalconnect.mapper;
+
+import br.com.legalconnect.dto.EnderecoRequestDTO;
+import br.com.legalconnect.dto.EnderecoResponseDTO;
+import br.com.legalconnect.entity.Endereco;
+import br.com.legalconnect.entity.Endereco.TipoEndereco; // Importa o enum correto
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+
+import java.util.List;
+import java.util.Set;
+
+/**
+ * @interface EnderecoMapper
+ * @brief Mapper MapStruct para conversão entre Endereco e seus DTOs.
+ */
+@Mapper(componentModel = "spring")
+public interface EnderecoMapper {
+
+    EnderecoMapper INSTANCE = Mappers.getMapper(EnderecoMapper.class);
+
+    /**
+     * @brief Converte um EnderecoRequestDTO para uma entidade Endereco.
+     * @param dto O DTO de requisição do endereço.
+     * @return A entidade Endereco.
+     */
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "pessoa", ignore = true) // Será setado no serviço
+    @Mapping(target = "empresa", ignore = true) // Será setado no serviço
+    Endereco toEntity(EnderecoRequestDTO dto);
+
+    /**
+     * @brief Converte uma entidade Endereco para um EnderecoResponseDTO.
+     * @param entity A entidade Endereco.
+     * @return O DTO de resposta do endereço.
+     */
+    EnderecoResponseDTO toResponseDTO(Endereco entity);
+
+    /**
+     * @brief Converte uma lista de EnderecoRequestDTOs para um Set de entidades Endereco.
+     * @param dtoList A lista de DTOs de requisição de endereços.
+     * @return Um Set de entidades Endereco.
+     */
+    Set<Endereco> toEntitySet(List<EnderecoRequestDTO> dtoList);
+
+    /**
+     * @brief Converte um Set de entidades Endereco para uma lista de EnderecoResponseDTOs.
+     * @param entitySet Um Set de entidades Endereco.
+     * @return Uma lista de DTOs de resposta de endereços.
+     */
+    List<EnderecoResponseDTO> toResponseDTOList(Set<Endereco> entitySet);
+}
+```
+```java
+package br.com.legalconnect.mapper;
+
+import br.com.legalconnect.dto.PessoaResponseDTO;
+import br.com.legalconnect.entity.Pessoa;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.InheritInverseConfiguration; // Importar se for usar @InheritInverseConfiguration
+import org.mapstruct.factory.Mappers;
+
+/**
+ * @interface PessoaMapper
+ * @brief Mapper MapStruct para conversão entre Pessoa e seus DTOs.
+ * Esta é uma interface base para ser estendida por mappers de subclasses de Pessoa.
+ */
+@Mapper(componentModel = "spring", uses = {UserMapper.class, EnderecoMapper.class})
+public interface PessoaMapper {
+
+    PessoaMapper INSTANCE = Mappers.getMapper(PessoaMapper.class);
+
+    /**
+     * @brief Mapeia uma entidade Pessoa para um PessoaResponseDTO.
+     * @param entity A entidade Pessoa.
+     * @return O DTO de resposta da pessoa.
+     */
+    @Mapping(source = "usuario", target = "usuario")
+    @Mapping(source = "enderecos", target = "enderecos")
+    @Mapping(source = "telefones", target = "telefones")
+    PessoaResponseDTO toResponseDTO(Pessoa entity);
+}
+```
+```java
+package br.com.legalconnect.mapper;
+
+import br.com.legalconnect.dto.PlanoResponseDTO;
+import br.com.legalconnect.entity.Plano; // Importar Plano da entidade
+import br.com.legalconnect.dto.EmpresaResponseDTO; // Importar EmpresaResponseDTO
+import br.com.legalconnect.dto.ProfissionalRequestDTO;
+import br.com.legalconnect.dto.ProfissionalResponseDTO;
+import br.com.legalconnect.entity.Empresa; // Importar Empresa da entidade
+import br.com.legalconnect.entity.Profissional;
+import br.com.legalconnect.entity.Profissional.StatusProfissional; // Importar o enum correto
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+
+/**
+ * @interface ProfissionalMapper
+ * @brief Mapper MapStruct para conversão entre Profissional e seus DTOs.
+ */
+@Mapper(componentModel = "spring", uses = {PessoaMapper.class, EnderecoMapper.class, UserMapper.class, EmpresaMapper.class})
+public interface ProfissionalMapper extends PessoaMapper {
+
+    ProfissionalMapper INSTANCE = Mappers.getMapper(ProfissionalMapper.class);
+
+    /**
+     * @brief Mapeia um ProfissionalRequestDTO para uma entidade Profissional.
+     * @param dto O DTO de requisição do profissional.
+     * @return A entidade Profissional.
+     */
+    @Mapping(target = "empresa", ignore = true) // Empresa será setada no serviço
+    @Mapping(target = "plano", ignore = true)   // Plano será setado no serviço
+    @Mapping(target = "roleProfissionals", ignore = true) // Não presente no DTO
+    Profissional toEntity(ProfissionalRequestDTO dto);
+
+    /**
+     * @brief Mapeia uma entidade Profissional para um ProfissionalResponseDTO.
+     * @param entity A entidade Profissional.
+     * @return O DTO de resposta do profissional.
+     */
+    @Mapping(source = "empresa", target = "empresa")
+    @Mapping(source = "plano", target = "plano")
+    ProfissionalResponseDTO toResponseDTO(Profissional entity);
+
+    /**
+     * @brief Mapeia uma entidade Plano para um PlanoResponseDTO.
+     * @param plano A entidade Plano.
+     * @return O DTO de resposta do Plano.
+     */
+    PlanoResponseDTO toPlanoResponseDTO(Plano plano);
+}
+```
+```java
+package br.com.legalconnect.mapper;
+
+import br.com.legalconnect.dto.UserRequestDTO;
+import br.com.legalconnect.dto.UserResponseDTO;
+import br.com.legalconnect.entity.User;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+
+/**
+ * @interface UserMapper
+ * @brief Mapper MapStruct para conversão entre User e seus DTOs.
+ */
+@Mapper(componentModel = "spring") // Integração com Spring para injeção de dependência
+public interface UserMapper {
+
+    UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
+
+    /**
+     * @brief Converte um UserRequestDTO para uma entidade User.
+     * Ignora campos da entidade User que não estão presentes no UserRequestDTO.
+     * @param dto O DTO de requisição do usuário.
+     * @return A entidade User.
+     */
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "nomeCompleto", ignore = true) // Não presente no DTO de requisição
+    @Mapping(target = "cpf", ignore = true) // Não presente no DTO de requisição
+    @Mapping(target = "telefone", ignore = true) // Não presente no DTO de requisição
+    @Mapping(target = "senhaHash", source = "password") // Mapeia password do DTO para senhaHash da entidade
+    @Mapping(target = "fotoUrl", ignore = true) // Não presente no DTO de requisição
+    User toEntity(UserRequestDTO dto);
+
+    /**
+     * @brief Converte uma entidade User para um UserResponseDTO.
+     * Ignora campos da entidade User que não estão presentes no UserResponseDTO.
+     * @param entity A entidade User.
+     * @return O DTO de resposta do usuário.
+     */
+    @Mapping(target = "email", source = "email")
+    UserResponseDTO toResponseDTO(User entity);
+}
+```
+```java
+# src/main/resources/application.properties
+# ===================================================================
+# Configurações Gerais da Aplicação Spring Boot
+# ===================================================================
+
+# Nome da aplicação (usado em logs e monitoramento)
+spring.application.name=legalconnect-usuario-service
+# Porta em que a aplicação será executada
+server.port=8084
+# Desabilita o management server caso esteja ativo e conflitando (opcional)
+# management.endpoints.web.exposure.include=*
+
+# Habilita o Eureka Client
+eureka.client.enabled=true
+# URL do servidor Eureka onde o auth-service irá se registrar
+eureka.client.serviceUrl.defaultZone=http://localhost:8761/eureka/
+
+# Configurações de instância para garantir identificação única no Eureka
+eureka.instance.hostname=localhost
+eureka.instance.instance-id=${spring.application.name}:${instanceId:${random.value}}
+# Configurações do SpringDoc OpenAPI
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.api-docs.path=/v3/api-docs
+springdoc.packagesToScan=br.com.legalconnect
+springdoc.pathsToMatch=/api/v1/**
+# ===================================================================
+# Configurações do Banco de Dados PostgreSQL
+# ===================================================================
+
+# URL de conexão com o banco de dados PostgreSQL
+# O microsserviço de autenticação se conecta ao banco de dados global (public)
+spring.datasource.url=jdbc:postgresql://localhost:5432/jusplatform_db
+
+# Nome de usuário do banco de dados
+spring.datasource.username=jususer
+
+# Senha do banco de dados
+spring.datasource.password=juspassword
+
+# Driver JDBC para PostgreSQL
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# Configurações do pool de conexões (HikariCP é o padrão no Spring Boot)
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.connection-timeout=30000
+spring.datasource.hikari.idle-timeout=600000
+spring.datasource.hikari.max-lifetime=1800000
+
+# ===================================================================
+# Configurações do JPA e Hibernate
+# ===================================================================
+
+# Dialeto do Hibernate para PostgreSQL
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+
+# Exibir queries SQL no console (para desenvolvimento)
+# Desabilita a geração automática de DDL pelo Hibernate na inicialização principal.
+# A criação de DDL para os esquemas de tenant será feita programaticamente pelo TenantSchemaService.
+spring.jpa.hibernate.ddl-auto=none
+spring.jpa.show-sql=true
+# Removido: spring.jpa.properties.hibernate.default_schema=public
+# Esta configuração forçava o Hibernate a usar o schema 'public' para DDL, o que não é desejado para entidades multi-tenant.
+
+
+# ===================================================================
+# Configurações de Segurança (JWT)
+# ===================================================================
+
+# Chave secreta para assinar e verificar os JWTs.
+# **IMPORTANTE**: Esta chave deve ser longa, complexa e armazenada de forma segura (ex: HashiCorp Vault, variáveis de ambiente).
+# Nunca exponha esta chave em um repositório público!
+application.security.jwt.secret-key=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+
+# Tempo de expiração do JWT em milissegundos (ex: 3600000ms = 1 hora)
+application.security.jwt.expiration=3600000
+
+# Tempo de expiração do Refresh Token em milissegundos (ex: 7 dias = 604800000ms)
+application.security.jwt.refresh-expiration=604800000
+
+# Força do encoder de senha (cost factor para BCrypt, padrão é 10)
+# Um valor maior aumenta a segurança, mas também o tempo de hash.
+application.security.password-encoder.strength=12
+
+# ===================================================================
+# Configurações de Logging (Logback)
+# ===================================================================
+
+# Nível de log padrão para a aplicação
+logging.level.br.com.legalconnect=INFO
+# Nível de log para o Spring Framework
+logging.level.org.springframework=WARN
+
+# Nível de log para Hibernate (queries SQL) - Desabilite em produção
+logging.level.org.hibernate.SQL=WARN
+logging.level.org.hibernate.type.descriptor.sql.BasicExtractor=WARN
+
+# Nível de log para o processo de DDL do Hibernate (agora menos relevante com Flyway)
+logging.level.org.hibernate.hbm2ddl=WARN
+
+# Nível de log para as conexões JDBC do Hibernate
+logging.level.org.hibernate.engine.jdbc.connections=WARN
+
+# Nível de log para o Flyway (muito importante para depurar migrações)
+logging.level.org.flywaydb=INFO
+
+# Adicione logs específicos para a configuração do JPA e Multi-Tenancy
+logging.level.org.hibernate.jpa=INFO
+logging.level.org.springframework.orm.jpa=INFO
+logging.level.org.springframework.data.jpa=INFO
+logging.level.org.hibernate.engine.jdbc.connections.spi=INFO
+
+# ===================================================================
+# Configurações de Multitenancy Específicas do Aplicativo
+# ===================================================================
+
+# ID do tenant padrão para usuários que não estão associados a um tenant específico (ex: clientes gerais)
+# Este UUID deve corresponder a um registro na tabela tb_tenant no schema global (public).
+application.tenant.default-id=00000000-0000-0000-0000-000000000001
+
+# ===================================================================
+# Configurações do Spring Boot Actuator
+# ===================================================================
+
+# Habilita todos os endpoints do Actuator (para monitoramento)
+management.endpoints.web.exposure.include=*
+# Define o caminho base para os endpoints do Actuator
+management.endpoints.web.base-path=/actuator
+
+# ===================================================================
+# Configurações de CORS (Cross-Origin Resource Sharing)
+# ===================================================================
+
+# Configuração de CORS global (pode ser mais específica nos controladores)
+# Esta configuração é um exemplo e pode ser ajustada conforme a necessidade.
+# Em produção, 'allowed-origins' deve ser restrito aos domínios do seu frontend.
+# spring.web.cors.allowed-origins=*
+# spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS,PATCH
+# spring.web.cors.allowed-headers=*
+# spring.web.cors.allow-credentials=false
+# spring.web.cors.max-age=3600
+# ===================================================================
+# Configurações do Flyway
+# ===================================================================
+spring.flyway.enabled=false
+spring.flyway.url=${spring.datasource.url}
+spring.flyway.user=${spring.datasource.username}
+spring.flyway.password=${spring.datasource.password}
+spring.flyway.locations=classpath:db/migration
+spring.flyway.baseline-on-migrate=true
+spring.flyway.baseline-version=1
+# ===================================================================
+# Configurações de Cache (Exemplo com Caffeine, adicione a dependência se usar)
+# ===================================================================
+
+# spring.cache.type=caffeine
+# spring.cache.cache-names=users,refreshTokens
+# spring.cache.caffeine.spec=expireAfterWrite=60m,maximumSize=500
+
+# ===================================================================
+# Propriedades de Aplicação Customizadas
+# ===================================================================
+
+# Exemplo de uma propriedade customizada
+# app.feature.new-registration-enabled=true
+
+# ===================================================================
+# Configurações para Proxy Reverso (Nginx)
+# ===================================================================
+
+# Habilita o processamento dos cabeçalhos X-Forwarded-* enviados por proxies.
+# Isso garante que a aplicação veja o IP real do cliente, o protocolo original (HTTP/HTTPS)
+# e o host original, em vez dos detalhes do proxy (Nginx).
+server.forward-headers-strategy=FRAMEWORK
+spring.main.allow-bean-definition-overriding=true
+# Configuração do Outlook SMTP
+spring.mail.username=marcelo.llm@outlook.com
+spring.mail.password=qlbzudmmytioxztj
+spring.mail.from=marcelo.llm@outlook.com
+spring.mail.protocol=smtp
+
+# Propriedades avançadas
+
+spring.mail.host=smtp.office365.com
+spring.mail.port=587 
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.starttls.required=true
+spring.mail.properties.mail.smtp.connectiontimeout=15000
+spring.mail.properties.mail.smtp.timeout=15000
+spring.mail.properties.mail.smtp.writetimeout=15000
+
+# Propriedade para o Thymeleaf (se estiver usando)
+spring.thymeleaf.prefix=classpath:/templates/
+spring.thymeleaf.suffix=.html
+spring.thymeleaf.mode=HTML
+spring.thymeleaf.cache=false
+# (Opcional, mas útil para debug)
+spring.mail.properties.mail.debug=true
+app.frontend.url=http://localhost:4200
+
+```
+```java
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${subject}">Bem-vindo!</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #eee;
+      }
+      .header h1 {
+        color: #007bff;
+      }
+      .content {
+        padding: 20px 0;
+      }
+      .footer {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        font-size: 0.9em;
+        color: #777;
+      }
+      .button {
+        display: inline-block;
+        background-color: #007bff;
+        color: #ffffff;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1 th:text="${title}">Olá!</h1>
+      </div>
+      <div class="content">
+        <p>
+          Prezado(a) <strong th:text="${userName}">Nome do Usuário</strong>,
+        </p>
+        <p>
+          É com grande prazer que confirmamos seu cadastro em nossa plataforma.
+        </p>
+        <p>
+          Seu e-mail de acesso é:
+          <strong th:text="${userEmail}">email@example.com</strong>
+        </p>
+        <p th:text="${message}">
+          Aproveite todas as funcionalidades que oferecemos!
+        </p>
+
+        <p style="text-align: center">
+          <a
+            th:href="${callToActionLink}"
+            class="button"
+            th:text="${callToActionText}"
+            >Acessar Plataforma</a
+          >
+        </p>
+      </div>
+      <div class="footer">
+        <p>
+          Este é um e-mail de notificação automático. Por favor, não responda.
+        </p>
+        <p>
+          &copy; <span th:text="${currentYear}">2025</span> Sua Empresa. Todos
+          os direitos reservados.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
+
+```
+```java
+package br.com.legalconnect.auth.auth_service;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class AuthServiceApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
+
+```
