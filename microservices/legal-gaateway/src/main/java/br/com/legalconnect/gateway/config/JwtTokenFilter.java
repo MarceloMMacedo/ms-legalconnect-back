@@ -52,8 +52,8 @@ public class JwtTokenFilter implements GatewayFilter {
 
         // Extrai e remove claims específicos
         Map<String, Object> claims = jwtUtil.getAllClaimsFromToken(token);
-        String userId = (String) claims.get("userId");
-        String tenantId = (String) claims.get("tenantId");
+        String userId = (String) claims.get("X-correlaton-ID");
+        String tenantId = (String) claims.get("X-Tenant-ID");
 
         // Remove os claims do token original (se necessário para nova validação
         // downstream)

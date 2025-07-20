@@ -32,16 +32,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-        <!-- Para Spring Boot 2 -->
-        <!-- <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-ui</artifactId>
-            <version>1.7.0</version>
-        </dependency> -->
 
-
-        <!-- Spring Boot Starter Web para classes de configuração web e DTOs de resposta.
-             Exclui Tomcat para não trazer dependências desnecessárias para uma lib. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -52,8 +43,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- Spring Boot Starter Data JPA para BaseEntity e configurações de multitenancy.
-             Removida a exclusão de hibernate-core para resolver MultiTenantConnectionProvider. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -62,12 +51,6 @@
                     <groupId>com.zaxxer</groupId>
                     <artifactId>HikariCP</artifactId>
                 </exclusion>
-                <!-- REMOVIDO: Exclusão de hibernate-core para permitir que
-                MultiTenantConnectionProvider seja resolvido -->
-                <!-- <exclusion>
-                    <groupId>org.hibernate.orm</groupId>
-                    <artifactId>hibernate-core</artifactId>
-                </exclusion> -->
             </exclusions>
         </dependency>
         <!-- Spring Context para anotações como @Configuration, @Component, etc. -->
@@ -90,35 +73,23 @@
             <version>6.0.0</version>
             <scope>provided</scope>
         </dependency>
+
         <!-- <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.5.0</version>
-        </dependency> -->
-        <!-- Lombok -->
-        <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
-        </dependency>
+        </dependency> -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version> <!-- Usando a versão definida nas propriedades -->
             <scope>provided</scope>
         </dependency>
-        <!-- MapStruct -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
             <version>${org.mapstruct.version}</version> <!-- Usando a versão definida nas propriedades -->
         </dependency>
-        <!-- Flyway Core para FlywayMultiTenantConfig -->
-        <!-- <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-            <version>${flyway.version}</version>  
-        </dependency> -->
-        <!-- OpenAPI/Swagger UI para OpenApiConfig -->
+
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>

@@ -69,7 +69,7 @@ public class HibernateConfig {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
         em.setPackagesToScan(
-                "br.com.legalconnect.user.entity",
+                "br.com.legalconnect.user.entity", "br.com.legalconnect.entity",
                 "br.com.legalconnect.auth.entity"); // Pacotes onde suas entidades estão localizadas
         em.setJpaVendorAdapter(jpaVendorAdapter());
 

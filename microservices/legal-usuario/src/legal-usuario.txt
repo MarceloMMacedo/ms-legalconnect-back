@@ -699,6 +699,9 @@ public class Empresa extends BaseEntity {
     @CollectionTable(name = "tb_empresa_telefones", joinColumns = @JoinColumn(name = "empresa_id"))
     @Column(name = "numero_telefone", length = 20)
     private Set<String> telefones = new HashSet<>(); // Conjunto de números de telefone da empresa
+
+    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<Profissional> profissionais = new HashSet<>();
 }
 ```
 ```java
@@ -1522,7 +1525,7 @@ spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
 # Exibir queries SQL no console (para desenvolvimento)
 # Desabilita a geração automática de DDL pelo Hibernate na inicialização principal.
 # A criação de DDL para os esquemas de tenant será feita programaticamente pelo TenantSchemaService.
-spring.jpa.hibernate.ddl-auto=none
+spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 # Removido: spring.jpa.properties.hibernate.default_schema=public
 # Esta configuração forçava o Hibernate a usar o schema 'public' para DDL, o que não é desejado para entidades multi-tenant.

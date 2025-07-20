@@ -66,4 +66,7 @@ public class Empresa extends BaseEntity {
     @CollectionTable(name = "tb_empresa_telefones", joinColumns = @JoinColumn(name = "empresa_id"))
     @Column(name = "numero_telefone", length = 20)
     private Set<String> telefones = new HashSet<>(); // Conjunto de números de telefone da empresa
+
+    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<Profissional> profissionais = new HashSet<>();
 }

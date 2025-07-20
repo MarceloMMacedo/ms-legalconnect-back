@@ -22,6 +22,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
+ * "/api/v1/usuarios/redefinir-senha/solicitar",
+ * "/api/v1/usuarios/redefinir-senha/confirmar",
+ * 
  * @class AuthController
  * @brief Controlador REST para endpoints de autenticação.
  *        Gerencia as requisições de login e refresh de tokens JWT.
@@ -76,7 +79,7 @@ public class AuthController {
          * @param request DTO de requisição de registro de usuário.
          * @return Resposta padronizada com DTO do usuário registrado.
          */
-        @PostMapping("/register-client")
+        @PostMapping("/clientes/registrar")
         public ResponseEntity<BaseResponse<UserResponseDTO>> registerClient(
                         @Valid @RequestBody UserRegistrationRequest request) {
                 log.info("Requisição de registro de cliente recebida para o e-mail: {}", request.getEmail());
@@ -99,7 +102,7 @@ public class AuthController {
          * @param request DTO de requisição de registro de usuário.
          * @return Resposta padronizada com DTO do usuário registrado.
          */
-        @PostMapping("/register-advogado")
+        @PostMapping("/advogados/registrar")
         public ResponseEntity<BaseResponse<UserResponseDTO>> registerAdvogado(
                         @Valid @RequestBody UserRegistrationRequest request) {
                 log.info("Requisição de registro de advogado recebida para o e-mail: {}", request.getEmail());
@@ -122,7 +125,7 @@ public class AuthController {
          * @param request DTO de requisição de registro de usuário.
          * @return Resposta padronizada com DTO do usuário registrado.
          */
-        @PostMapping("/register-socio")
+        @PostMapping("/socios/registrar")
         public ResponseEntity<BaseResponse<UserResponseDTO>> registerSocio(
                         @Valid @RequestBody UserRegistrationRequest request) {
                 log.info("Requisição de registro de sócio recebida para o e-mail: {}", request.getEmail());
@@ -145,7 +148,7 @@ public class AuthController {
          * @param request DTO de requisição de registro de usuário.
          * @return Resposta padronizada com DTO do usuário registrado.
          */
-        @PostMapping("/register-admin")
+        @PostMapping("/administradores/registrar")
         public ResponseEntity<BaseResponse<UserResponseDTO>> registerAdmin(
                         @Valid @RequestBody UserRegistrationRequest request) {
                 log.info("Requisição de registro de administrador recebida para o e-mail: {}", request.getEmail());
@@ -167,7 +170,7 @@ public class AuthController {
          * @param request DTO contendo o e-mail do usuário.
          * @return Resposta padronizada de sucesso.
          */
-        @PostMapping("/recover-password")
+        @PostMapping("/senhas/recuperar")
         public ResponseEntity<BaseResponse<Void>> recoverPassword(@Valid @RequestBody RecoverPasswordRequest request) {
                 log.info("Requisição de recuperação de senha recebida para o e-mail: {}", request.getEmail());
                 long startTime = System.currentTimeMillis();
@@ -187,7 +190,7 @@ public class AuthController {
          * @param request DTO contendo o token e a nova senha.
          * @return Resposta padronizada de sucesso.
          */
-        @PostMapping("/reset-password")
+        @PostMapping("/senhas/redefinir")
         public ResponseEntity<BaseResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
                 log.info("Requisição de redefinição de senha recebida com token.");
                 long startTime = System.currentTimeMillis();

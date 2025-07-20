@@ -41,10 +41,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
@@ -72,19 +69,14 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
-        <!-- Flyway Core para migrações de banco de dados -->
+        <!-- <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId> 
+        </dependency> 
         <dependency>
             <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-            <!-- A versão será gerenciada pela seção dependencyManagement -->
-        </dependency>
-        <!-- Flyway para PostgreSQL (necessário se você usa recursos específicos do PostgreSQL no
-        Flyway) -->
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
-            <!-- A versão será gerenciada pela seção dependencyManagement -->
-        </dependency>
+            <artifactId>flyway-database-postgresql</artifactId> 
+        </dependency> -->
 
         <!-- JWT Libraries -->
         <dependency>
@@ -169,20 +161,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!-- Adicionado/Atualizado: Força a versão do flyway-core para evitar conflitos de
-            dependência transitiva -->
-            <dependency>
-                <groupId>org.flywaydb</groupId>
-                <artifactId>flyway-core</artifactId>
-                <version>${flyway.version}</version>
-            </dependency>
-            <!-- Adicionado/Atualizado: Força a versão do flyway-database-postgresql para evitar
-            conflitos de dependência transitiva -->
-            <dependency>
-                <groupId>org.flywaydb</groupId>
-                <artifactId>flyway-database-postgresql</artifactId>
-                <version>${flyway.version}</version>
-            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

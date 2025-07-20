@@ -7,8 +7,6 @@ import java.util.UUID; // Import UUID
 
 import javax.sql.DataSource;
 
-import org.flywaydb.core.Flyway;
-import org.flywaydb.core.api.exception.FlywayValidateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -101,38 +99,47 @@ public class TenantMigrationService {
         // Garante que o esquema exista antes de tentar migrar
         createSchemaIfNotExist(schemaName);
 
-        Flyway flyway = Flyway.configure()
-                .dataSource(dataSource)
-                .locations(flywayLocations)
-                .schemas(schemaName) // Define o esquema específico para esta migração
-                .baselineOnMigrate(flywayBaselineOnMigrate)
-                .baselineVersion(flywayBaselineVersion)
-                .load();
+        // Flyway flyway = Flyway.configure()
+        // .dataSource(dataSource)
+        // .locations(flywayLocations)
+        // .schemas(schemaName) // Define o esquema específico para esta migração
+        // .baselineOnMigrate(flywayBaselineOnMigrate)
+        // .baselineVersion(flywayBaselineVersion)
+        // .load();
 
-        try {
-            flyway.migrate();
-            log.info("Migração do Flyway concluída com sucesso para o esquema: {}", schemaName);
-        } catch (FlywayValidateException ve) {
-            log.error("Validação do Flyway falhou para o schema {}: {}", schemaName, ve.getMessage());
+        // try {
+        // flyway.migrate();
+        // log.info("Migração do Flyway concluída com sucesso para o esquema: {}",
+        // schemaName);
+        // } catch (FlywayValidateException ve) {
+        // log.error("Validação do Flyway falhou para o schema {}: {}", schemaName,
+        // ve.getMessage());
 
-            // Verifica se o erro foi por incompatibilidade de checksum e executa o repair
-            if (ve.getMessage() != null && ve.getMessage().contains("Migration checksum mismatch")) {
-                log.warn("Checksum mismatch detectado para o schema {}. Executando Flyway.repair()...", schemaName);
-                try {
-                    flyway.repair();
-                    log.info("Flyway.repair() executado com sucesso. Tentando migrar novamente para o schema: {}",
-                            schemaName);
-                    flyway.migrate();
-                } catch (Exception re) {
-                    log.error("Falha ao executar Flyway.repair() ou nova tentativa de migrate para o schema {}: {}",
-                            schemaName, re.getMessage(), re);
-                    throw new RuntimeException(
-                            "Falha na migração mesmo após tentativa de repair para o schema " + schemaName, re);
-                }
-            } else {
-                throw new RuntimeException("Erro de validação Flyway para o schema " + schemaName, ve);
-            }
-        }
+        // // Verifica se o erro foi por incompatibilidade de checksum e executa o
+        // repair
+        // if (ve.getMessage() != null && ve.getMessage().contains("Migration checksum
+        // mismatch")) {
+        // log.warn("Checksum mismatch detectado para o schema {}. Executando
+        // Flyway.repair()...", schemaName);
+        // try {
+        // flyway.repair();
+        // log.info("Flyway.repair() executado com sucesso. Tentando migrar novamente
+        // para o schema: {}",
+        // schemaName);
+        // flyway.migrate();
+        // } catch (Exception re) {
+        // log.error("Falha ao executar Flyway.repair() ou nova tentativa de migrate
+        // para o schema {}: {}",
+        // schemaName, re.getMessage(), re);
+        // throw new RuntimeException(
+        // "Falha na migração mesmo após tentativa de repair para o schema " +
+        // schemaName, re);
+        // }
+        // } else {
+        // throw new RuntimeException("Erro de validação Flyway para o schema " +
+        // schemaName, ve);
+        // }
+        // }
     }
 
     /**
