@@ -6,16 +6,29 @@ import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Configuração geral do Gateway.
+ * Inclui um bean para permitir o roteamento dinâmico no application.yml,
+ * especialmente útil para integração com o Swagger.
+ */
 @Configuration
 public class GatewayConfig {
 
-    // Este bean é para permitir o roteamento dinâmico no application.yml
-    // para o Swagger, onde precisamos pegar o URI de qualquer serviço.
+    /**
+     * Este bean permite o roteamento dinâmico no application.yml para o Swagger,
+     * onde precisamos pegar o URI de qualquer serviço.
+     * 
+     * @param discoveryClient Cliente de descoberta de serviços.
+     * @return Instância de CustomDiscoveryClientService.
+     */
     @Bean
     public CustomDiscoveryClientService customDiscoveryClientService(DiscoveryClient discoveryClient) {
         return new CustomDiscoveryClientService(discoveryClient);
     }
 
+    /**
+     * Serviço auxiliar para obter URI de serviços.
+     */
     public static class CustomDiscoveryClientService {
         private final DiscoveryClient discoveryClient;
 
@@ -23,14 +36,14 @@ public class GatewayConfig {
             this.discoveryClient = discoveryClient;
         }
 
+        /**
+         * Retorna um URI base para o balanceador de carga.
+         * Em um cenário real, pode ser expandido para listar todos os serviços
+         * e construir rotas dinâmicas para o Swagger.
+         * 
+         * @return URI base.
+         */
         public URI getServiceUri() {
-            // Este método será usado no application.yml para resolver o URI dinamicamente.
-            // Para o Swagger, precisamos de um URI genérico para que o Gateway possa
-            // proxyar requisições para qualquer serviço.
-            // Em um cenário real, você pode querer listar todos os serviços
-            // e construir as rotas do Swagger dinamicamente em tempo de execução
-            // ou ter um serviço de agregação de Swagger.
-            // Aqui, apenas retornamos um URI base para o balanceador de carga.
             return URI.create("lb://");
         }
     }
