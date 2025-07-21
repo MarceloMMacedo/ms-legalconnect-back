@@ -13,6 +13,34 @@ import lombok.Getter;
  */
 @Getter
 public enum ErrorCode {
+    // Erros gerais de validação
+    DADOS_INVALIDOS("001", "Dados fornecidos são inválidos."),
+    REQUISICAO_MAL_FORMADA("002", "A requisição está mal formada."),
+    PARAMETRO_AUSENTE("003", "Parâmetro obrigatório ausente."),
+
+    // Erros de entidade / negócio
+    ENTIDADE_NAO_ENCONTRADA("100", "Entidade não encontrada."),
+    EMPRESA_NAO_ENCONTRADA("101", "Empresa não encontrada."),
+    PROFISSIONAL_NAO_ENCONTRADO("102", "Profissional não encontrado."),
+    CLIENTE_NAO_ENCONTRADO("103", "Cliente não encontrado."),
+    ADMINISTRADOR_NAO_ENCONTRADO("104", "Administrador não encontrado."),
+    PLANO_NAO_ENCONTRADO("105", "Plano não encontrado."),
+    USER_NAO_ENCONTRADO("106", "Usuário associado não encontrado."),
+
+    // Erros de duplicidade
+    CNPJ_DUPLICADO("200", "CNPJ já cadastrado."),
+    CPF_DUPLICADO("201", "CPF já cadastrado."),
+    OAB_DUPLICADA("202", "Número da OAB já cadastrado."),
+    EMAIL_DUPLICADO("203", "Email já cadastrado."),
+    NOME_PLANO_DUPLICADO("204", "Nome do plano já cadastrado."),
+
+    // Erros de integridade
+    INTEGRIDADE_VIOLADA("300", "Violação de integridade de dados."),
+    RECURSO_EM_USO("301", "Recurso não pode ser excluído pois está em uso."),
+
+    // Erros de sistema / internos
+    ERRO_INTERNO_SERVIDOR("500", "Ocorreu um erro interno no servidor."),
+    SERVICO_INDISPONIVEL("503", "Serviço temporariamente indisponível."),
 
     // Erros Gerais/Comuns (1000-1999)
     GENERIC_ERROR("1000", "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde."),

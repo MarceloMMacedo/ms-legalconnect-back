@@ -1,14 +1,6 @@
 ```java
 package br.com.legalconnect;
 
-public class implents {
-
-}
-
-```
-```java
-package br.com.legalconnect;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -38,6 +30,458 @@ public class LegalUsuarioApplication {
     public static void main(String[] args) {
         SpringApplication.run(LegalUsuarioApplication.class, args);
         log.info("LegalUsuarioApplication iniciada com sucesso!");
+    }
+}
+```
+```java
+package br.com.legalconnect.config; // Importa da common-lib
+
+import java.io.IOException;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import br.com.legalconnect.common.config.multitenancy.TenantContext;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+/**
+ * @class TenantFilter
+ * @brief Filtro HTTP para interceptar requisições e extrair o ID do tenant.
+ *        Define o tenant ID no TenantContext para que o Hibernate possa usá-lo.
+ */
+@Component
+public class TenantFilter extends OncePerRequestFilter {
+
+    @Value("${application.tenant.default-id}")
+    private String defaultTenantId;
+
+    private static final String TENANT_HEADER = "X-Tenant-ID";
+
+    /**
+     * @brief Filtra a requisição para extrair e definir o ID do tenant.
+     * @param request     A requisição HTTP.
+     * @param response    A resposta HTTP.
+     * @param filterChain A cadeia de filtros.
+     * @throws ServletException Se ocorrer um erro de servlet.
+     * @throws IOException      Se ocorrer um erro de I/O.
+     */
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+        try {
+            String tenantIdHeader = request.getHeader(TENANT_HEADER);
+            String tenantId = "public";
+
+            if (tenantIdHeader != null && !tenantIdHeader.isEmpty()) {
+                try {
+                    tenantId = (tenantIdHeader);
+                } catch (IllegalArgumentException e) {
+                    // Logar ou tratar o erro de UUID inválido, talvez retornar um 400 Bad Request
+                    System.err.println("UUID de Tenant inválido no cabeçalho X-Tenant-ID: " + tenantIdHeader);
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "UUID de Tenant inválido.");
+                    return;
+                }
+            } else {
+                // Usar o tenant padrão se o cabeçalho não for fornecido
+                try {
+                    tenantId = (defaultTenantId);
+                } catch (IllegalArgumentException e) {
+                    System.err.println("UUID de Tenant padrão inválido na configuração: " + defaultTenantId);
+                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                            "Configuração de Tenant padrão inválida.");
+                    return;
+                }
+            }
+
+            TenantContext.setCurrentTenant(tenantId);
+            filterChain.doFilter(request, response);
+        } finally {
+            TenantContext.clear(); // Limpar o TenantContext após a requisição
+        }
+    }
+}
+```
+```java
+package br.com.legalconnect.controller;
+
+import dto.AdministradorRequestDTO;
+import dto.AdministradorResponseDTO;
+import service.ServicoAdministrador;
+import common.dto.BaseResponse; // Importa da common-lib
+import common.dto.SuccessResponseDTO; // Importa da common-lib
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+/**
+ * @class ControladorAdministradorPlataforma
+ * @brief Controlador REST para gerenciar operações relacionadas a Administradores da Plataforma.
+ * Expõe endpoints para CRUD de Administradores.
+ */
+@RestController
+@RequestMapping("/api/v1/administradores-plataforma")
+public class ControladorAdministradorPlataforma {
+
+    private final ServicoAdministrador servicoAdministrador;
+
+    @Autowired
+    public ControladorAdministradorPlataforma(ServicoAdministrador servicoAdministrador) {
+        this.servicoAdministrador = servicoAdministrador;
+    }
+
+    /**
+     * @brief Cadastra um novo Administrador da Plataforma.
+     * @param requestDTO DTO com os dados do Administrador a ser cadastrado.
+     * @return ResponseEntity com o DTO do Administrador cadastrado e status 201 Created.
+     */
+    @PostMapping
+    public ResponseEntity<BaseResponse<AdministradorResponseDTO>> cadastrarAdministrador(@Valid @RequestBody AdministradorRequestDTO requestDTO) {
+        AdministradorResponseDTO responseDTO = servicoAdministrador.cadastrarAdministrador(requestDTO);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Administrador cadastrado com sucesso.", null, responseDTO, null), HttpStatus.CREATED);
+    }
+
+    /**
+     * @brief Busca um Administrador da Plataforma por ID.
+     * @param id ID do Administrador a ser buscado.
+     * @return ResponseEntity com o DTO do Administrador encontrado e status 200 OK.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<BaseResponse<AdministradorResponseDTO>> buscarAdministradorPorId(@PathVariable UUID id) {
+        AdministradorResponseDTO responseDTO = servicoAdministrador.buscarAdministradorPorId(id);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Administrador encontrado.", null, responseDTO, null), HttpStatus.OK);
+    }
+
+    /**
+     * @brief Lista todos os Administradores da Plataforma com paginação.
+     * @param pageable Objeto Pageable para configuração da paginação (ex: ?page=0&size=10&sort=nomeCompleto,asc).
+     * @return ResponseEntity com uma página de DTOs de Administradores e status 200 OK.
+     */
+    @GetMapping
+    public ResponseEntity<BaseResponse<Page<AdministradorResponseDTO>>> listarAdministradores(
+            @PageableDefault(size = 10, page = 0, sort = "nomeCompleto") Pageable pageable) {
+        Page<AdministradorResponseDTO> responsePage = servicoAdministrador.listarAdministradores(pageable);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Lista de administradores recuperada com sucesso.", null, responsePage, null), HttpStatus.OK);
+    }
+
+    /**
+     * @brief Atualiza os dados de um Administrador da Plataforma existente.
+     * @param id ID do Administrador a ser atualizado.
+     * @param requestDTO DTO com os dados atualizados do Administrador.
+     * @return ResponseEntity com o DTO do Administrador atualizado e status 200 OK.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<BaseResponse<AdministradorResponseDTO>> atualizarAdministrador(
+            @PathVariable UUID id,
+            @Valid @RequestBody AdministradorRequestDTO requestDTO) {
+        AdministradorResponseDTO responseDTO = servicoAdministrador.atualizarAdministrador(id, requestDTO);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Administrador atualizado com sucesso.", null, responseDTO, null), HttpStatus.OK);
+    }
+
+    /**
+     * @brief Exclui um Administrador da Plataforma pelo ID.
+     * @param id ID do Administrador a ser excluído.
+     * @return ResponseEntity com status 204 No Content.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<BaseResponse<Void>> excluirAdministrador(@PathVariable UUID id) {
+        servicoAdministrador.excluirAdministrador(id);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Administrador excluído com sucesso.", null, null, null), HttpStatus.NO_CONTENT);
+    }
+}
+```
+```java
+package br.com.legalconnect.controller;
+
+import dto.ClienteRequestDTO;
+import dto.ClienteResponseDTO;
+import service.ServicoCliente;
+import common.dto.BaseResponse; // Importa da common-lib
+import common.dto.SuccessResponseDTO; // Importa da common-lib
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+/**
+ * @class ControladorCliente
+ * @brief Controlador REST para gerenciar operações relacionadas a Clientes.
+ * Expõe endpoints para CRUD de Clientes.
+ */
+@RestController
+@RequestMapping("/api/v1/clientes")
+public class ControladorCliente {
+
+    private final ServicoCliente servicoCliente;
+
+    @Autowired
+    public ControladorCliente(ServicoCliente servicoCliente) {
+        this.servicoCliente = servicoCliente;
+    }
+
+    /**
+     * @brief Cadastra um novo Cliente.
+     * @param requestDTO DTO com os dados do Cliente a ser cadastrado.
+     * @return ResponseEntity com o DTO do Cliente cadastrado e status 201 Created.
+     */
+    @PostMapping
+    public ResponseEntity<BaseResponse<ClienteResponseDTO>> cadastrarCliente(@Valid @RequestBody ClienteRequestDTO requestDTO) {
+        ClienteResponseDTO responseDTO = servicoCliente.cadastrarCliente(requestDTO);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Cliente cadastrado com sucesso.", null, responseDTO, null), HttpStatus.CREATED);
+    }
+
+    /**
+     * @brief Busca um Cliente por ID.
+     * @param id ID do Cliente a ser buscado.
+     * @return ResponseEntity com o DTO do Cliente encontrado e status 200 OK.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<BaseResponse<ClienteResponseDTO>> buscarClientePorId(@PathVariable UUID id) {
+        ClienteResponseDTO responseDTO = servicoCliente.buscarClientePorId(id);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Cliente encontrado.", null, responseDTO, null), HttpStatus.OK);
+    }
+
+    /**
+     * @brief Lista todos os Clientes com paginação.
+     * @param pageable Objeto Pageable para configuração da paginação (ex: ?page=0&size=10&sort=nomeCompleto,asc).
+     * @return ResponseEntity com uma página de DTOs de Clientes e status 200 OK.
+     */
+    @GetMapping
+    public ResponseEntity<BaseResponse<Page<ClienteResponseDTO>>> listarClientes(
+            @PageableDefault(size = 10, page = 0, sort = "nomeCompleto") Pageable pageable) {
+        Page<ClienteResponseDTO> responsePage = servicoCliente.listarClientes(pageable);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Lista de clientes recuperada com sucesso.", null, responsePage, null), HttpStatus.OK);
+    }
+
+    /**
+     * @brief Atualiza os dados de um Cliente existente.
+     * @param id ID do Cliente a ser atualizado.
+     * @param requestDTO DTO com os dados atualizados do Cliente.
+     * @return ResponseEntity com o DTO do Cliente atualizado e status 200 OK.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<BaseResponse<ClienteResponseDTO>> atualizarCliente(
+            @PathVariable UUID id,
+            @Valid @RequestBody ClienteRequestDTO requestDTO) {
+        ClienteResponseDTO responseDTO = servicoCliente.atualizarCliente(id, requestDTO);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Cliente atualizado com sucesso.", null, responseDTO, null), HttpStatus.OK);
+    }
+
+    /**
+     * @brief Exclui um Cliente pelo ID.
+     * @param id ID do Cliente a ser excluído.
+     * @return ResponseEntity com status 204 No Content.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<BaseResponse<Void>> excluirCliente(@PathVariable UUID id) {
+        servicoCliente.excluirCliente(id);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Cliente excluído com sucesso.", null, null, null), HttpStatus.NO_CONTENT);
+    }
+}
+```
+```java
+package br.com.legalconnect.controller;
+
+import dto.EmpresaRequestDTO;
+import dto.EmpresaResponseDTO;
+import service.ServicoEmpresa;
+import common.dto.BaseResponse; // Importa da common-lib
+import common.dto.SuccessResponseDTO; // Importa da common-lib
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+/**
+ * @class ControladorEmpresa
+ * @brief Controlador REST para gerenciar operações relacionadas a Empresas.
+ * Expõe endpoints para CRUD de Empresas.
+ */
+@RestController
+@RequestMapping("/api/v1/empresas")
+public class ControladorEmpresa {
+
+    private final ServicoEmpresa servicoEmpresa;
+
+    @Autowired
+    public ControladorEmpresa(ServicoEmpresa servicoEmpresa) {
+        this.servicoEmpresa = servicoEmpresa;
+    }
+
+    /**
+     * @brief Cadastra uma nova Empresa.
+     * @param requestDTO DTO com os dados da Empresa a ser cadastrada.
+     * @return ResponseEntity com o DTO da Empresa cadastrada e status 201 Created.
+     */
+    @PostMapping
+    public ResponseEntity<BaseResponse<EmpresaResponseDTO>> cadastrarEmpresa(@Valid @RequestBody EmpresaRequestDTO requestDTO) {
+        EmpresaResponseDTO responseDTO = servicoEmpresa.cadastrarEmpresa(requestDTO);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Empresa cadastrada com sucesso.", null, responseDTO, null), HttpStatus.CREATED);
+    }
+
+    /**
+     * @brief Busca uma Empresa por ID.
+     * @param id ID da Empresa a ser buscada.
+     * @return ResponseEntity com o DTO da Empresa encontrada e status 200 OK.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<BaseResponse<EmpresaResponseDTO>> buscarEmpresaPorId(@PathVariable UUID id) {
+        EmpresaResponseDTO responseDTO = servicoEmpresa.buscarEmpresaPorId(id);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Empresa encontrada.", null, responseDTO, null), HttpStatus.OK);
+    }
+
+    /**
+     * @brief Lista todas as Empresas com paginação.
+     * @param pageable Objeto Pageable para configuração da paginação (ex: ?page=0&size=10&sort=nomeFantasia,asc).
+     * @return ResponseEntity com uma página de DTOs de Empresas e status 200 OK.
+     */
+    @GetMapping
+    public ResponseEntity<BaseResponse<Page<EmpresaResponseDTO>>> listarEmpresas(
+            @PageableDefault(size = 10, page = 0, sort = "nomeFantasia") Pageable pageable) {
+        Page<EmpresaResponseDTO> responsePage = servicoEmpresa.listarEmpresas(pageable);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Lista de empresas recuperada com sucesso.", null, responsePage, null), HttpStatus.OK);
+    }
+
+    /**
+     * @brief Atualiza os dados de uma Empresa existente.
+     * @param id ID da Empresa a ser atualizada.
+     * @param requestDTO DTO com os dados atualizados da Empresa.
+     * @return ResponseEntity com o DTO da Empresa atualizada e status 200 OK.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<BaseResponse<EmpresaResponseDTO>> atualizarEmpresa(
+            @PathVariable UUID id,
+            @Valid @RequestBody EmpresaRequestDTO requestDTO) {
+        EmpresaResponseDTO responseDTO = servicoEmpresa.atualizarEmpresa(id, requestDTO);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Empresa atualizada com sucesso.", null, responseDTO, null), HttpStatus.OK);
+    }
+
+    /**
+     * @brief Exclui uma Empresa pelo ID.
+     * @param id ID da Empresa a ser excluída.
+     * @return ResponseEntity com status 204 No Content.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<BaseResponse<Void>> excluirEmpresa(@PathVariable UUID id) {
+        servicoEmpresa.excluirEmpresa(id);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Empresa excluída com sucesso.", null, null, null), HttpStatus.NO_CONTENT);
+    }
+}
+```
+```java
+package br.com.legalconnect.controller;
+
+import dto.ProfissionalRequestDTO;
+import dto.ProfissionalResponseDTO;
+import service.ServicoProfissional;
+import common.dto.BaseResponse; // Importa da common-lib
+import common.dto.SuccessResponseDTO; // Importa da common-lib
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+/**
+ * @class ControladorProfissional
+ * @brief Controlador REST para gerenciar operações relacionadas a Profissionais.
+ * Expõe endpoints para CRUD de Profissionais.
+ */
+@RestController
+@RequestMapping("/api/v1/profissionais")
+public class ControladorProfissional {
+
+    private final ServicoProfissional servicoProfissional;
+
+    @Autowired
+    public ControladorProfissional(ServicoProfissional servicoProfissional) {
+        this.servicoProfissional = servicoProfissional;
+    }
+
+    /**
+     * @brief Cadastra um novo Profissional.
+     * @param requestDTO DTO com os dados do Profissional a ser cadastrado.
+     * @return ResponseEntity com o DTO do Profissional cadastrado e status 201 Created.
+     */
+    @PostMapping
+    public ResponseEntity<BaseResponse<ProfissionalResponseDTO>> cadastrarProfissional(@Valid @RequestBody ProfissionalRequestDTO requestDTO) {
+        ProfissionalResponseDTO responseDTO = servicoProfissional.cadastrarProfissional(requestDTO);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Profissional cadastrado com sucesso.", null, responseDTO, null), HttpStatus.CREATED);
+    }
+
+    /**
+     * @brief Busca um Profissional por ID.
+     * @param id ID do Profissional a ser buscado.
+     * @return ResponseEntity com o DTO do Profissional encontrado e status 200 OK.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<BaseResponse<ProfissionalResponseDTO>> buscarProfissionalPorId(@PathVariable UUID id) {
+        ProfissionalResponseDTO responseDTO = servicoProfissional.buscarProfissionalPorId(id);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Profissional encontrado.", null, responseDTO, null), HttpStatus.OK);
+    }
+
+    /**
+     * @brief Lista todos os Profissionais com paginação.
+     * @param pageable Objeto Pageable para configuração da paginação (ex: ?page=0&size=10&sort=nomeCompleto,asc).
+     * @return ResponseEntity com uma página de DTOs de Profissionais e status 200 OK.
+     */
+    @GetMapping
+    public ResponseEntity<BaseResponse<Page<ProfissionalResponseDTO>>> listarProfissionais(
+            @PageableDefault(size = 10, page = 0, sort = "nomeCompleto") Pageable pageable) {
+        Page<ProfissionalResponseDTO> responsePage = servicoProfissional.listarProfissionais(pageable);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Lista de profissionais recuperada com sucesso.", null, responsePage, null), HttpStatus.OK);
+    }
+
+    /**
+     * @brief Atualiza os dados de um Profissional existente.
+     * @param id ID do Profissional a ser atualizado.
+     * @param requestDTO DTO com os dados atualizados do Profissional.
+     * @return ResponseEntity com o DTO do Profissional atualizado e status 200 OK.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<BaseResponse<ProfissionalResponseDTO>> atualizarProfissional(
+            @PathVariable UUID id,
+            @Valid @RequestBody ProfissionalRequestDTO requestDTO) {
+        ProfissionalResponseDTO responseDTO = servicoProfissional.atualizarProfissional(id, requestDTO);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Profissional atualizado com sucesso.", null, responseDTO, null), HttpStatus.OK);
+    }
+
+    /**
+     * @brief Exclui um Profissional pelo ID.
+     * @param id ID do Profissional a ser excluído.
+     * @return ResponseEntity com status 204 No Content.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<BaseResponse<Void>> excluirProfissional(@PathVariable UUID id) {
+        servicoProfissional.excluirProfissional(id);
+        return new ResponseEntity<>(new BaseResponse<>("SUCCESS", "Profissional excluído com sucesso.", null, null, null), HttpStatus.NO_CONTENT);
     }
 }
 ```
@@ -496,9 +940,10 @@ public class ProfissionalResponseDTO extends PessoaResponseDTO {
 ```java
 package br.com.legalconnect.dto;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -513,13 +958,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class UserRequestDTO {
+    private UUID id;
     @NotBlank(message = "O email não pode estar em branco.")
     @Email(message = "Formato de email inválido.")
     private String email;
 
-    @NotBlank(message = "A senha não pode estar em branco.")
-    @Size(min = 8, message = "A senha deve ter no mínimo 8 caracteres.")
-    private String password;
+    // @NotBlank(message = "A senha não pode estar em branco.")
+    // @Size(min = 8, message = "A senha deve ter no mínimo 8 caracteres.")
+    // private String password;
 
     // O papel (Role) pode ser definido aqui ou inferido pelo serviço de
     // autenticação/usuário
@@ -1423,12 +1869,13 @@ public interface ProfissionalMapper extends PessoaMapper {
 ```java
 package br.com.legalconnect.mapper;
 
-import br.com.legalconnect.dto.UserRequestDTO;
-import br.com.legalconnect.dto.UserResponseDTO;
-import br.com.legalconnect.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
+
+import br.com.legalconnect.dto.UserRequestDTO;
+import br.com.legalconnect.dto.UserResponseDTO;
+import br.com.legalconnect.entity.User;
 
 /**
  * @interface UserMapper
@@ -1441,7 +1888,8 @@ public interface UserMapper {
 
     /**
      * @brief Converte um UserRequestDTO para uma entidade User.
-     * Ignora campos da entidade User que não estão presentes no UserRequestDTO.
+     *        Ignora campos da entidade User que não estão presentes no
+     *        UserRequestDTO.
      * @param dto O DTO de requisição do usuário.
      * @return A entidade User.
      */
@@ -1451,18 +1899,1411 @@ public interface UserMapper {
     @Mapping(target = "nomeCompleto", ignore = true) // Não presente no DTO de requisição
     @Mapping(target = "cpf", ignore = true) // Não presente no DTO de requisição
     @Mapping(target = "telefone", ignore = true) // Não presente no DTO de requisição
-    @Mapping(target = "senhaHash", source = "password") // Mapeia password do DTO para senhaHash da entidade
+    // @Mapping(target = "senhaHash", source = "password") // Mapeia password do DTO
+    // para senhaHash da entidade
     @Mapping(target = "fotoUrl", ignore = true) // Não presente no DTO de requisição
     User toEntity(UserRequestDTO dto);
 
     /**
      * @brief Converte uma entidade User para um UserResponseDTO.
-     * Ignora campos da entidade User que não estão presentes no UserResponseDTO.
+     *        Ignora campos da entidade User que não estão presentes no
+     *        UserResponseDTO.
      * @param entity A entidade User.
      * @return O DTO de resposta do usuário.
      */
     @Mapping(target = "email", source = "email")
     UserResponseDTO toResponseDTO(User entity);
+}
+```
+```java
+package br.com.legalconnect.repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.entity.Administrador;
+
+/**
+ * @interface RepositorioAdministrador
+ * @brief Repositório Spring Data JPA para a entidade Administrador.
+ *        Fornece métodos CRUD e de busca personalizados para Administrador.
+ */
+@Repository
+public interface RepositorioAdministrador extends JpaRepository<Administrador, UUID> {
+
+    /**
+     * @brief Busca um Administrador pelo CPF.
+     * @param cpf O CPF do administrador.
+     * @return Um Optional contendo o Administrador, se encontrado.
+     */
+    Optional<Administrador> findByCpf(String cpf);
+
+    /**
+     * @brief Lista todos os Administradores com paginação.
+     * @param pageable Objeto Pageable para configuração de paginação.
+     * @return Uma página de Administradores.
+     */
+    Page<Administrador> findAll(Pageable pageable);
+}
+```
+```java
+package br.com.legalconnect.repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.entity.Cliente;
+
+/**
+ * @interface RepositorioCliente
+ * @brief Repositório Spring Data JPA para a entidade Cliente.
+ *        Fornece métodos CRUD e de busca personalizados para Cliente.
+ */
+@Repository
+public interface RepositorioCliente extends JpaRepository<Cliente, UUID> {
+
+    /**
+     * @brief Busca um Cliente pelo CPF.
+     * @param cpf O CPF do cliente.
+     * @return Um Optional contendo o Cliente, se encontrado.
+     */
+    Optional<Cliente> findByCpf(String cpf);
+
+    /**
+     * @brief Lista todos os Clientes com paginação.
+     * @param pageable Objeto Pageable para configuração de paginação.
+     * @return Uma página de Clientes.
+     */
+    Page<Cliente> findAll(Pageable pageable);
+}
+```
+```java
+package br.com.legalconnect.repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.entity.Empresa;
+
+/**
+ * @interface RepositorioEmpresa
+ * @brief Repositório Spring Data JPA para a entidade Empresa.
+ *        Fornece métodos CRUD e de busca personalizados para Empresa.
+ */
+@Repository
+public interface RepositorioEmpresa extends JpaRepository<Empresa, UUID> {
+
+    /**
+     * @brief Busca uma Empresa pelo CNPJ.
+     * @param cnpj O CNPJ da empresa.
+     * @return Um Optional contendo a Empresa, se encontrada.
+     */
+    Optional<Empresa> findByCnpj(String cnpj);
+
+    /**
+     * @brief Lista todas as Empresas com paginação.
+     * @param pageable Objeto Pageable para configuração de paginação.
+     * @return Uma página de Empresas.
+     */
+    Page<Empresa> findAll(Pageable pageable);
+}
+```
+```java
+package br.com.legalconnect.repository;
+
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.entity.Endereco;
+
+/**
+ * @interface RepositorioEndereco
+ * @brief Repositório Spring Data JPA para a entidade Endereco.
+ *        Fornece métodos CRUD básicos para Endereco.
+ */
+@Repository
+public interface RepositorioEndereco extends JpaRepository<Endereco, UUID> {
+    // Métodos de busca adicionais podem ser definidos aqui se necessário,
+    // como findByPessoaId(UUID pessoaId) ou findByEmpresaId(UUID empresaId)
+}
+```
+```java
+package br.com.legalconnect.repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.entity.Pessoa;
+
+/**
+ * @interface RepositorioPessoa
+ * @brief Repositório Spring Data JPA para a entidade Pessoa (base).
+ *        Fornece métodos CRUD básicos para Pessoa e busca por CPF.
+ *        Como Pessoa é uma entidade base abstrata com estratégia JOINED, este
+ *        repositório
+ *        pode ser usado para operações polimórficas se necessário, mas
+ *        geralmente
+ *        repositórios específicos para subclasses (Profissional, Cliente,
+ *        Administrador)
+ *        são mais comuns para operações de negócio.
+ */
+@Repository
+public interface RepositorioPessoa extends JpaRepository<Pessoa, UUID> {
+
+    /**
+     * @brief Busca uma Pessoa pelo CPF.
+     * @param cpf O CPF da pessoa.
+     * @return Um Optional contendo a Pessoa, se encontrada.
+     */
+    Optional<Pessoa> findByCpf(String cpf);
+}
+```
+```java
+package br.com.legalconnect.repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.entity.Plano;
+
+/**
+ * @interface RepositorioPlano
+ * @brief Repositório Spring Data JPA para a entidade Plano.
+ *        Fornece métodos CRUD e de busca personalizados para Plano.
+ *        **Nota:** Em uma arquitetura de microsserviços ideal, esta entidade e
+ *        seu
+ *        repositório poderiam residir em um serviço de 'marketplace' ou
+ *        'assinatura'.
+ *        Aqui, é mantido para fins de completude do modelo de dados do
+ *        user-service,
+ *        mas a gestão real dos planos pode ser externa.
+ */
+@Repository
+public interface RepositorioPlano extends JpaRepository<Plano, UUID> {
+
+    /**
+     * @brief Busca um Plano pelo nome.
+     * @param nome O nome do plano.
+     * @return Um Optional contendo o Plano, se encontrado.
+     */
+    Optional<Plano> findByNome(String nome);
+}
+```
+```java
+package br.com.legalconnect.repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.entity.Profissional;
+
+/**
+ * @interface RepositorioProfissional
+ * @brief Repositório Spring Data JPA para a entidade Profissional.
+ *        Fornece métodos CRUD e de busca personalizados para Profissional.
+ */
+@Repository
+public interface RepositorioProfissional extends JpaRepository<Profissional, UUID> {
+
+    /**
+     * @brief Busca um Profissional pelo CPF.
+     * @param cpf O CPF do profissional.
+     * @return Um Optional contendo o Profissional, se encontrado.
+     */
+    Optional<Profissional> findByCpf(String cpf);
+
+    /**
+     * @brief Busca um Profissional pelo número da OAB.
+     * @param numeroOab O número da OAB do profissional.
+     * @return Um Optional contendo o Profissional, se encontrado.
+     */
+    Optional<Profissional> findByNumeroOab(String numeroOab);
+
+    /**
+     * @brief Lista todos os Profissionais com paginação.
+     * @param pageable Objeto Pageable para configuração de paginação.
+     * @return Uma página de Profissionais.
+     */
+    Page<Profissional> findAll(Pageable pageable);
+}
+```
+```java
+package br.com.legalconnect.repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.entity.RoleProfissional;
+
+/**
+ * @interface RepositorioRoleProfissional
+ * @brief Repositório Spring Data JPA para a entidade RoleProfissional.
+ *        Fornece métodos CRUD e de busca personalizados para RoleProfissional.
+ *        **Nota:** Em um ambiente multi-tenant, os papéis podem ser globais ou
+ *        por tenant.
+ *        Este repositório assume que a entidade RoleProfissional está no schema
+ *        do tenant.
+ */
+@Repository
+public interface RepositorioRoleProfissional extends JpaRepository<RoleProfissional, UUID> {
+
+    /**
+     * @brief Busca um RoleProfissional pelo nome.
+     * @param nome O nome do papel.
+     * @return Um Optional contendo o RoleProfissional, se encontrado.
+     */
+    Optional<RoleProfissional> findByNome(String nome);
+}
+```
+```java
+package br.com.legalconnect.repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.entity.User;
+
+/**
+ * @interface RepositorioUser
+ * @brief Repositório Spring Data JPA para a entidade User.
+ *        Fornece métodos CRUD e de busca personalizados para User.
+ *        **Nota:** Este repositório é crucial para o pré-requisito de
+ *        associação de Pessoa a um User existente.
+ *        As operações de criação/atualização de User em si são de
+ *        responsabilidade de outro microsserviço (ex: auth-service).
+ */
+@Repository
+public interface RepositorioUser extends JpaRepository<User, UUID> {
+
+    /**
+     * @brief Busca um User pelo email.
+     * @param email O email do usuário.
+     * @return Um Optional contendo o User, se encontrado.
+     */
+    Optional<User> findByEmail(String email);
+
+    /**
+     * @brief Busca um User pelo CPF.
+     * @param cpf O CPF do usuário.
+     * @return Um Optional contendo o User, se encontrado.
+     */
+    Optional<User> findByCpf(String cpf);
+}
+```
+```java
+package br.com.legalconnect.service;
+
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.dto.AdministradorRequestDTO;
+import br.com.legalconnect.dto.AdministradorResponseDTO;
+import br.com.legalconnect.entity.Administrador;
+import br.com.legalconnect.entity.Endereco;
+import br.com.legalconnect.entity.User;
+import br.com.legalconnect.mapper.AdministradorMapper;
+import br.com.legalconnect.repository.RepositorioAdministrador;
+import br.com.legalconnect.repository.RepositorioUser;
+
+/**
+ * @class ServicoAdministrador
+ * @brief Serviço de domínio para gerenciar operações relacionadas a
+ *        Administradores.
+ *        Contém a lógica de negócio para criação, busca, atualização e exclusão
+ *        de Administradores.
+ */
+@Service
+public class ServicoAdministrador {
+
+    private final RepositorioAdministrador repositorioAdministrador;
+    private final RepositorioUser repositorioUser;
+    private final AdministradorMapper administradorMapper;
+
+    @Autowired
+    public ServicoAdministrador(RepositorioAdministrador repositorioAdministrador, RepositorioUser repositorioUser,
+            AdministradorMapper administradorMapper) {
+        this.repositorioAdministrador = repositorioAdministrador;
+        this.repositorioUser = repositorioUser;
+        this.administradorMapper = administradorMapper;
+    }
+
+    /**
+     * @brief Cadastra um novo Administrador no sistema.
+     * @param requestDTO DTO com os dados do Administrador a ser cadastrado.
+     * @return DTO com os dados do Administrador cadastrado.
+     * @throws BusinessException Se o CPF já estiver cadastrado ou o User associado
+     *                           não for encontrado.
+     */
+    @Transactional
+    public AdministradorResponseDTO cadastrarAdministrador(AdministradorRequestDTO requestDTO) {
+        // 1. Verificar pré-requisito: User associado deve existir
+        UUID userId = requestDTO.getUsuario().getId(); // Presume que o ID do User vem no DTO
+        User user = repositorioUser.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND,
+                        "Usuário associado com ID " + userId + " não encontrado."));
+
+        // 2. Validação de duplicidade de CPF
+        if (repositorioAdministrador.findByCpf(requestDTO.getCpf()).isPresent()) {
+            throw new BusinessException(ErrorCode.INVALID_CPF, "CPF já cadastrado para outro administrador.");
+        }
+
+        // 3. Mapear DTO para entidade
+        Administrador administrador = administradorMapper.toEntity(requestDTO);
+        administrador.setUsuario(user); // Associar o User encontrado
+
+        // 4. Associar endereços à pessoa (Administrador)
+        Set<Endereco> enderecos = requestDTO.getEnderecos().stream()
+                .map(enderecoDTO -> {
+                    Endereco endereco = administradorMapper.toEntity(enderecoDTO);
+                    endereco.setPessoa(administrador); // Garante a associação bidirecional
+                    return endereco;
+                })
+                .collect(Collectors.toSet());
+        administrador.setEnderecos(enderecos);
+
+        // 5. Salvar a entidade
+        Administrador savedAdministrador = repositorioAdministrador.save(administrador);
+
+        // 6. Mapear entidade salva para DTO de resposta
+        return administradorMapper.toResponseDTO(savedAdministrador);
+    }
+
+    /**
+     * @brief Busca um Administrador pelo ID.
+     * @param id ID do Administrador a ser buscado.
+     * @return DTO com os dados do Administrador encontrado.
+     * @throws BusinessException Se o Administrador não for encontrado.
+     */
+    @Transactional(readOnly = true)
+    public AdministradorResponseDTO buscarAdministradorPorId(UUID id) {
+        Administrador administrador = repositorioAdministrador.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                        "Administrador com ID " + id + " não encontrado."));
+        return administradorMapper.toResponseDTO(administrador);
+    }
+
+    /**
+     * @brief Lista todos os Administradores com paginação.
+     * @param pageable Objeto Pageable para configuração da paginação.
+     * @return Página de DTOs de Administradores.
+     */
+    @Transactional(readOnly = true)
+    public Page<AdministradorResponseDTO> listarAdministradores(Pageable pageable) {
+        return repositorioAdministrador.findAll(pageable)
+                .map(administradorMapper::toResponseDTO);
+    }
+
+    /**
+     * @brief Atualiza os dados de um Administrador existente.
+     * @param id         ID do Administrador a ser atualizado.
+     * @param requestDTO DTO com os dados atualizados do Administrador.
+     * @return DTO com os dados do Administrador atualizado.
+     * @throws BusinessException Se o Administrador não for encontrado ou se houver
+     *                           duplicidade de CPF.
+     */
+    @Transactional
+    public AdministradorResponseDTO atualizarAdministrador(UUID id, AdministradorRequestDTO requestDTO) {
+        Administrador existingAdministrador = repositorioAdministrador.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                        "Administrador com ID " + id + " não encontrado para atualização."));
+
+        // 1. Validação de duplicidade de CPF (se o CPF foi alterado)
+        if (!existingAdministrador.getCpf().equals(requestDTO.getCpf())) {
+            if (repositorioAdministrador.findByCpf(requestDTO.getCpf()).isPresent()) {
+                throw new BusinessException(ErrorCode.INVALID_CPF, "Novo CPF já cadastrado para outro administrador.");
+            }
+        }
+
+        // 2. Atualizar campos básicos da Pessoa e Administrador
+        // O mapper precisa de um método de atualização, ou fazer manualmente
+        existingAdministrador.setNomeCompleto(requestDTO.getNomeCompleto());
+        existingAdministrador.setCpf(requestDTO.getCpf());
+        existingAdministrador.setDataNascimento(requestDTO.getDataNascimento());
+        existingAdministrador.setStatus(requestDTO.getStatus()); // Campo específico de Administrador
+
+        // 3. Atualizar endereços (lógica de sincronização)
+        existingAdministrador.getEnderecos().clear(); // Limpa os endereços existentes
+        requestDTO.getEnderecos().forEach(enderecoDTO -> {
+            // Reutiliza o mapper para converter DTO para Endereco
+            Endereco newEndereco = administradorMapper.toEntity(enderecoDTO);
+            newEndereco.setPessoa(existingAdministrador); // Garante a associação bidirecional
+            existingAdministrador.getEnderecos().add(newEndereco);
+        });
+
+        // 4. Atualizar telefones
+        existingAdministrador.getTelefones().clear();
+        if (requestDTO.getTelefones() != null) {
+            existingAdministrador.getTelefones().addAll(requestDTO.getTelefones());
+        }
+
+        // 5. Salvar a entidade atualizada
+        Administrador updatedAdministrador = repositorioAdministrador.save(existingAdministrador);
+
+        return administradorMapper.toResponseDTO(updatedAdministrador);
+    }
+
+    /**
+     * @brief Exclui um Administrador pelo ID.
+     * @param id ID do Administrador a ser excluído.
+     * @throws BusinessException Se o Administrador não for encontrado.
+     */
+    @Transactional
+    public void excluirAdministrador(UUID id) {
+        if (!repositorioAdministrador.existsById(id)) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                    "Administrador com ID " + id + " não encontrado para exclusão.");
+        }
+        // A exclusão em cascata do Endereco e User (se configurado no mapeamento) será
+        // tratada pelo JPA
+        repositorioAdministrador.deleteById(id);
+    }
+}
+```
+```java
+package br.com.legalconnect.service;
+
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.dto.ClienteRequestDTO;
+import br.com.legalconnect.dto.ClienteResponseDTO;
+import br.com.legalconnect.entity.Cliente;
+import br.com.legalconnect.entity.Endereco;
+import br.com.legalconnect.entity.User;
+import br.com.legalconnect.mapper.ClienteMapper;
+import br.com.legalconnect.repository.RepositorioCliente;
+import br.com.legalconnect.repository.RepositorioUser;
+
+/**
+ * @class ServicoCliente
+ * @brief Serviço de domínio para gerenciar operações relacionadas a Clientes.
+ *        Contém a lógica de negócio para criação, busca, atualização e exclusão
+ *        de Clientes.
+ */
+@Service
+public class ServicoCliente {
+
+    private final RepositorioCliente repositorioCliente;
+    private final RepositorioUser repositorioUser;
+    private final ClienteMapper clienteMapper;
+
+    @Autowired
+    public ServicoCliente(RepositorioCliente repositorioCliente, RepositorioUser repositorioUser,
+            ClienteMapper clienteMapper) {
+        this.repositorioCliente = repositorioCliente;
+        this.repositorioUser = repositorioUser;
+        this.clienteMapper = clienteMapper;
+    }
+
+    /**
+     * @brief Cadastra um novo Cliente no sistema.
+     * @param requestDTO DTO com os dados do Cliente a ser cadastrado.
+     * @return DTO com os dados do Cliente cadastrado.
+     * @throws BusinessException Se o CPF já estiver cadastrado ou o User associado
+     *                           não for encontrado.
+     */
+    @Transactional
+    public ClienteResponseDTO cadastrarCliente(ClienteRequestDTO requestDTO) {
+        // 1. Verificar pré-requisito: User associado deve existir
+        UUID userId = requestDTO.getUsuario().getId(); // Presume que o ID do User vem no DTO
+        User user = repositorioUser.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND,
+                        "Usuário associado com ID " + userId + " não encontrado."));
+
+        // 2. Validação de duplicidade de CPF
+        if (repositorioCliente.findByCpf(requestDTO.getCpf()).isPresent()) {
+            throw new BusinessException(ErrorCode.INVALID_CPF, "CPF já cadastrado para outro cliente.");
+        }
+
+        // 3. Mapear DTO para entidade
+        Cliente cliente = clienteMapper.toEntity(requestDTO);
+        cliente.setUsuario(user); // Associar o User encontrado
+
+        // 4. Associar endereços à pessoa (Cliente)
+        Set<Endereco> enderecos = requestDTO.getEnderecos().stream()
+                .map(enderecoDTO -> {
+                    Endereco endereco = clienteMapper.toEntity(enderecoDTO);
+                    endereco.setPessoa(cliente); // Garante a associação bidirecional
+                    return endereco;
+                })
+                .collect(Collectors.toSet());
+        cliente.setEnderecos(enderecos);
+
+        // 5. Salvar a entidade
+        Cliente savedCliente = repositorioCliente.save(cliente);
+
+        // 6. Mapear entidade salva para DTO de resposta
+        return clienteMapper.toResponseDTO(savedCliente);
+    }
+
+    /**
+     * @brief Busca um Cliente pelo ID.
+     * @param id ID do Cliente a ser buscado.
+     * @return DTO com os dados do Cliente encontrado.
+     * @throws BusinessException Se o Cliente não for encontrado.
+     */
+    @Transactional(readOnly = true)
+    public ClienteResponseDTO buscarClientePorId(UUID id) {
+        Cliente cliente = repositorioCliente.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                        "Cliente com ID " + id + " não encontrado."));
+        return clienteMapper.toResponseDTO(cliente);
+    }
+
+    /**
+     * @brief Lista todos os Clientes com paginação.
+     * @param pageable Objeto Pageable para configuração da paginação.
+     * @return Página de DTOs de Clientes.
+     */
+    @Transactional(readOnly = true)
+    public Page<ClienteResponseDTO> listarClientes(Pageable pageable) {
+        return repositorioCliente.findAll(pageable)
+                .map(clienteMapper::toResponseDTO);
+    }
+
+    /**
+     * @brief Atualiza os dados de um Cliente existente.
+     * @param id         ID do Cliente a ser atualizado.
+     * @param requestDTO DTO com os dados atualizados do Cliente.
+     * @return DTO com os dados do Cliente atualizado.
+     * @throws BusinessException Se o Cliente não for encontrado ou se houver
+     *                           duplicidade de CPF.
+     */
+    @Transactional
+    public ClienteResponseDTO atualizarCliente(UUID id, ClienteRequestDTO requestDTO) {
+        Cliente existingCliente = repositorioCliente.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                        "Cliente com ID " + id + " não encontrado para atualização."));
+
+        // 1. Validação de duplicidade de CPF (se o CPF foi alterado)
+        if (!existingCliente.getCpf().equals(requestDTO.getCpf())) {
+            if (repositorioCliente.findByCpf(requestDTO.getCpf()).isPresent()) {
+                throw new BusinessException(ErrorCode.INVALID_CPF, "Novo CPF já cadastrado para outro cliente.");
+            }
+        }
+
+        // 2. Atualizar campos básicos da Pessoa e Cliente
+        existingCliente.setNomeCompleto(requestDTO.getNomeCompleto());
+        existingCliente.setCpf(requestDTO.getCpf());
+        existingCliente.setDataNascimento(requestDTO.getDataNascimento());
+        existingCliente.setStatus(requestDTO.getStatus()); // Campo específico de Cliente
+        existingCliente.setTipo(requestDTO.getTipo()); // Campo específico de Cliente
+
+        // 3. Atualizar endereços (lógica de sincronização)
+        existingCliente.getEnderecos().clear(); // Limpa os endereços existentes
+        requestDTO.getEnderecos().forEach(enderecoDTO -> {
+            Endereco newEndereco = clienteMapper.toEntity(enderecoDTO);
+            newEndereco.setPessoa(existingCliente);
+            existingCliente.getEnderecos().add(newEndereco);
+        });
+
+        // 4. Atualizar telefones
+        existingCliente.getTelefones().clear();
+        if (requestDTO.getTelefones() != null) {
+            existingCliente.getTelefones().addAll(requestDTO.getTelefones());
+        }
+
+        // 5. Salvar a entidade atualizada
+        Cliente updatedCliente = repositorioCliente.save(existingCliente);
+
+        return clienteMapper.toResponseDTO(updatedCliente);
+    }
+
+    /**
+     * @brief Exclui um Cliente pelo ID.
+     * @param id ID do Cliente a ser excluído.
+     * @throws BusinessException Se o Cliente não for encontrado.
+     */
+    @Transactional
+    public void excluirCliente(UUID id) {
+        if (!repositorioCliente.existsById(id)) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                    "Cliente com ID " + id + " não encontrado para exclusão.");
+        }
+        // A exclusão em cascata do Endereco e User (se configurado no mapeamento) será
+        // tratada pelo JPA
+        repositorioCliente.deleteById(id);
+    }
+}
+```
+```java
+package br.com.legalconnect.service;
+
+import common.exception.ErrorCode; // Importa da common-lib
+import dto.EmpresaRequestDTO;
+import dto.EmpresaResponseDTO;
+import entity.Empresa;
+import entity.Endereco;
+import common.exception.BusinessException; // Importa da common-lib
+import mapper.EmpresaMapper;
+import repository.RepositorioEmpresa;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+/**
+ * @class ServicoEmpresa
+ * @brief Serviço de domínio para gerenciar operações relacionadas a Empresas.
+ * Contém a lógica de negócio para criação, busca, atualização e exclusão de Empresas.
+ */
+@Service
+public class ServicoEmpresa {
+
+    private final RepositorioEmpresa repositorioEmpresa;
+    private final EmpresaMapper empresaMapper;
+
+    @Autowired
+    public ServicoEmpresa(RepositorioEmpresa repositorioEmpresa, EmpresaMapper empresaMapper) {
+        this.repositorioEmpresa = repositorioEmpresa;
+        this.empresaMapper = empresaMapper;
+    }
+
+    /**
+     * @brief Cadastra uma nova Empresa no sistema.
+     * @param requestDTO DTO com os dados da Empresa a ser cadastrada.
+     * @return DTO com os dados da Empresa cadastrada.
+     * @throws BusinessException Se o CNPJ já estiver cadastrado.
+     */
+    @Transactional
+    public EmpresaResponseDTO cadastrarEmpresa(EmpresaRequestDTO requestDTO) {
+        // 1. Validação de duplicidade de CNPJ
+        if (repositorioEmpresa.findByCnpj(requestDTO.getCnpj()).isPresent()) {
+            throw new BusinessException(ErrorCode.INVALID_CNPJ, "CNPJ já cadastrado para outra empresa.");
+        }
+
+        // 2. Mapear DTO para entidade
+        Empresa empresa = empresaMapper.toEntity(requestDTO);
+
+        // 3. Associar endereços à empresa
+        Set<Endereco> enderecos = requestDTO.getEnderecos().stream()
+                .map(enderecoDTO -> {
+                    // Reutiliza o mapper para converter DTO para Endereco
+                    Endereco endereco = empresaMapper.toEntity(enderecoDTO);
+                    endereco.setEmpresa(empresa); // Garante a associação bidirecional
+                    return endereco;
+                })
+                .collect(Collectors.toSet());
+        empresa.setEnderecos(enderecos);
+
+        // 4. Salvar a entidade
+        Empresa savedEmpresa = repositorioEmpresa.save(empresa);
+
+        // 5. Mapear entidade salva para DTO de resposta
+        return empresaMapper.toResponseDTO(savedEmpresa);
+    }
+
+    /**
+     * @brief Busca uma Empresa pelo ID.
+     * @param id ID da Empresa a ser buscada.
+     * @return DTO com os dados da Empresa encontrada.
+     * @throws BusinessException Se a Empresa não for encontrada.
+     */
+    @Transactional(readOnly = true)
+    public EmpresaResponseDTO buscarEmpresaPorId(UUID id) {
+        Empresa empresa = repositorioEmpresa.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Empresa com ID " + id + " não encontrada."));
+        return empresaMapper.toResponseDTO(empresa);
+    }
+
+    /**
+     * @brief Lista todas as Empresas com paginação.
+     * @param pageable Objeto Pageable para configuração da paginação.
+     * @return Página de DTOs de Empresas.
+     */
+    @Transactional(readOnly = true)
+    public Page<EmpresaResponseDTO> listarEmpresas(Pageable pageable) {
+        return repositorioEmpresa.findAll(pageable)
+                .map(empresaMapper::toResponseDTO);
+    }
+
+    /**
+     * @brief Atualiza os dados de uma Empresa existente.
+     * @param id ID da Empresa a ser atualizada.
+     * @param requestDTO DTO com os dados atualizados da Empresa.
+     * @return DTO com os dados da Empresa atualizada.
+     * @throws BusinessException Se a Empresa não for encontrada ou se houver duplicidade de CNPJ.
+     */
+    @Transactional
+    public EmpresaResponseDTO atualizarEmpresa(UUID id, EmpresaRequestDTO requestDTO) {
+        Empresa existingEmpresa = repositorioEmpresa.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Empresa com ID " + id + " não encontrada para atualização."));
+
+        // 1. Validação de duplicidade de CNPJ (se o CNPJ foi alterado)
+        if (!existingEmpresa.getCnpj().equals(requestDTO.getCnpj())) {
+            if (repositorioEmpresa.findByCnpj(requestDTO.getCnpj()).isPresent()) {
+                throw new BusinessException(ErrorCode.INVALID_CNPJ, "Novo CNPJ já cadastrado para outra empresa.");
+            }
+        }
+
+        // 2. Atualizar campos básicos da Empresa
+        existingEmpresa.setNomeFantasia(requestDTO.getNomeFantasia());
+        existingEmpresa.setRazaoSocial(requestDTO.getRazaoSocial());
+        existingEmpresa.setCnpj(requestDTO.getCnpj());
+        existingEmpresa.setEmailContato(requestDTO.getEmailContato());
+
+        // 3. Atualizar endereços (lógica de sincronização)
+        existingEmpresa.getEnderecos().clear(); // Limpa os endereços existentes
+        requestDTO.getEnderecos().forEach(enderecoDTO -> {
+            Endereco newEndereco = empresaMapper.toEntity(enderecoDTO);
+            newEndereco.setEmpresa(existingEmpresa);
+            existingEmpresa.getEnderecos().add(newEndereco);
+        });
+
+        // 4. Atualizar telefones
+        existingEmpresa.getTelefones().clear();
+        if (requestDTO.getTelefones() != null) {
+            existingEmpresa.getTelefones().addAll(requestDTO.getTelefones());
+        }
+
+        // 5. Salvar a entidade atualizada
+        Empresa updatedEmpresa = repositorioEmpresa.save(existingEmpresa);
+
+        return empresaMapper.toResponseDTO(updatedEmpresa);
+    }
+
+    /**
+     * @brief Exclui uma Empresa pelo ID.
+     * @param id ID da Empresa a ser excluída.
+     * @throws BusinessException Se a Empresa não for encontrada ou se possuir profissionais associados.
+     */
+    @Transactional
+    public void excluirEmpresa(UUID id) {
+        Empresa empresa = repositorioEmpresa.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Empresa com ID " + id + " não encontrada para exclusão."));
+
+        // Verificar se existem profissionais associados antes de excluir
+        if (!empresa.getProfissionais().isEmpty()) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Empresa não pode ser excluída pois possui profissionais associados.");
+        }
+
+        // A exclusão em cascata do Endereco será tratada pelo JPA
+        repositorioEmpresa.delete(empresa);
+    }
+}
+```
+```java
+package br.com.legalconnect.service;
+
+import common.exception.ErrorCode; // Importa da common-lib
+import dto.EnderecoRequestDTO;
+import dto.EnderecoResponseDTO;
+import entity.Endereco;
+import common.exception.BusinessException; // Importa da common-lib
+import mapper.EnderecoMapper;
+import repository.RepositorioEndereco;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+/**
+ * @class ServicoEndereco
+ * @brief Serviço de domínio para gerenciar operações relacionadas a Endereços.
+ * Este serviço pode ser usado para operações diretas em Endereços,
+ * embora na maioria dos casos eles sejam gerenciados em cascata por Pessoa ou Empresa.
+ */
+@Service
+public class ServicoEndereco {
+
+    private final RepositorioEndereco repositorioEndereco;
+    private final EnderecoMapper enderecoMapper;
+
+    @Autowired
+    public ServicoEndereco(RepositorioEndereco repositorioEndereco, EnderecoMapper enderecoMapper) {
+        this.repositorioEndereco = repositorioEndereco;
+        this.enderecoMapper = enderecoMapper;
+    }
+
+    /**
+     * @brief Cadastra um novo Endereco.
+     * @param requestDTO DTO com os dados do Endereco a ser cadastrado.
+     * @return DTO com os dados do Endereco cadastrado.
+     */
+    @Transactional
+    public EnderecoResponseDTO cadastrarEndereco(EnderecoRequestDTO requestDTO) {
+        Endereco endereco = enderecoMapper.toEntity(requestDTO);
+        Endereco savedEndereco = repositorioEndereco.save(endereco);
+        return enderecoMapper.toResponseDTO(savedEndereco);
+    }
+
+    /**
+     * @brief Busca um Endereco pelo ID.
+     * @param id ID do Endereco a ser buscado.
+     * @return DTO com os dados do Endereco encontrado.
+     * @throws BusinessException Se o Endereco não for encontrado.
+     */
+    @Transactional(readOnly = true)
+    public EnderecoResponseDTO buscarEnderecoPorId(UUID id) {
+        Endereco endereco = repositorioEndereco.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Endereço com ID " + id + " não encontrado."));
+        return enderecoMapper.toResponseDTO(endereco);
+    }
+
+    /**
+     * @brief Lista todos os Enderecos.
+     * @return Lista de DTOs de Enderecos.
+     */
+    @Transactional(readOnly = true)
+    public List<EnderecoResponseDTO> listarEnderecos() {
+        return repositorioEndereco.findAll().stream()
+                .map(enderecoMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * @brief Atualiza os dados de um Endereco existente.
+     * @param id ID do Endereco a ser atualizado.
+     * @param requestDTO DTO com os dados atualizados do Endereco.
+     * @return DTO com os dados do Endereco atualizado.
+     * @throws BusinessException Se o Endereco não for encontrado.
+     */
+    @Transactional
+    public EnderecoResponseDTO atualizarEndereco(UUID id, EnderecoRequestDTO requestDTO) {
+        Endereco existingEndereco = repositorioEndereco.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Endereço com ID " + id + " não encontrado para atualização."));
+
+        // Atualizar campos básicos do Endereco
+        existingEndereco.setLogradouro(requestDTO.getLogradouro());
+        existingEndereco.setNumero(requestDTO.getNumero());
+        existingEndereco.setComplemento(requestDTO.getComplemento());
+        existingEndereco.setBairro(requestDTO.getBairro());
+        existingEndereco.setCidade(requestDTO.getCidade());
+        existingEndereco.setEstado(requestDTO.getEstado());
+        existingEndereco.setCep(requestDTO.getCep());
+        existingEndereco.setPais(requestDTO.getPais());
+        existingEndereco.setTipoEndereco(requestDTO.getTipoEndereco());
+
+        Endereco updatedEndereco = repositorioEndereco.save(existingEndereco);
+        return enderecoMapper.toResponseDTO(updatedEndereco);
+    }
+
+    /**
+     * @brief Exclui um Endereco pelo ID.
+     * @param id ID do Endereco a ser excluído.
+     * @throws BusinessException Se o Endereco não for encontrado.
+     */
+    @Transactional
+    public void excluirEndereco(UUID id) {
+        if (!repositorioEndereco.existsById(id)) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Endereço com ID " + id + " não encontrado para exclusão.");
+        }
+        repositorioEndereco.deleteById(id);
+    }
+}
+```
+```java
+package br.com.legalconnect.service;
+
+import common.exception.ErrorCode; // Importa da common-lib
+import dto.PessoaResponseDTO;
+import entity.Pessoa;
+import common.exception.BusinessException; // Importa da common-lib
+import mapper.PessoaMapper;
+import repository.RepositorioPessoa;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+/**
+ * @class ServicoPessoa
+ * @brief Serviço de domínio para operações genéricas relacionadas a Pessoas.
+ * Como Pessoa é uma entidade base abstrata, este serviço lida com operações
+ * que podem ser comuns a todas as subclasses (Profissional, Cliente, Administrador).
+ * Operações de criação/atualização específicas devem ser tratadas nos serviços das subclasses.
+ */
+@Service
+public class ServicoPessoa {
+
+    private final RepositorioPessoa repositorioPessoa;
+    private final PessoaMapper pessoaMapper;
+
+    @Autowired
+    public ServicoPessoa(RepositorioPessoa repositorioPessoa, PessoaMapper pessoaMapper) {
+        this.repositorioPessoa = repositorioPessoa;
+        this.pessoaMapper = pessoaMapper;
+    }
+
+    /**
+     * @brief Busca uma Pessoa pelo ID.
+     * @param id ID da Pessoa a ser buscada.
+     * @return DTO com os dados da Pessoa encontrada.
+     * @throws BusinessException Se a Pessoa não for encontrada.
+     */
+    @Transactional(readOnly = true)
+    public PessoaResponseDTO buscarPessoaPorId(UUID id) {
+        Pessoa pessoa = repositorioPessoa.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Pessoa com ID " + id + " não encontrada."));
+        return pessoaMapper.toResponseDTO(pessoa);
+    }
+
+    /**
+     * @brief Lista todas as Pessoas.
+     * @return Lista de DTOs de Pessoas.
+     */
+    @Transactional(readOnly = true)
+    public List<PessoaResponseDTO> listarTodasPessoas() {
+        return repositorioPessoa.findAll().stream()
+                .map(pessoaMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * @brief Exclui uma Pessoa pelo ID.
+     * @param id ID da Pessoa a ser excluída.
+     * @throws BusinessException Se a Pessoa não for encontrada.
+     * **Nota:** A exclusão de Pessoa deve ser feita com cautela, pois pode
+     * impactar subclasses (Profissional, Cliente, Administrador) e o User associado.
+     * Idealmente, a exclusão de subclasses deveria ser o ponto de entrada.
+     */
+    @Transactional
+    public void excluirPessoa(UUID id) {
+        if (!repositorioPessoa.existsById(id)) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Pessoa com ID " + id + " não encontrada para exclusão.");
+        }
+        repositorioPessoa.deleteById(id);
+    }
+}
+```
+```java
+package br.com.legalconnect.service;
+
+import common.exception.ErrorCode; // Importa da common-lib
+import dto.PlanoResponseDTO;
+import entity.Plano;
+import common.exception.BusinessException; // Importa da common-lib
+import mapper.ProfissionalMapper; // Reutilizando mapper de profissional para plano
+import repository.RepositorioPlano;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+/**
+ * @class ServicoPlano
+ * @brief Serviço de domínio para gerenciar operações relacionadas a Planos.
+ * **Nota:** Este serviço é um placeholder. Em uma arquitetura de microsserviços real,
+ * a gestão de planos seria feita em um microsserviço dedicado (ex: marketplace ou assinatura).
+ * Aqui, ele apenas fornece métodos de busca para que outros serviços possam referenciar planos.
+ */
+@Service
+public class ServicoPlano {
+
+    private final RepositorioPlano repositorioPlano;
+    private final ProfissionalMapper profissionalMapper; // Usando o mapper de Profissional que já tem o toPlanoResponseDTO
+
+    @Autowired
+    public ServicoPlano(RepositorioPlano repositorioPlano, ProfissionalMapper profissionalMapper) {
+        this.repositorioPlano = repositorioPlano;
+        this.profissionalMapper = profissionalMapper;
+    }
+
+    /**
+     * @brief Busca um Plano pelo ID.
+     * @param id ID do Plano a ser buscado.
+     * @return DTO com os dados do Plano encontrado.
+     * @throws BusinessException Se o Plano não for encontrado.
+     */
+    @Transactional(readOnly = true)
+    public PlanoResponseDTO buscarPlanoPorId(UUID id) {
+        Plano plano = repositorioPlano.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Plano com ID " + id + " não encontrado."));
+        return profissionalMapper.toPlanoResponseDTO(plano);
+    }
+
+    /**
+     * @brief Lista todos os Planos disponíveis.
+     * @return Lista de DTOs de Planos.
+     */
+    @Transactional(readOnly = true)
+    public List<PlanoResponseDTO> listarTodosPlanos() {
+        return repositorioPlano.findAll().stream()
+                .map(profissionalMapper::toPlanoResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Métodos para cadastrar, atualizar e excluir planos não são implementados aqui,
+    // pois seriam responsabilidade do microsserviço de marketplace/assinatura.
+}
+```
+```java
+package br.com.legalconnect.service;
+
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.dto.ProfissionalRequestDTO;
+import br.com.legalconnect.dto.ProfissionalResponseDTO;
+import br.com.legalconnect.entity.Empresa;
+import br.com.legalconnect.entity.Endereco;
+import br.com.legalconnect.entity.Plano;
+import br.com.legalconnect.entity.Profissional;
+import br.com.legalconnect.entity.User;
+import br.com.legalconnect.mapper.ProfissionalMapper;
+import br.com.legalconnect.repository.RepositorioEmpresa;
+import br.com.legalconnect.repository.RepositorioPlano;
+import br.com.legalconnect.repository.RepositorioProfissional;
+import br.com.legalconnect.repository.RepositorioUser;
+
+/**
+ * @class ServicoProfissional
+ * @brief Serviço de domínio para gerenciar operações relacionadas a
+ *        Profissionais.
+ *        Contém a lógica de negócio para criação, busca, atualização e exclusão
+ *        de Profissionais.
+ */
+@Service
+public class ServicoProfissional {
+
+    private final RepositorioProfissional repositorioProfissional;
+    private final RepositorioUser repositorioUser;
+    private final RepositorioPlano repositorioPlano;
+    private final RepositorioEmpresa repositorioEmpresa;
+    private final ProfissionalMapper profissionalMapper;
+
+    @Autowired
+    public ServicoProfissional(RepositorioProfissional repositorioProfissional,
+            RepositorioUser repositorioUser,
+            RepositorioPlano repositorioPlano,
+            RepositorioEmpresa repositorioEmpresa,
+            ProfissionalMapper profissionalMapper) {
+        this.repositorioProfissional = repositorioProfissional;
+        this.repositorioUser = repositorioUser;
+        this.repositorioPlano = repositorioPlano;
+        this.repositorioEmpresa = repositorioEmpresa;
+        this.profissionalMapper = profissionalMapper;
+    }
+
+    /**
+     * @brief Cadastra um novo Profissional no sistema.
+     * @param requestDTO DTO com os dados do Profissional a ser cadastrado.
+     * @return DTO com os dados do Profissional cadastrado.
+     * @throws BusinessException Se o CPF ou OAB já estiverem cadastrados, ou se o
+     *                           User/Plano/Empresa associado não for encontrado.
+     */
+    @Transactional
+    public ProfissionalResponseDTO cadastrarProfissional(ProfissionalRequestDTO requestDTO) {
+        // 1. Verificar pré-requisito: User associado deve existir
+        UUID userId = requestDTO.getUsuario().getId(); // Presume que o ID do User vem no DTO
+        User user = repositorioUser.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND,
+                        "Usuário associado com ID " + userId + " não encontrado."));
+
+        // 2. Validação de duplicidade de CPF e OAB
+        if (repositorioProfissional.findByCpf(requestDTO.getCpf()).isPresent()) {
+            throw new BusinessException(ErrorCode.INVALID_CPF, "CPF já cadastrado para outro profissional.");
+        }
+        if (repositorioProfissional.findByNumeroOab(requestDTO.getNumeroOab()).isPresent()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT,
+                    "Número da OAB já cadastrado para outro profissional.");
+        }
+
+        // 3. Buscar Plano e Empresa (se aplicável)
+        Plano plano = repositorioPlano.findById(requestDTO.getPlanoId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                        "Plano com ID " + requestDTO.getPlanoId() + " não encontrado."));
+
+        Empresa empresa = null;
+        if (requestDTO.getEmpresaId() != null) {
+            empresa = repositorioEmpresa.findById(requestDTO.getEmpresaId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                            "Empresa com ID " + requestDTO.getEmpresaId() + " não encontrada."));
+        }
+
+        // 4. Mapear DTO para entidade
+        Profissional profissional = profissionalMapper.toEntity(requestDTO);
+        profissional.setUsuario(user); // Associar o User encontrado
+        profissional.setPlano(plano); // Associar o Plano encontrado
+        profissional.setEmpresa(empresa); // Associar a Empresa (pode ser null)
+
+        // 5. Associar endereços à pessoa (Profissional)
+        Set<Endereco> enderecos = requestDTO.getEnderecos().stream()
+                .map(enderecoDTO -> {
+                    // Reutiliza o mapper para converter DTO para Endereco
+                    Endereco endereco = profissionalMapper.toEntity(enderecoDTO);
+                    endereco.setPessoa(profissional); // Garante a associação bidirecional
+                    return endereco;
+                })
+                .collect(Collectors.toSet());
+        profissional.setEnderecos(enderecos);
+
+        // 6. Salvar a entidade
+        Profissional savedProfissional = repositorioProfissional.save(profissional);
+
+        // 7. Mapear entidade salva para DTO de resposta
+        return profissionalMapper.toResponseDTO(savedProfissional);
+    }
+
+    /**
+     * @brief Busca um Profissional pelo ID.
+     * @param id ID do Profissional a ser buscado.
+     * @return DTO com os dados do Profissional encontrado.
+     * @throws BusinessException Se o Profissional não for encontrado.
+     */
+    @Transactional(readOnly = true)
+    public ProfissionalResponseDTO buscarProfissionalPorId(UUID id) {
+        Profissional profissional = repositorioProfissional.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                        "Profissional com ID " + id + " não encontrado."));
+        return profissionalMapper.toResponseDTO(profissional);
+    }
+
+    /**
+     * @brief Lista todos os Profissionais com paginação.
+     * @param pageable Objeto Pageable para configuração da paginação.
+     * @return Página de DTOs de Profissionais.
+     */
+    @Transactional(readOnly = true)
+    public Page<ProfissionalResponseDTO> listarProfissionais(Pageable pageable) {
+        return repositorioProfissional.findAll(pageable)
+                .map(profissionalMapper::toResponseDTO);
+    }
+
+    /**
+     * @brief Atualiza os dados de um Profissional existente.
+     * @param id         ID do Profissional a ser atualizado.
+     * @param requestDTO DTO com os dados atualizados do Profissional.
+     * @return DTO com os dados do Profissional atualizado.
+     * @throws BusinessException Se o Profissional não for encontrado, ou se houver
+     *                           duplicidade de CPF/OAB, ou se Plano/Empresa não for
+     *                           encontrado.
+     */
+    @Transactional
+    public ProfissionalResponseDTO atualizarProfissional(UUID id, ProfissionalRequestDTO requestDTO) {
+        Profissional existingProfissional = repositorioProfissional.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                        "Profissional com ID " + id + " não encontrado para atualização."));
+
+        // 1. Validação de duplicidade de CPF (se o CPF foi alterado)
+        if (!existingProfissional.getCpf().equals(requestDTO.getCpf())) {
+            if (repositorioProfissional.findByCpf(requestDTO.getCpf()).isPresent()) {
+                throw new BusinessException(ErrorCode.INVALID_CPF, "Novo CPF já cadastrado para outro profissional.");
+            }
+        }
+        // 2. Validação de duplicidade de OAB (se a OAB foi alterada)
+        if (!existingProfissional.getNumeroOab().equals(requestDTO.getNumeroOab())) {
+            if (repositorioProfissional.findByNumeroOab(requestDTO.getNumeroOab()).isPresent()) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT,
+                        "Novo número da OAB já cadastrado para outro profissional.");
+            }
+        }
+
+        // 3. Buscar Plano e Empresa (se aplicável)
+        Plano plano = repositorioPlano.findById(requestDTO.getPlanoId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                        "Plano com ID " + requestDTO.getPlanoId() + " não encontrado."));
+
+        Empresa empresa = null;
+        if (requestDTO.getEmpresaId() != null) {
+            empresa = repositorioEmpresa.findById(requestDTO.getEmpresaId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                            "Empresa com ID " + requestDTO.getEmpresaId() + " não encontrada."));
+        }
+
+        // 4. Atualizar campos básicos da Pessoa e Profissional
+        existingProfissional.setNomeCompleto(requestDTO.getNomeCompleto());
+        existingProfissional.setCpf(requestDTO.getCpf());
+        existingProfissional.setDataNascimento(requestDTO.getDataNascimento());
+        existingProfissional.setNumeroOab(requestDTO.getNumeroOab());
+        existingProfissional.setStatusProfissional(requestDTO.getStatusProfissional());
+        existingProfissional.setUsaMarketplace(requestDTO.getUsaMarketplace());
+        existingProfissional.setFazParteDePlano(requestDTO.getFazParteDePlano());
+        existingProfissional.setPlano(plano);
+        existingProfissional.setEmpresa(empresa);
+
+        // 5. Atualizar endereços (lógica de sincronização)
+        existingProfissional.getEnderecos().clear(); // Limpa os endereços existentes
+        requestDTO.getEnderecos().forEach(enderecoDTO -> {
+            Endereco newEndereco = profissionalMapper.toEntity(enderecoDTO);
+            newEndereco.setPessoa(existingProfissional);
+            existingProfissional.getEnderecos().add(newEndereco);
+        });
+
+        // 6. Atualizar telefones
+        existingProfissional.getTelefones().clear();
+        if (requestDTO.getTelefones() != null) {
+            existingProfissional.getTelefones().addAll(requestDTO.getTelefones());
+        }
+
+        // 7. Salvar a entidade atualizada
+        Profissional updatedProfissional = repositorioProfissional.save(existingProfissional);
+
+        return profissionalMapper.toResponseDTO(updatedProfissional);
+    }
+
+    /**
+     * @brief Exclui um Profissional pelo ID.
+     * @param id ID do Profissional a ser excluído.
+     * @throws BusinessException Se o Profissional não for encontrado.
+     */
+    @Transactional
+    public void excluirProfissional(UUID id) {
+        if (!repositorioProfissional.existsById(id)) {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND,
+                    "Profissional com ID " + id + " não encontrado para exclusão.");
+        }
+        // A exclusão em cascata do Endereco e User (se configurado no mapeamento) será
+        // tratada pelo JPA
+        repositorioProfissional.deleteById(id);
+    }
+}
+```
+```java
+package br.com.legalconnect.service;
+
+import common.exception.ErrorCode; // Importa da common-lib
+import dto.UserResponseDTO;
+import entity.User;
+import common.exception.BusinessException; // Importa da common-lib
+import mapper.UserMapper;
+import repository.RepositorioUser;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+/**
+ * @class ServicoUser
+ * @brief Serviço de domínio para gerenciar operações relacionadas a Users.
+ * **Nota:** Este serviço é primariamente para busca e validação de Users existentes
+ * para associação com entidades Pessoa (Profissional, Cliente, Administrador).
+ * A criação e gestão principal de Users é responsabilidade de outro microsserviço (ex: auth-service).
+ */
+@Service
+public class ServicoUser {
+
+    private final RepositorioUser repositorioUser;
+    private final UserMapper userMapper;
+
+    @Autowired
+    public ServicoUser(RepositorioUser repositorioUser, UserMapper userMapper) {
+        this.repositorioUser = repositorioUser;
+        this.userMapper = userMapper;
+    }
+
+    /**
+     * @brief Busca um User pelo ID.
+     * @param id ID do User a ser buscado.
+     * @return DTO com os dados do User encontrado.
+     * @throws BusinessException Se o User não for encontrado.
+     */
+    @Transactional(readOnly = true)
+    public UserResponseDTO buscarUserPorId(UUID id) {
+        User user = repositorioUser.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "Usuário com ID " + id + " não encontrado."));
+        return userMapper.toResponseDTO(user);
+    }
+
+    /**
+     * @brief Lista todos os Users.
+     * @return Lista de DTOs de Users.
+     */
+    @Transactional(readOnly = true)
+    public List<UserResponseDTO> listarTodosUsers() {
+        return repositorioUser.findAll().stream()
+                .map(userMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * @brief Verifica se um User existe pelo ID.
+     * @param id ID do User a ser verificado.
+     * @return true se o User existe, false caso contrário.
+     */
+    @Transactional(readOnly = true)
+    public boolean userExiste(UUID id) {
+        return repositorioUser.existsById(id);
+    }
+
+    /**
+     * @brief Busca um User pelo CPF.
+     * @param cpf O CPF do usuário.
+     * @return Um Optional contendo o DTO do User, se encontrado.
+     */
+    @Transactional(readOnly = true)
+    public Optional<UserResponseDTO> buscarUserPorCpf(String cpf) {
+        return repositorioUser.findByCpf(cpf)
+                .map(userMapper::toResponseDTO);
+    }
 }
 ```
 ```java
