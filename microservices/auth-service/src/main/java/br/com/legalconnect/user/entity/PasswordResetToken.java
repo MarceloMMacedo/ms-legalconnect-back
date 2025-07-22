@@ -47,4 +47,7 @@ public class PasswordResetToken extends BaseEntity {
 
     @Column(name = "usado", nullable = false)
     private boolean usado; // Indica se o token já foi usado
+
+    @Column(name = "tentativas", nullable = false, columnDefinition = "INT DEFAULT 0")
+    private Integer tentativas; // Número de tentativas de uso do token
 }

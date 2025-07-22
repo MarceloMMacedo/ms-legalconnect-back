@@ -1,1 +1,345 @@
-{"openapi":"3.0.1","info":{"title":"LegalConnect Gateway API","description":"API Gateway para o sistema LegalConnect","version":"1.0"},"servers":[{"url":"http://192.168.1.4:51478","description":"Generated server url"}],"security":[{"JWT":[]}],"paths":{"/api/v1/profissionais/{id}":{"get":{"tags":["controlador-profissional"],"operationId":"buscarProfissionalPorId","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseProfissionalResponseDTO"}}}}}},"put":{"tags":["controlador-profissional"],"operationId":"atualizarProfissional","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ProfissionalRequestDTO"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseProfissionalResponseDTO"}}}}}},"delete":{"tags":["controlador-profissional"],"operationId":"excluirProfissional","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseVoid"}}}}}}},"/api/v1/empresas/{id}":{"get":{"tags":["controlador-empresa"],"operationId":"buscarEmpresaPorId","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseEmpresaResponseDTO"}}}}}},"put":{"tags":["controlador-empresa"],"operationId":"atualizarEmpresa","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/EmpresaRequestDTO"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseEmpresaResponseDTO"}}}}}},"delete":{"tags":["controlador-empresa"],"operationId":"excluirEmpresa","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseVoid"}}}}}}},"/api/v1/clientes/{id}":{"get":{"tags":["controlador-cliente"],"operationId":"buscarClientePorId","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseClienteResponseDTO"}}}}}},"put":{"tags":["controlador-cliente"],"operationId":"atualizarCliente","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ClienteRequestDTO"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseClienteResponseDTO"}}}}}},"delete":{"tags":["controlador-cliente"],"operationId":"excluirCliente","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseVoid"}}}}}}},"/api/v1/administradores-plataforma/{id}":{"get":{"tags":["controlador-administrador-plataforma"],"operationId":"buscarAdministradorPorId","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseAdministradorResponseDTO"}}}}}},"put":{"tags":["controlador-administrador-plataforma"],"operationId":"atualizarAdministrador","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/AdministradorRequestDTO"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseAdministradorResponseDTO"}}}}}},"delete":{"tags":["controlador-administrador-plataforma"],"operationId":"excluirAdministrador","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseVoid"}}}}}}},"/api/v1/profissionais":{"get":{"tags":["controlador-profissional"],"operationId":"listarProfissionais","parameters":[{"name":"pageable","in":"query","required":true,"schema":{"$ref":"#/components/schemas/Pageable"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponsePageProfissionalResponseDTO"}}}}}},"post":{"tags":["controlador-profissional"],"operationId":"cadastrarProfissional","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ProfissionalRequestDTO"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseProfissionalResponseDTO"}}}}}}},"/api/v1/empresas":{"get":{"tags":["controlador-empresa"],"operationId":"listarEmpresas","parameters":[{"name":"pageable","in":"query","required":true,"schema":{"$ref":"#/components/schemas/Pageable"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponsePageEmpresaResponseDTO"}}}}}},"post":{"tags":["controlador-empresa"],"operationId":"cadastrarEmpresa","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/EmpresaRequestDTO"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseEmpresaResponseDTO"}}}}}}},"/api/v1/clientes":{"get":{"tags":["controlador-cliente"],"operationId":"listarClientes","parameters":[{"name":"pageable","in":"query","required":true,"schema":{"$ref":"#/components/schemas/Pageable"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponsePageClienteResponseDTO"}}}}}},"post":{"tags":["controlador-cliente"],"operationId":"cadastrarCliente","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ClienteRequestDTO"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseClienteResponseDTO"}}}}}}},"/api/v1/administradores-plataforma":{"get":{"tags":["controlador-administrador-plataforma"],"operationId":"listarAdministradores","parameters":[{"name":"pageable","in":"query","required":true,"schema":{"$ref":"#/components/schemas/Pageable"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponsePageAdministradorResponseDTO"}}}}}},"post":{"tags":["controlador-administrador-plataforma"],"operationId":"cadastrarAdministrador","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/AdministradorRequestDTO"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/BaseResponseAdministradorResponseDTO"}}}}}}}},"components":{"schemas":{"EnderecoRequestDTO":{"required":["bairro","cep","cidade","estado","logradouro","numero","pais","tipoEndereco"],"type":"object","properties":{"id":{"type":"string","format":"uuid"},"logradouro":{"maxLength":255,"minLength":0,"type":"string"},"numero":{"maxLength":20,"minLength":0,"type":"string"},"complemento":{"maxLength":255,"minLength":0,"type":"string"},"bairro":{"maxLength":100,"minLength":0,"type":"string"},"cidade":{"maxLength":100,"minLength":0,"type":"string"},"estado":{"maxLength":2,"minLength":2,"type":"string"},"cep":{"pattern":"\\d{5}-\\d{3}","type":"string"},"pais":{"maxLength":50,"minLength":0,"type":"string"},"tipoEndereco":{"type":"string","enum":["RESIDENCIAL","COMERCIAL","ESCRITORIO","COBRANCA","ENTREGA","OUTRO"]}}},"ProfissionalRequestDTO":{"required":["cpf","fazParteDePlano","nomeCompleto","numeroOab","planoId","statusProfissional","usaMarketplace","usuario"],"type":"object","properties":{"usuario":{"$ref":"#/components/schemas/UserRequestDTO"},"nomeCompleto":{"maxLength":255,"minLength":0,"type":"string"},"cpf":{"pattern":"\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}","type":"string"},"dataNascimento":{"type":"string","format":"date"},"enderecos":{"type":"array","items":{"$ref":"#/components/schemas/EnderecoRequestDTO"}},"telefones":{"uniqueItems":true,"type":"array","items":{"type":"string"}},"numeroOab":{"maxLength":50,"minLength":0,"type":"string"},"statusProfissional":{"type":"string","enum":["ATIVO","LICENCIADO","SUSPENSO","EM_ANALISE"]},"usaMarketplace":{"type":"boolean"},"fazParteDePlano":{"type":"boolean"},"empresaId":{"type":"string","format":"uuid"},"planoId":{"type":"string","format":"uuid"}}},"UserRequestDTO":{"required":["email"],"type":"object","properties":{"id":{"type":"string","format":"uuid"},"email":{"type":"string"}}},"BaseResponseProfissionalResponseDTO":{"type":"object","properties":{"status":{"type":"string","enum":["SUCESSO","ERRO","AVISO"]},"message":{"type":"string"},"timestamp":{"type":"string","format":"date-time"},"data":{"$ref":"#/components/schemas/ProfissionalResponseDTO"},"errors":{"type":"array","items":{"type":"string"}}}},"EmpresaResponseDTO":{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"nomeFantasia":{"type":"string"},"razaoSocial":{"type":"string"},"cnpj":{"type":"string"},"emailContato":{"type":"string"},"enderecos":{"type":"array","items":{"$ref":"#/components/schemas/EnderecoResponseDTO"}},"telefones":{"uniqueItems":true,"type":"array","items":{"type":"string"}},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"}}},"EnderecoResponseDTO":{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"logradouro":{"type":"string"},"numero":{"type":"string"},"complemento":{"type":"string"},"bairro":{"type":"string"},"cidade":{"type":"string"},"estado":{"type":"string"},"cep":{"type":"string"},"pais":{"type":"string"},"tipoEndereco":{"type":"string","enum":["RESIDENCIAL","COMERCIAL","ESCRITORIO","COBRANCA","ENTREGA","OUTRO"]},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"}}},"PlanoResponseDTO":{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"nome":{"type":"string"},"descricao":{"type":"string"},"precoMensal":{"type":"number"},"precoAnual":{"type":"number"},"limiteServicosAgendaveis":{"type":"integer","format":"int32"},"visibilidadeDestaque":{"type":"string","enum":["PADRAO","PREMIUM","DESTAQUE_MAXIMO"]},"acessoRelatoriosAvancados":{"type":"boolean"},"permitePedidosOrcamento":{"type":"boolean"},"periodoTesteDias":{"type":"integer","format":"int32"},"isDefault":{"type":"boolean"},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"}}},"ProfissionalResponseDTO":{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"usuario":{"$ref":"#/components/schemas/UserResponseDTO"},"nomeCompleto":{"type":"string"},"cpf":{"type":"string"},"dataNascimento":{"type":"string","format":"date"},"enderecos":{"type":"array","items":{"$ref":"#/components/schemas/EnderecoResponseDTO"}},"telefones":{"uniqueItems":true,"type":"array","items":{"type":"string"}},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"},"numeroOab":{"type":"string"},"statusProfissional":{"type":"string","enum":["ATIVO","LICENCIADO","SUSPENSO","EM_ANALISE"]},"usaMarketplace":{"type":"boolean"},"fazParteDePlano":{"type":"boolean"},"empresa":{"$ref":"#/components/schemas/EmpresaResponseDTO"},"plano":{"$ref":"#/components/schemas/PlanoResponseDTO"}}},"UserResponseDTO":{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"email":{"type":"string"},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"}}},"EmpresaRequestDTO":{"required":["cnpj","nomeFantasia","razaoSocial"],"type":"object","properties":{"id":{"type":"string","format":"uuid"},"nomeFantasia":{"maxLength":255,"minLength":0,"type":"string"},"razaoSocial":{"maxLength":255,"minLength":0,"type":"string"},"cnpj":{"pattern":"\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}","type":"string"},"emailContato":{"maxLength":255,"minLength":0,"type":"string"},"enderecos":{"type":"array","items":{"$ref":"#/components/schemas/EnderecoRequestDTO"}},"telefones":{"uniqueItems":true,"type":"array","items":{"type":"string"}}}},"BaseResponseEmpresaResponseDTO":{"type":"object","properties":{"status":{"type":"string","enum":["SUCESSO","ERRO","AVISO"]},"message":{"type":"string"},"timestamp":{"type":"string","format":"date-time"},"data":{"$ref":"#/components/schemas/EmpresaResponseDTO"},"errors":{"type":"array","items":{"type":"string"}}}},"ClienteRequestDTO":{"required":["cpf","nomeCompleto","usuario"],"type":"object","properties":{"usuario":{"$ref":"#/components/schemas/UserRequestDTO"},"nomeCompleto":{"maxLength":255,"minLength":0,"type":"string"},"cpf":{"pattern":"\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}","type":"string"},"dataNascimento":{"type":"string","format":"date"},"enderecos":{"type":"array","items":{"$ref":"#/components/schemas/EnderecoRequestDTO"}},"telefones":{"uniqueItems":true,"type":"array","items":{"type":"string"}},"status":{"type":"string"}}},"BaseResponseClienteResponseDTO":{"type":"object","properties":{"status":{"type":"string","enum":["SUCESSO","ERRO","AVISO"]},"message":{"type":"string"},"timestamp":{"type":"string","format":"date-time"},"data":{"$ref":"#/components/schemas/ClienteResponseDTO"},"errors":{"type":"array","items":{"type":"string"}}}},"ClienteResponseDTO":{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"usuario":{"$ref":"#/components/schemas/UserResponseDTO"},"nomeCompleto":{"type":"string"},"cpf":{"type":"string"},"dataNascimento":{"type":"string","format":"date"},"enderecos":{"type":"array","items":{"$ref":"#/components/schemas/EnderecoResponseDTO"}},"telefones":{"uniqueItems":true,"type":"array","items":{"type":"string"}},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"},"status":{"type":"string"},"tipo":{"type":"string"}}},"AdministradorRequestDTO":{"required":["cpf","nomeCompleto","usuario"],"type":"object","properties":{"usuario":{"$ref":"#/components/schemas/UserRequestDTO"},"nomeCompleto":{"maxLength":255,"minLength":0,"type":"string"},"cpf":{"pattern":"\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}","type":"string"},"dataNascimento":{"type":"string","format":"date"},"enderecos":{"type":"array","items":{"$ref":"#/components/schemas/EnderecoRequestDTO"}},"telefones":{"uniqueItems":true,"type":"array","items":{"type":"string"}},"status":{"type":"string"}}},"AdministradorResponseDTO":{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"usuario":{"$ref":"#/components/schemas/UserResponseDTO"},"nomeCompleto":{"type":"string"},"cpf":{"type":"string"},"dataNascimento":{"type":"string","format":"date"},"enderecos":{"type":"array","items":{"$ref":"#/components/schemas/EnderecoResponseDTO"}},"telefones":{"uniqueItems":true,"type":"array","items":{"type":"string"}},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"},"status":{"type":"string"}}},"BaseResponseAdministradorResponseDTO":{"type":"object","properties":{"status":{"type":"string","enum":["SUCESSO","ERRO","AVISO"]},"message":{"type":"string"},"timestamp":{"type":"string","format":"date-time"},"data":{"$ref":"#/components/schemas/AdministradorResponseDTO"},"errors":{"type":"array","items":{"type":"string"}}}},"Pageable":{"type":"object","properties":{"page":{"minimum":0,"type":"integer","format":"int32"},"size":{"minimum":1,"type":"integer","format":"int32"},"sort":{"type":"array","items":{"type":"string"}}}},"BaseResponsePageProfissionalResponseDTO":{"type":"object","properties":{"status":{"type":"string","enum":["SUCESSO","ERRO","AVISO"]},"message":{"type":"string"},"timestamp":{"type":"string","format":"date-time"},"data":{"$ref":"#/components/schemas/PageProfissionalResponseDTO"},"errors":{"type":"array","items":{"type":"string"}}}},"PageProfissionalResponseDTO":{"type":"object","properties":{"totalElements":{"type":"integer","format":"int64"},"totalPages":{"type":"integer","format":"int32"},"size":{"type":"integer","format":"int32"},"content":{"type":"array","items":{"$ref":"#/components/schemas/ProfissionalResponseDTO"}},"number":{"type":"integer","format":"int32"},"sort":{"type":"array","items":{"$ref":"#/components/schemas/SortObject"}},"first":{"type":"boolean"},"last":{"type":"boolean"},"numberOfElements":{"type":"integer","format":"int32"},"pageable":{"$ref":"#/components/schemas/PageableObject"},"empty":{"type":"boolean"}}},"PageableObject":{"type":"object","properties":{"offset":{"type":"integer","format":"int64"},"sort":{"type":"array","items":{"$ref":"#/components/schemas/SortObject"}},"pageSize":{"type":"integer","format":"int32"},"pageNumber":{"type":"integer","format":"int32"},"unpaged":{"type":"boolean"},"paged":{"type":"boolean"}}},"SortObject":{"type":"object","properties":{"direction":{"type":"string"},"nullHandling":{"type":"string"},"ascending":{"type":"boolean"},"property":{"type":"string"},"ignoreCase":{"type":"boolean"}}},"BaseResponsePageEmpresaResponseDTO":{"type":"object","properties":{"status":{"type":"string","enum":["SUCESSO","ERRO","AVISO"]},"message":{"type":"string"},"timestamp":{"type":"string","format":"date-time"},"data":{"$ref":"#/components/schemas/PageEmpresaResponseDTO"},"errors":{"type":"array","items":{"type":"string"}}}},"PageEmpresaResponseDTO":{"type":"object","properties":{"totalElements":{"type":"integer","format":"int64"},"totalPages":{"type":"integer","format":"int32"},"size":{"type":"integer","format":"int32"},"content":{"type":"array","items":{"$ref":"#/components/schemas/EmpresaResponseDTO"}},"number":{"type":"integer","format":"int32"},"sort":{"type":"array","items":{"$ref":"#/components/schemas/SortObject"}},"first":{"type":"boolean"},"last":{"type":"boolean"},"numberOfElements":{"type":"integer","format":"int32"},"pageable":{"$ref":"#/components/schemas/PageableObject"},"empty":{"type":"boolean"}}},"BaseResponsePageClienteResponseDTO":{"type":"object","properties":{"status":{"type":"string","enum":["SUCESSO","ERRO","AVISO"]},"message":{"type":"string"},"timestamp":{"type":"string","format":"date-time"},"data":{"$ref":"#/components/schemas/PageClienteResponseDTO"},"errors":{"type":"array","items":{"type":"string"}}}},"PageClienteResponseDTO":{"type":"object","properties":{"totalElements":{"type":"integer","format":"int64"},"totalPages":{"type":"integer","format":"int32"},"size":{"type":"integer","format":"int32"},"content":{"type":"array","items":{"$ref":"#/components/schemas/ClienteResponseDTO"}},"number":{"type":"integer","format":"int32"},"sort":{"type":"array","items":{"$ref":"#/components/schemas/SortObject"}},"first":{"type":"boolean"},"last":{"type":"boolean"},"numberOfElements":{"type":"integer","format":"int32"},"pageable":{"$ref":"#/components/schemas/PageableObject"},"empty":{"type":"boolean"}}},"BaseResponsePageAdministradorResponseDTO":{"type":"object","properties":{"status":{"type":"string","enum":["SUCESSO","ERRO","AVISO"]},"message":{"type":"string"},"timestamp":{"type":"string","format":"date-time"},"data":{"$ref":"#/components/schemas/PageAdministradorResponseDTO"},"errors":{"type":"array","items":{"type":"string"}}}},"PageAdministradorResponseDTO":{"type":"object","properties":{"totalElements":{"type":"integer","format":"int64"},"totalPages":{"type":"integer","format":"int32"},"size":{"type":"integer","format":"int32"},"content":{"type":"array","items":{"$ref":"#/components/schemas/AdministradorResponseDTO"}},"number":{"type":"integer","format":"int32"},"sort":{"type":"array","items":{"$ref":"#/components/schemas/SortObject"}},"first":{"type":"boolean"},"last":{"type":"boolean"},"numberOfElements":{"type":"integer","format":"int32"},"pageable":{"$ref":"#/components/schemas/PageableObject"},"empty":{"type":"boolean"}}},"BaseResponseVoid":{"type":"object","properties":{"status":{"type":"string","enum":["SUCESSO","ERRO","AVISO"]},"message":{"type":"string"},"timestamp":{"type":"string","format":"date-time"},"data":{"type":"object"},"errors":{"type":"array","items":{"type":"string"}}}}},"securitySchemes":{"JWT":{"type":"http","name":"JWT","scheme":"bearer","bearerFormat":"JWT"}}}}
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "LegalConnect Gateway API",
+    "description": "API Gateway para o sistema LegalConnect",
+    "version": "1.0"
+  },
+  "servers": [
+    { "url": "http://192.168.1.4:54557", "description": "Generated server url" }
+  ],
+  "security": [{ "JWT": [] }],
+  "paths": {
+    "/api/v1/auth/socios/registrar": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "registerSocio",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/senhas/redefinir": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "resetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResetPasswordRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/senhas/recuperar": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "recoverPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoverPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh-token": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "refreshToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseAuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "authenticate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequestDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseAuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/clientes/registrar": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "registerClient",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/advogados/registrar": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "registerAdvogado",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/administradores/registrar": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "registerAdmin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserRegistrationRequest": {
+        "required": ["cpf", "email", "nomeCompleto", "senha", "userType"],
+        "type": "object",
+        "properties": {
+          "nomeCompleto": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string"
+          },
+          "email": { "maxLength": 255, "minLength": 0, "type": "string" },
+          "cpf": {
+            "pattern": "^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$",
+            "type": "string"
+          },
+          "telefone": { "maxLength": 20, "minLength": 0, "type": "string" },
+          "senha": {
+            "maxLength": 2147483647,
+            "minLength": 8,
+            "type": "string"
+          },
+          "userType": { "type": "string" }
+        }
+      },
+      "BaseResponseUserResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/UserResponseDTO" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "UserResponseDTO": {
+        "type": "object",
+        "properties": {
+          "nomeCompleto": { "type": "string" },
+          "email": { "type": "string" },
+          "cpf": { "type": "string" },
+          "telefone": { "type": "string" },
+          "fotoUrl": { "type": "string" },
+          "status": { "type": "string" }
+        }
+      },
+      "ResetPasswordRequest": {
+        "required": ["novaSenha", "token"],
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" },
+          "novaSenha": {
+            "maxLength": 2147483647,
+            "minLength": 8,
+            "type": "string"
+          }
+        }
+      },
+      "BaseResponseVoid": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "type": "object" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "RecoverPasswordRequest": {
+        "required": ["email"],
+        "type": "object",
+        "properties": { "email": { "type": "string" } }
+      },
+      "RefreshTokenRequestDTO": {
+        "required": ["refreshToken"],
+        "type": "object",
+        "properties": { "refreshToken": { "type": "string" } }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": { "type": "string" },
+          "refreshToken": { "type": "string" },
+          "tokenType": { "type": "string" },
+          "expiresIn": { "type": "integer", "format": "int64" }
+        }
+      },
+      "BaseResponseAuthResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/AuthResponse" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "LoginRequestDTO": {
+        "required": ["email", "senha"],
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "senha": { "type": "string" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "JWT": {
+        "type": "http",
+        "name": "JWT",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

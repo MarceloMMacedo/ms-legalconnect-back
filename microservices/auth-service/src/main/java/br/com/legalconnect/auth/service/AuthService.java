@@ -390,6 +390,7 @@ public class AuthService {
                             .user(user)
                             .expiraEm(expiryDate)
                             .usado(false)
+                            .tentativas(0)
                             .build();
                     return passwordResetTokenRepository.save(newToken);
                 });
@@ -429,16 +430,28 @@ public class AuthService {
         log.info("Tentativa de redefinição de senha com token.");
 
         // 1. Busca e valida o token
-        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
-                .orElseThrow(() -> {
-                    log.warn("Falha na redefinição de senha: Token inválido ou não encontrado.");
-                    return new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_INVALID);
-                });
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token).get();
+        if (resetToken == null) {
+            log.warn("Falha na redefinição de senha: Token inválido ou não encontrado.");
+            new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_INVALID,
+                    "Falha na redefinição de senha: Token inválido ou não encontrado.");
+        }
 
         if (resetToken.isUsado()) {
             log.warn("Falha na redefinição de senha: Token já utilizado para o usuário: {}",
                     resetToken.getUser().getEmail());
-            throw new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_USED);
+            throw new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_USED,
+                    "Falha na redefinição de senha: Token já utilizado para o usuário");
+        }
+        var tentativas = resetToken.getTentativas();
+        resetToken.setTentativas(tentativas + 1);
+
+        passwordResetTokenRepository.save(resetToken);
+        if (tentativas >= 3) {
+            log.warn("Falha na redefinição de senha: Tentativas de redefinição excedidas para o usuário: {}",
+                    resetToken.getUser().getEmail());
+            throw new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_EXCEEDED,
+                    "Falha na redefinição de senha: Tentativas de redefinição excedidas");
         }
         var inspiracao = resetToken.getExpiraEm();
         var inspiracao2 = Instant.now();
@@ -449,7 +462,8 @@ public class AuthService {
             passwordResetTokenRepository.save(resetToken);
             // passwordResetTokenRepository.delete(resetToken); // Opcional: deletar tokens
             // expirados
-            throw new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED);
+            throw new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED,
+                    "Falha na redefinição de senha: Token expirado para o usuário");
         }
 
         // 2. Busca o usuário associado ao token
@@ -490,7 +504,8 @@ public class AuthService {
                 .orElseThrow(() -> {
                     log.warn("Falha na atualização de perfil: Usuário não encontrado com ID: {}", userId);
 
-                    return new BusinessException(ErrorCode.USER_NOT_FOUND);
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND,
+                            "Falha na atualização de perfil: Usuário não encontrado com ID");
                 });
 
         // Valida unicidade de e-mail, se o e-mail for alterado
@@ -498,7 +513,8 @@ public class AuthService {
             if (userRepository.existsByEmail(updateRequest.getEmail())) {
                 log.warn("Falha na atualização de perfil: Novo e-mail '{}' já em uso.", updateRequest.getEmail());
 
-                throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED);
+                throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED,
+                        "Falha na atualização de perfil: Novo e-mail " + updateRequest.getEmail() + " já em uso.");
             }
             user.setEmail(updateRequest.getEmail());
             log.debug("E-mail do usuário {} atualizado para: {}", userId, updateRequest.getEmail());
@@ -514,7 +530,8 @@ public class AuthService {
             if (!passwordEncoder.matches(updateRequest.getSenhaAtual(), user.getSenhaHash())) {
                 log.warn("Falha na alteração de senha: Senha atual inválida para o usuário ID: {}", userId);
 
-                throw new BusinessException(ErrorCode.PASSWORD_TOO_WEAK);
+                throw new BusinessException(ErrorCode.PASSWORD_TOO_WEAK,
+                        "Falha na alteração de senha: Senha atual inválida para o usuário ID");
             }
             user.setSenhaHash(passwordEncoder.encode(updateRequest.getNovaSenha()));
             // Invalida todos os refresh tokens do usuário para forçar novo login após a

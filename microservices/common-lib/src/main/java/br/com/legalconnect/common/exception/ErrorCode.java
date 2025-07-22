@@ -69,6 +69,7 @@ public enum ErrorCode {
     PASSWORD_RESET_TOKEN_INVALID("2011", "Token de redefinição de senha inválido."), // Novo erro
     PASSWORD_RESET_TOKEN_EXPIRED("2012", "Token de redefinição de senha expirado."), // Novo erro
     PASSWORD_RESET_TOKEN_USED("2013", "Token de redefinição de senha já utilizado."), // Novo erro
+    PASSWORD_RESET_TOKEN_EXCEEDED("2014", "Limite de redefinições de senha excedido."), // Novo erro
 
     // Erros de Negócio Específicos (3000-3999) - Exemplo
     TENANT_NOT_FOUND("3000", "Tenant não encontrado."),

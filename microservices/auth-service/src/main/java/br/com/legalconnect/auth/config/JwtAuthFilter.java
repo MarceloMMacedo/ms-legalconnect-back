@@ -15,6 +15,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import br.com.legalconnect.auth.service.JwtService;
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -127,34 +129,31 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 } else {
                     log.warn("Token JWT inválido ou expirado para o usuário: {}. Token não corresponde ou expirou.",
                             userEmail);
-                    throw new AuthenticationException("Token JWT inválido ou expirado.") {
+                    throw new BusinessException(ErrorCode.USER_NAO_ENCONTRADO, "Token JWT inválido ou expirado.") {
                     }; // Re-lança para o AuthenticationEntryPoint
                 }
             } else if (userEmail == null) {
                 log.warn("E-mail do usuário não pôde ser extraído do JWT.");
-                throw new AuthenticationException("Token JWT inválido: E-mail do usuário ausente.") {
+                throw new BusinessException(ErrorCode.USER_NAO_ENCONTRADO,
+                        "Token JWT inválido: E-mail do usuário ausente.") {
                 }; // Re-lança para o AuthenticationEntryPoint
             } else {
                 log.debug("Usuário '{}' já autenticado no contexto de segurança. Pulando autenticação JWT.", userEmail);
             }
 
             // 4. Continua a cadeia de filtros APENAS SE A AUTENTICAÇÃO FOI PROCESSADA OU
-            // IGNORADA CORRETAMENTE
             filterChain.doFilter(request, response);
 
         } catch (AuthenticationException e) {
             // Captura exceções de autenticação e as relança para o EntryPoint
             log.error("Falha na autenticação JWT: {}", e.getMessage());
-            throw e; // Re-lança para o AuthenticationEntryPoint
+            throw e;
         } catch (Exception e) {
-            // Captura qualquer outra exceção inesperada e a relança como
-            // AuthenticationException
             log.error("Erro inesperado durante o processamento do JWT: {}", e.getMessage(), e);
-            throw new AuthenticationException("Erro interno durante a autenticação.") {
+            throw new BusinessException(ErrorCode.USER_NAO_ENCONTRADO,
+                    "Erro inesperado durante o processamento do JWT") {
             };
         } finally {
-            // Garante que o MDC seja limpo após a requisição, independentemente do
-            // resultado
             MDC.remove("userId");
             MDC.remove("tenantId");
             log.debug("Finalizando doFilterInternal para a requisição: {}. MDC limpo.", request.getRequestURI());
