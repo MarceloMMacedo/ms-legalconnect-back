@@ -1,20 +1,13 @@
 package br.com.legalconnect.auth.config;
 
 import java.io.IOException;
-import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import br.com.legalconnect.common.dto.BaseResponse; // Assumindo que BaseResponse está na common-lib
-import br.com.legalconnect.common.exception.ErrorCode; // Assumindo ErrorCode está na common-lib
-import br.com.legalconnect.enums.StatusResponse;
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
+import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,45 +26,42 @@ import jakarta.servlet.http.HttpServletResponse;
  *        `BaseResponse` contendo o código e mensagem de erro.
  */
 @Component
-public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
+public class JwtAuthEntryPoint extends OncePerRequestFilter {
 
-    private static final Logger log = LoggerFactory.getLogger(JwtAuthEntryPoint.class);
+    private static final String TENANT_HEADER = "X-Tenant-ID";
+    private static final String CORRELATION_HEADER = "X-Correlation-ID";
 
-    @Autowired
-    private ObjectMapper objectMapper; // Para converter o objeto de resposta em JSON
-
-    /**
-     * @brief Lida com requisições não autenticadas ou com falha de autenticação.
-     *
-     *        Retorna uma resposta HTTP 401 Unauthorized com um corpo JSON
-     *        padronizado,
-     *        utilizando o `BaseResponse` e o `ErrorCode.UNAUTHORIZED_ACCESS`.
-     *
-     * @param request       A requisição HTTP.
-     * @param response      A resposta HTTP.
-     * @param authException A exceção de autenticação que causou a falha.
-     * @throws IOException      Se ocorrer um erro de I/O ao escrever a resposta.
-     * @throws ServletException Se ocorrer um erro de servlet.
-     */
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response,
-            AuthenticationException authException) throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain)
+            throws ServletException, IOException {
 
-        log.error("Erro de autenticação: {}", authException.getMessage(), authException); // Loga o erro de autenticação
+        try {
+            // 1. Validação do Tenant ID
+            String tenantId = request.getHeader(TENANT_HEADER);
+            if (tenantId == null || tenantId.isBlank()) {
+                throw new BusinessException(ErrorCode.TENANT_NOT_FOUND, TENANT_HEADER + " header is required");
+            }
 
-        // Define o status HTTP como 401 Unauthorized
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        // Define o tipo de conteúdo da resposta como JSON
-        response.setContentType("application/json");
+            // 2. Validação do Correlation ID
+            String correlationId = request.getHeader(CORRELATION_HEADER);
+            if (correlationId == null || correlationId.isBlank()) {
+                throw new BusinessException(ErrorCode.USER_NOT_FOUND, CORRELATION_HEADER + " header is required");
+            }
 
-        // Constrói o objeto de resposta padronizado
-        BaseResponse<Void> errorResponse = BaseResponse.<Void>builder()
-                .status(StatusResponse.ERRO) // Ou "UNAUTHORIZED"
-                .message(ErrorCode.UNAUTHORIZED_ACCESS.getMessage() + ": " + authException.getMessage())
-                .errors(List.of(ErrorCode.UNAUTHORIZED_ACCESS.getCode()))
-                .build();
+            // 3. Se tudo válido, prossegue com a requisição
+            filterChain.doFilter(request, response);
 
-        // Escreve o objeto JSON na resposta
-        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+        } catch (MissingHeaderException ex) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+        }
+    }
+
+    // Exceção customizada para headers faltantes
+    private static class MissingHeaderException extends RuntimeException {
+        public MissingHeaderException(String message) {
+            super(message);
+        }
     }
 }

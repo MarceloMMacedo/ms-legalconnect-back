@@ -18,7 +18,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource; // Importar CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -130,11 +129,12 @@ public class SecurityConfig {
      *                           Spring.
      * @return Uma instância de JwtAuthFilter.
      */
-    @Bean
-    public JwtAuthFilter jwtAuthFilter(JwtService jwtService, UserDetailsService userDetailsService) {
-        log.debug("Criando bean JwtAuthFilter.");
-        return new JwtAuthFilter(jwtService, userDetailsService);
-    }
+    // @Bean
+    // public JwtAuthFilter jwtAuthFilter(JwtService jwtService, UserDetailsService
+    // userDetailsService) {
+    // log.debug("Criando bean JwtAuthFilter.");
+    // return new JwtAuthFilter(jwtService, userDetailsService);
+    // }
 
     /**
      * @brief Configura a cadeia de filtros de segurança HTTP.
@@ -166,8 +166,8 @@ public class SecurityConfig {
         http.authenticationProvider(authenticationProvider(userDetailsService()));
 
         // Usa o bean jwtAuthFilter que foi definido acima
-        http.addFilterBefore(jwtAuthFilter(jwtService, userDetailsService()),
-                UsernamePasswordAuthenticationFilter.class);
+        // http.addFilterBefore(jwtAuthFilter(jwtService, userDetailsService()),
+        // UsernamePasswordAuthenticationFilter.class);
 
         http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
 

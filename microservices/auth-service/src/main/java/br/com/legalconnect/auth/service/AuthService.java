@@ -117,23 +117,22 @@ public class AuthService {
 
         // Adiciona id do usuário e id do tenant aos claims do JWT
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", user.getId());
+        claims.put("X-Correlation-ID", user.getId());
         if (user.getTenant() != null) {
-            claims.put("tenantId", user.getTenant().getId());
+            claims.put("X-Tenant-ID", user.getTenant().getId());
         }
 
         // Gera os tokens com os claims adicionais
         String jwtToken = jwtService.generateToken(claims, user);
         String refreshToken = jwtService.generateRefreshToken(user);
-
         log.info("Tokens JWT gerados para o usuário ID: {}, Tenant ID: {}", user.getId(),
                 user.getTenant() != null ? user.getTenant().getId() : "N/A");
 
         // Adiciona informações ao MDC após autenticação bem-sucedida para logs
         // subsequentes
-        MDC.put("userId", String.valueOf(user.getId()));
+        MDC.put("X-Correlation-ID", String.valueOf(user.getId()));
         if (user.getTenant() != null) {
-            MDC.put("tenantId", String.valueOf(user.getTenant().getId()));
+            MDC.put("X-Tenant-ID", String.valueOf(user.getTenant().getId()));
         }
 
         return BaseResponse.<AuthResponse>builder()
