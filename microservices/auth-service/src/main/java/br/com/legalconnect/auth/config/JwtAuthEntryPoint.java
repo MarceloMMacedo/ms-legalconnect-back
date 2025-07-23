@@ -1,16 +1,13 @@
 package br.com.legalconnect.auth.config;
 
-import java.io.IOException;
-
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
 
 import br.com.legalconnect.common.exception.BusinessException;
 import br.com.legalconnect.common.exception.ErrorCode;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import reactor.core.publisher.Mono;
 
 /**
  * @class JwtAuthEntryPoint
@@ -26,42 +23,25 @@ import jakarta.servlet.http.HttpServletResponse;
  *        `BaseResponse` contendo o código e mensagem de erro.
  */
 @Component
-public class JwtAuthEntryPoint extends OncePerRequestFilter {
+public class JwtAuthEntryPoint implements WebFilter {
 
     private static final String TENANT_HEADER = "X-Tenant-ID";
     private static final String CORRELATION_HEADER = "X-Correlation-ID";
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain)
-            throws ServletException, IOException {
-
-        try {
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        return Mono.fromRunnable(() -> {
             // 1. Validação do Tenant ID
-            String tenantId = request.getHeader(TENANT_HEADER);
+            String tenantId = exchange.getRequest().getHeaders().getFirst(TENANT_HEADER);
             if (tenantId == null || tenantId.isBlank()) {
                 throw new BusinessException(ErrorCode.TENANT_NOT_FOUND, TENANT_HEADER + " header is required");
             }
 
             // 2. Validação do Correlation ID
-            String correlationId = request.getHeader(CORRELATION_HEADER);
+            String correlationId = exchange.getRequest().getHeaders().getFirst(CORRELATION_HEADER);
             if (correlationId == null || correlationId.isBlank()) {
                 throw new BusinessException(ErrorCode.USER_NOT_FOUND, CORRELATION_HEADER + " header is required");
             }
-
-            // 3. Se tudo válido, prossegue com a requisição
-            filterChain.doFilter(request, response);
-
-        } catch (MissingHeaderException ex) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
-        }
-    }
-
-    // Exceção customizada para headers faltantes
-    private static class MissingHeaderException extends RuntimeException {
-        public MissingHeaderException(String message) {
-            super(message);
-        }
+        }).then(chain.filter(exchange));
     }
 }

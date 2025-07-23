@@ -2,8 +2,6 @@ package br.com.legalconnect.dto;
 
 import java.util.UUID;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,8 +17,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UserRequestDTO {
     private UUID id;
-    @NotBlank(message = "O email não pode estar em branco.")
-    @Email(message = "Formato de email inválido.")
+    // @NotBlank(message = "O email não pode estar em branco.")
+    // @Email(message = "Formato de email inválido.")
     private String email;
 
     // @NotBlank(message = "A senha não pode estar em branco.")

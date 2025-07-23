@@ -81,5 +81,5 @@ public abstract class Pessoa extends BaseEntity {
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "tb_pessoa_telefones", joinColumns = @JoinColumn(name = "pessoa_id"))
     @Column(name = "numero_telefone", length = 20)
-    private Set<String> telefones = new HashSet<>(); // Conjunto de números de telefone da pessoa
+    private Set<String> telefones = new HashSet<>();
 }

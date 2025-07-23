@@ -119,7 +119,7 @@ public class AuthService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("X-Correlation-ID", user.getId());
         if (user.getTenant() != null) {
-            claims.put("X-Tenant-ID", user.getTenant().getId());
+            claims.put("X-Tenant-ID", user.getTenant().getSchemaName());
         }
 
         // Gera os tokens com os claims adicionais

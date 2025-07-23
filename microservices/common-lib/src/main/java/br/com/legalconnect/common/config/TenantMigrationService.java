@@ -152,6 +152,7 @@ public class TenantMigrationService {
                 Statement statement = connection.createStatement()) {
             String sql = String.format("CREATE SCHEMA IF NOT EXISTS \"%s\"", schemaName);
             statement.execute(sql);
+            TenantContext.setCurrentTenant(schemaName);
             log.debug("Esquema '{}' verificado/criado com sucesso.", schemaName);
         } catch (SQLException e) {
             log.error("Erro ao criar/verificar esquema '{}': {}", schemaName, e.getMessage(), e);

@@ -53,6 +53,7 @@ public class ServicoCliente {
                         "Usuário associado com ID " + userId + " não encontrado."));
 
         // 2. Validação de duplicidade de CPF
+
         if (repositorioCliente.findByCpf(requestDTO.getCpf()).isPresent()) {
             throw new BusinessException(ErrorCode.INVALID_CPF, "CPF já cadastrado para outro cliente.");
         }
