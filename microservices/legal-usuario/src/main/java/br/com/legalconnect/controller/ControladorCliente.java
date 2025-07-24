@@ -33,7 +33,7 @@ import jakarta.validation.Valid;
  *        Expõe endpoints para CRUD de Clientes.
  */
 @RestController
-@RequestMapping("/api/v1/clientes")
+@RequestMapping("/api/v1/usuarios/clientes")
 public class ControladorCliente {
 
         private final ServicoCliente servicoCliente;

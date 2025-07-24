@@ -1,20 +1,18 @@
 package br.com.legalconnect.mapper;
 
-import br.com.legalconnect.dto.EmpresaRequestDTO;
-import br.com.legalconnect.dto.EmpresaResponseDTO;
-import br.com.legalconnect.entity.Empresa;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
-import java.util.List;
-import java.util.Set;
+import br.com.legalconnect.dto.EmpresaRequestDTO;
+import br.com.legalconnect.dto.EmpresaResponseDTO;
+import br.com.legalconnect.entity.Empresa;
 
 /**
  * @interface EmpresaMapper
  * @brief Mapper MapStruct para conversão entre Empresa e seus DTOs.
  */
-@Mapper(componentModel = "spring", uses = {EnderecoMapper.class})
+@Mapper(componentModel = "spring", uses = { EnderecoMapper.class })
 public interface EmpresaMapper {
 
     EmpresaMapper INSTANCE = Mappers.getMapper(EmpresaMapper.class);
