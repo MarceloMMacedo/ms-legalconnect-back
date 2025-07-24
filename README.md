@@ -1,4 +1,6 @@
-Este documento apresenta todas as partes de um projeto Spring Boot configurado para interagir com duas bases de dados PostgreSQL distintas, db1 (para Produtos) e db2 (para Clientes), usando JPA e Spring Data JPA.1. pom.xml (Dependências do Projeto)<?xml version="1.0" encoding="UTF-8"?>
+Este documento apresenta todas as partes de um projeto Spring Boot configurado para interagir com duas bases de dados PostgreSQL distintas, db1 (para Produtos) e db2 (para Clientes), usando JPA e Spring Data JPA.1. pom.xml (Dependências do Projeto)
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -47,12 +49,16 @@ Este documento apresenta todas as partes de um projeto Spring Boot configurado p
     </build>
 
 </project>
-2. src/main/resources/application.properties (Configuração)# DataSource 1 - db1 (Produtos)
+```
+
+# 2. src/main/resources/application.properties (Configuração)# DataSource 1 - db1 (Produtos)
+````
 spring.datasource.db1.jdbc-url=jdbc:postgresql://localhost:5432/db1
 spring.datasource.db1.username=postgres
 spring.datasource.db1.password=admin
 spring.datasource.db1.driver-class-name=org.postgresql.Driver
 spring.datasource.db1.initialization-mode=always
+```
 
 # DataSource 2 - db2 (Clientes)
 spring.datasource.db2.jdbc-url=jdbc:postgresql://localhost:5432/db2
