@@ -84,9 +84,10 @@ public class TenantMigrationService {
         } catch (Exception e) {
             log.error("Erro ao executar migrações do Flyway para tenants: {}", e.getMessage(), e);
             throw new RuntimeException("Falha ao migrar tenants na inicialização.", e);
-        } finally {
-            TenantContext.clear(); // Limpa o contexto do tenant
         }
+        // finally {
+        // TenantContext.clear(); // Limpa o contexto do tenant
+        // }
     }
 
     /**

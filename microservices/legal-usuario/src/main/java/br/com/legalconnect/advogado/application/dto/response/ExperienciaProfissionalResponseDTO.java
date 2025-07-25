@@ -16,9 +16,14 @@ import lombok.Setter;
 @Builder
 public class ExperienciaProfissionalResponseDTO {
     private UUID id;
+
     private String cargo;
+
     private String empresa;
+
     private LocalDate dataInicio;
+
     private LocalDate dataFim;
+
     private String descricao;
 }

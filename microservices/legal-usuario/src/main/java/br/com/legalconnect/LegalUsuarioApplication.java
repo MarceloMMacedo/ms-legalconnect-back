@@ -13,7 +13,8 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
                                                                 // pacote raiz
 @EntityScan(basePackages = {
         // "br.com.legalconnect.entity",
-        "br.com.legalconnect.entity"
+        "br.com.legalconnect.entity",
+        "br.com.legalconnect.advogado.domain.modal.entity"
 })
 // @EnableJpaRepositories(basePackages = {
 // "br.com.legalconnect.user.repository",

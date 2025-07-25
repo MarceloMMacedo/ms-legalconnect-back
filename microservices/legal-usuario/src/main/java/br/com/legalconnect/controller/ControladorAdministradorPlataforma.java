@@ -1,3 +1,4 @@
+
 package br.com.legalconnect.controller;
 
 import java.util.UUID;

@@ -37,16 +37,21 @@ public class AtualizacaoPerfilRequest {
     @PastOrPresent(message = "A data de nascimento da pessoa não pode ser uma data futura.")
     private LocalDate dataNascimentoPessoa;
 
+    @NotBlank(message = "O número de telefone não pode ser vazio.")
     @Size(max = 10, message = "A lista de telefones não pode exceder 10 itens.")
-    private List<@NotBlank(message = "O número de telefone não pode ser vazio.") @Size(max = 20, message = "O número de telefone deve ter no máximo 20 caracteres.") String> telefonesPessoa;
+    private List<String> telefonesPessoa;
 
-    private List<@NotNull(message = "O ID do local de atuação não pode ser nulo.") UUID> locaisAtuacaoIds;
+    @NotNull(message = "O ID do local de atuação não pode ser nulo.")
+    private List<UUID> locaisAtuacaoIds;
 
-    private List<@NotNull(message = "O ID da área de atuação não pode ser nulo.") UUID> areaAtuacaoIds;
+    @NotNull(message = "O ID da área de atuação não pode ser nulo.")
+    private List<UUID> areaAtuacaoIds;
 
-    private List<@NotNull(message = "O ID do idioma não pode ser nulo.") UUID> idiomaIds;
+    @NotNull(message = "O ID do idioma não pode ser nulo.")
+    private List<UUID> idiomaIds;
 
-    private List<@NotNull(message = "O ID do tipo de atendimento não pode ser nulo.") UUID> tipoAtendimentoIds;
+    @NotNull(message = "O ID do tipo de atendimento não pode ser nulo.")
+    private List<UUID> tipoAtendimentoIds;
 
     @Valid
     private List<CertificacaoRequestDTO> certificacoes;

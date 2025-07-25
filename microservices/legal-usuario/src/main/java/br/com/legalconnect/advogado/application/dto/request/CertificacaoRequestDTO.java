@@ -19,12 +19,16 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class CertificacaoRequestDTO {
+
     private UUID id;
+
     @NotBlank(message = "O nome da certificação é obrigatório.")
     @Size(max = 255, message = "O nome da certificação deve ter no máximo 255 caracteres.")
     private String nome;
+
     @Size(max = 255, message = "A instituição da certificação deve ter no máximo 255 caracteres.")
     private String instituicao;
+
     @NotNull(message = "A data de conclusão da certificação é obrigatória.")
     @PastOrPresent(message = "A data de conclusão da certificação não pode ser uma data futura.")
     private LocalDate dataConclusao;

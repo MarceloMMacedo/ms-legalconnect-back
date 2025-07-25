@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import br.com.legalconnect.common.dto.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -29,7 +28,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class ProfissionalEntity extends BaseEntity {
+public class ProfissionalEntity extends PessoaEntity {
 
     @Column(name = "numero_oab", nullable = false, unique = true, length = 50)
     private String numeroOab;

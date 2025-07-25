@@ -32,6 +32,7 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "tb_profissional")
 @PrimaryKeyJoinColumn(name = "id")
 @Getter
+
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor

@@ -16,7 +16,10 @@ import lombok.Setter;
 @Builder
 public class FormacaoAcademicaResponseDTO {
     private UUID id;
+
     private String curso;
+
     private String instituicao;
+
     private LocalDate dataConclusao;
 }

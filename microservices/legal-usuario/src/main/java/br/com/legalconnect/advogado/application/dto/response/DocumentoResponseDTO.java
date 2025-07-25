@@ -15,7 +15,10 @@ import lombok.Setter;
 @Builder
 public class DocumentoResponseDTO {
     private UUID id;
+
     private String nomeArquivo;
+
     private String urlS3;
+
     private String tipoDocumento;
 }

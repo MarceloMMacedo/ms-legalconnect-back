@@ -3,9 +3,10 @@ package br.com.legalconnect.advogado.domain.modal.entity;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 import br.com.legalconnect.common.dto.BaseEntity;
+import br.com.legalconnect.entity.Endereco;
+import br.com.legalconnect.entity.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -16,6 +17,7 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,7 +27,7 @@ import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "tb_pessoa")
-@Inheritance(strategy = InheritanceType.JOINED) // Estratégia de herança para subclasses
+@Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,26 +35,44 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class PessoaEntity extends BaseEntity {
 
-    @Column(name = "user_id", nullable = false, unique = true)
-    private UUID userId; // Referência ao ID do usuário do Auth Service
+    /**
+     * @brief Relacionamento um-para-um com a entidade User.
+     *        Este lado é o dono do relacionamento, e a coluna 'user_id' será criada
+     *        em 'tb_pessoa'.
+     *        O CascadeType.ALL garante que operações no User (como deleção) se
+     *        propaguem para Pessoa.
+     */
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, unique = true)
+    private User usuario; // O usuário associado a esta pessoa
 
     @Column(name = "nome_completo", nullable = false, length = 255)
-    private String nomeCompleto;
+    private String nomeCompleto; // Nome completo da pessoa
 
     @Column(name = "cpf", nullable = false, unique = true, length = 14)
-    private String cpf;
+    private String cpf; // Número do Cadastro de Pessoa Física (CPF), único por pessoa
 
     @Column(name = "data_nascimento")
-    private LocalDate dataNascimento;
+    private LocalDate dataNascimento; // Data de nascimento da pessoa
 
+    /**
+     * @brief Relacionamento um-para-muitos com a entidade Endereco.
+     *        Uma pessoa pode ter múltiplos endereços (residencial, comercial,
+     *        etc.).
+     *        CascadeType.ALL garante que operações nos Enderecos se propaguem para
+     *        Pessoa.
+     *        mappedBy indica que o relacionamento é gerenciado pelo campo 'pessoa'
+     *        na entidade Endereco.
+     */
     @OneToMany(mappedBy = "pessoa", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<EnderecoEntity> enderecos = new HashSet<>();
+    private Set<Endereco> enderecos = new HashSet<>(); // Conjunto de endereços da pessoa
 
+    /**
+     * @brief Coleção de strings para armazenar múltiplos números de telefone.
+     *        Será mapeada para uma tabela separada 'tb_pessoa_telefones'.
+     */
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "tb_pessoa_telefones", joinColumns = @JoinColumn(name = "pessoa_id"))
     @Column(name = "numero_telefone", length = 20)
     private Set<String> telefones = new HashSet<>();
-
-    @Column(name = "tenant_id", nullable = false)
-    private UUID tenantId; // Para isolamento de dados por tenant
 }

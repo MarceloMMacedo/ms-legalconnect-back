@@ -1,0 +1,2845 @@
+{
+  "openapi": "3.0.1",
+  "info": { "title": "OpenAPI definition", "version": "v0" },
+  "servers": [
+    { "url": "http://localhost:8080", "description": "Generated server url" }
+  ],
+  "tags": [
+    {
+      "name": "Locais de Atuação",
+      "description": "Gerenciamento de dados mestre de Locais de Atuação"
+    },
+    {
+      "name": "Idiomas",
+      "description": "Gerenciamento de dados mestre de Idiomas"
+    },
+    {
+      "name": "Profissionais",
+      "description": "Gerenciamento de perfis de Advogados"
+    },
+    {
+      "name": "Agendamentos",
+      "description": "Gerenciamento de agendamentos de consultas e avaliações"
+    },
+    {
+      "name": "Áreas de Atuação",
+      "description": "Gerenciamento de dados mestre de Áreas de Atuação"
+    },
+    {
+      "name": "Tipos de Atendimento",
+      "description": "Gerenciamento de dados mestre de Tipos de Atendimento"
+    }
+  ],
+  "paths": {
+    "/api/v1/profissionais/{profissionalId}/formacoes/{formacaoId}": {
+      "get": {
+        "tags": ["Profissionais"],
+        "summary": "Busca uma formação acadêmica específica de um profissional",
+        "description": "Retorna os detalhes de uma formação acadêmica específica de um advogado.",
+        "operationId": "getFormacaoAcademicaById",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "formacaoId",
+            "in": "path",
+            "description": "ID da formação",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Formação acadêmica encontrada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (formação pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Formação acadêmica não encontrada para este profissional",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Profissionais"],
+        "summary": "Atualiza uma formação acadêmica de um profissional",
+        "description": "Atualiza os detalhes de uma formação acadêmica existente associada a um advogado.",
+        "operationId": "updateFormacaoAcademica",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "formacaoId",
+            "in": "path",
+            "description": "ID da formação a ser atualizada",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormacaoAcademicaRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Formação acadêmica atualizada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de requisição inválidos",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (formação pertence a outro tenant ou profissional)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Formação acadêmica não encontrada para este profissional",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Profissionais"],
+        "summary": "Deleta uma formação acadêmica de um profissional",
+        "description": "Remove uma formação acadêmica específica do perfil de um advogado.",
+        "operationId": "deleteFormacaoAcademica",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "formacaoId",
+            "in": "path",
+            "description": "ID da formação a ser deletada",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Formação acadêmica deletada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (formação pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "404": {
+            "description": "Formação acadêmica não encontrada para deleção",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profissionais/{profissionalId}/experiencias/{experienciaId}": {
+      "get": {
+        "tags": ["Profissionais"],
+        "summary": "Busca uma experiência profissional específica de um profissional",
+        "description": "Retorna os detalhes de uma experiência profissional específica de um advogado.",
+        "operationId": "getExperienciaProfissionalById",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "experienciaId",
+            "in": "path",
+            "description": "ID da experiência",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Experiência profissional encontrada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (experiência pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Experiência profissional não encontrada para este profissional",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Profissionais"],
+        "summary": "Atualiza uma experiência profissional de um profissional",
+        "description": "Atualiza os detalhes de uma experiência profissional existente associada a um advogado.",
+        "operationId": "updateExperienciaProfissional",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "experienciaId",
+            "in": "path",
+            "description": "ID da experiência a ser atualizada",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperienciaProfissionalRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Experiência profissional atualizada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de requisição inválidos",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (experiência pertence a outro tenant ou profissional)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Experiência profissional não encontrada para este profissional",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Profissionais"],
+        "summary": "Deleta uma experiência profissional de um profissional",
+        "description": "Remove uma experiência profissional específica do perfil de um advogado.",
+        "operationId": "deleteExperienciaProfissional",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "experienciaId",
+            "in": "path",
+            "description": "ID da experiência a ser deletada",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Experiência profissional deletada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (experiência pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "404": {
+            "description": "Experiência profissional não encontrada para deleção",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profissionais/{profissionalId}/certificacoes/{certificacaoId}": {
+      "get": {
+        "tags": ["Profissionais"],
+        "summary": "Busca uma certificação específica de um profissional",
+        "description": "Retorna os detalhes de uma certificação específica de um advogado.",
+        "operationId": "getCertificacaoById",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "certificacaoId",
+            "in": "path",
+            "description": "ID da certificação",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Certificação encontrada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (certificação pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Certificação não encontrada para este profissional",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Profissionais"],
+        "summary": "Atualiza uma certificação de um profissional",
+        "description": "Atualiza os detalhes de uma certificação existente associada a um advogado.",
+        "operationId": "updateCertificacao",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "certificacaoId",
+            "in": "path",
+            "description": "ID da certificação a ser atualizada",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CertificacaoRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Certificação atualizada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de requisição inválidos",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (certificação pertence a outro tenant ou profissional)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Certificação não encontrada para este profissional",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Profissionais"],
+        "summary": "Deleta uma certificação de um profissional",
+        "description": "Remove uma certificação específica do perfil de um advogado.",
+        "operationId": "deleteCertificacao",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "certificacaoId",
+            "in": "path",
+            "description": "ID da certificação a ser deletada",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Certificação deletada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (certificação pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "404": {
+            "description": "Certificação não encontrada para deleção",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profissionais/{id}": {
+      "get": {
+        "tags": ["Profissionais"],
+        "summary": "Busca um profissional pelo ID",
+        "description": "Retorna os detalhes completos de um advogado específico.",
+        "operationId": "getProfissionalById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profissional encontrado com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (profissional pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profissional não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Profissionais"],
+        "summary": "Atualiza um profissional existente",
+        "description": "Atualiza os dados de um advogado, incluindo informações pessoais e coleções relacionadas.",
+        "operationId": "updateProfissional",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do profissional a ser atualizado",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfissionalUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Profissional atualizado com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de requisição inválidos",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (profissional pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profissional não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de dados (ex: email duplicado)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Profissionais"],
+        "summary": "Deleta um profissional pelo ID",
+        "description": "Remove um advogado e todos os seus dados associados do sistema.",
+        "operationId": "deleteProfissional",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do profissional a ser deletado",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profissional deletado com sucesso",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (profissional pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "404": {
+            "description": "Profissional não encontrado",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profissionais": {
+      "get": {
+        "tags": ["Profissionais"],
+        "summary": "Lista todos os profissionais com paginação",
+        "description": "Retorna uma lista paginada de todos os advogados associados ao tenant atual.",
+        "operationId": "getAllProfissionais",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número da página (0-indexed)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 0 },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Tamanho da página",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 10 },
+            "example": 10
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Critério de ordenação (ex: nomeCompleto,asc ou numeroOab,desc)",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": ["nomeCompleto", "asc"]
+            },
+            "example": "nomeCompleto,asc"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profissionais listados com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePageProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePageProfissionalResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Profissionais"],
+        "summary": "Cria um novo profissional",
+        "description": "Registra um novo advogado com seus dados pessoais e informações profissionais.",
+        "operationId": "createProfissional",
+        "parameters": [
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfissionalCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Profissional criado com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de requisição inválidos",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "OAB, CPF ou Email já cadastrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseProfissionalResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profissionais/{profissionalId}/formacoes": {
+      "get": {
+        "tags": ["Profissionais"],
+        "summary": "Lista todas as formações acadêmicas de um profissional",
+        "description": "Retorna uma lista de todas as formações acadêmicas associadas a um advogado específico.",
+        "operationId": "getAllFormacoesAcademicas",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Formações acadêmicas listadas com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (profissional pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profissional não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Profissionais"],
+        "summary": "Adiciona uma formação acadêmica a um profissional",
+        "description": "Adiciona uma nova formação acadêmica ao perfil de um advogado.",
+        "operationId": "addFormacaoAcademica",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormacaoAcademicaRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Formação acadêmica adicionada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de requisição inválidos",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (profissional pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profissional não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseFormacaoAcademicaResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profissionais/{profissionalId}/experiencias": {
+      "get": {
+        "tags": ["Profissionais"],
+        "summary": "Lista todas as experiências profissionais de um profissional",
+        "description": "Retorna uma lista de todas as experiências profissionais associadas a um advogado específico.",
+        "operationId": "getAllExperienciasProfissionais",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Experiências profissionais listadas com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (profissional pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profissional não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Profissionais"],
+        "summary": "Adiciona uma experiência profissional a um profissional",
+        "description": "Adiciona uma nova experiência profissional ao perfil de um advogado.",
+        "operationId": "addExperienciaProfissional",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperienciaProfissionalRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Experiência profissional adicionada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de requisição inválidos",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (profissional pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profissional não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseExperienciaProfissionalResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profissionais/{profissionalId}/documentos/upload": {
+      "post": {
+        "tags": ["Profissionais"],
+        "summary": "Realiza o upload de um documento para um profissional",
+        "description": "Faz o upload de um documento para o S3 e persiste seus metadados para um advogado.",
+        "operationId": "uploadDocumento",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentoUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Documento enviado com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDocumentoResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de requisição inválidos (ex: Base64 inválido)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDocumentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (profissional pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDocumentoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profissional não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDocumentoResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha ao fazer upload do documento ou erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDocumentoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profissionais/{profissionalId}/certificacoes": {
+      "get": {
+        "tags": ["Profissionais"],
+        "summary": "Lista todas as certificações de um profissional",
+        "description": "Retorna uma lista de todas as certificações associadas a um advogado específico.",
+        "operationId": "getAllCertificacoes",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Certificações listadas com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (profissional pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profissional não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListCertificacaoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Profissionais"],
+        "summary": "Adiciona uma certificação a um profissional",
+        "description": "Adiciona uma nova certificação ao perfil de um advogado.",
+        "operationId": "addCertificacao",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CertificacaoRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Certificação adicionada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de requisição inválidos",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (profissional pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profissional não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseCertificacaoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agendamentos/avaliar": {
+      "post": {
+        "tags": ["Agendamentos"],
+        "summary": "Avalia uma consulta",
+        "description": "Permite a um cliente fornecer uma nota e um comentário para uma consulta já realizada.",
+        "operationId": "avaliarConsulta",
+        "parameters": [
+          {
+            "name": "agendamentoId",
+            "in": "query",
+            "description": "ID do agendamento a ser avaliado",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "clienteId",
+            "in": "query",
+            "description": "ID do cliente que está avaliando",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "rating",
+            "in": "query",
+            "description": "Nota da avaliação (1 a 5)",
+            "required": true,
+            "schema": { "type": "integer", "format": "int32" }
+          },
+          {
+            "name": "comentario",
+            "in": "query",
+            "description": "Comentário opcional sobre a avaliação",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta avaliada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseBoolean" }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de requisição inválidos (ex: nota fora do intervalo)",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseBoolean" }
+              }
+            }
+          },
+          "404": {
+            "description": "Agendamento não encontrado",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseBoolean" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseBoolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agendamentos/agendar": {
+      "post": {
+        "tags": ["Agendamentos"],
+        "summary": "Agenda uma nova consulta",
+        "description": "Permite a um cliente agendar uma consulta com um profissional, verificando disponibilidade e enviando notificações.",
+        "operationId": "agendarConsulta",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "query",
+            "description": "ID do profissional para o agendamento",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "clienteId",
+            "in": "query",
+            "description": "ID do cliente que está agendando",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "horarioAgendamento",
+            "in": "query",
+            "description": "Horário desejado para a consulta (formato ISO 8601, ex: 2024-07-25T10:00:00)",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "tipoServico",
+            "in": "query",
+            "description": "Tipo de serviço a ser agendado (ex: 'Consulta Online', 'Reunião Presencial')",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Consulta agendada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseBoolean" }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados de requisição inválidos (ex: horário indisponível)",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseBoolean" }
+              }
+            }
+          },
+          "404": {
+            "description": "Profissional não encontrado",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseBoolean" }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de agendamento (horário já ocupado)",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseBoolean" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseBoolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tipos-atendimento": {
+      "get": {
+        "tags": ["Tipos de Atendimento"],
+        "summary": "Lista todos os tipos de atendimento",
+        "description": "Retorna uma lista de todos os tipos de atendimento cadastrados.",
+        "operationId": "getAllTiposAtendimento",
+        "responses": {
+          "200": {
+            "description": "Tipos de Atendimento listados com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListTipoAtendimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListTipoAtendimentoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tipos-atendimento/{id}": {
+      "get": {
+        "tags": ["Tipos de Atendimento"],
+        "summary": "Busca um tipo de atendimento pelo ID",
+        "description": "Retorna os detalhes de um tipo de atendimento específico.",
+        "operationId": "getTipoAtendimentoById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do Tipo de Atendimento",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tipo de Atendimento encontrado com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseTipoAtendimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tipo de Atendimento não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseTipoAtendimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseTipoAtendimentoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profissionais/{profissionalId}/documentos": {
+      "get": {
+        "tags": ["Profissionais"],
+        "summary": "Lista todos os documentos de um profissional",
+        "description": "Retorna uma lista de todos os documentos associados a um advogado específico.",
+        "operationId": "getAllDocumentos",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Documentos listados com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListDocumentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (profissional pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListDocumentoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profissional não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListDocumentoResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListDocumentoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profissionais/{profissionalId}/documentos/{documentoId}": {
+      "get": {
+        "tags": ["Profissionais"],
+        "summary": "Busca um documento específico de um profissional",
+        "description": "Retorna os detalhes de um documento específico de um advogado.",
+        "operationId": "getDocumentoById",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "documentoId",
+            "in": "path",
+            "description": "ID do documento",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Documento encontrado com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDocumentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (documento pertence a outro tenant ou profissional)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDocumentoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Documento não encontrado para este profissional",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDocumentoResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDocumentoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Profissionais"],
+        "summary": "Deleta um documento de um profissional",
+        "description": "Remove um documento específico do perfil de um advogado, incluindo a remoção do S3.",
+        "operationId": "deleteDocumento",
+        "parameters": [
+          {
+            "name": "profissionalId",
+            "in": "path",
+            "description": "ID do profissional",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "documentoId",
+            "in": "path",
+            "description": "ID do documento a ser deletado",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Documento deletado com sucesso",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado (documento pertence a outro tenant)",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "404": {
+            "description": "Documento não encontrado para deleção",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha ao deletar o documento do S3 ou erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/locais-atuacao": {
+      "get": {
+        "tags": ["Locais de Atuação"],
+        "summary": "Lista todos os locais de atuação",
+        "description": "Retorna uma lista de todos os locais de atuação cadastrados.",
+        "operationId": "getAllLocaisAtuacao",
+        "responses": {
+          "200": {
+            "description": "Locais de Atuação listados com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListLocalAtuacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListLocalAtuacaoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/locais-atuacao/{id}": {
+      "get": {
+        "tags": ["Locais de Atuação"],
+        "summary": "Busca um local de atuação pelo ID",
+        "description": "Retorna os detalhes de um local de atuação específico.",
+        "operationId": "getLocalAtuacaoById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do Local de Atuação",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Local de Atuação encontrado com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseLocalAtuacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Local de Atuação não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseLocalAtuacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseLocalAtuacaoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/idiomas": {
+      "get": {
+        "tags": ["Idiomas"],
+        "summary": "Lista todos os idiomas",
+        "description": "Retorna uma lista de todos os idiomas cadastrados.",
+        "operationId": "getAllIdiomas",
+        "responses": {
+          "200": {
+            "description": "Idiomas listados com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListIdiomaResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListIdiomaResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/idiomas/{id}": {
+      "get": {
+        "tags": ["Idiomas"],
+        "summary": "Busca um idioma pelo ID",
+        "description": "Retorna os detalhes de um idioma específico.",
+        "operationId": "getIdiomaById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do idioma",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Idioma encontrado com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseIdiomaResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Idioma não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseIdiomaResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseIdiomaResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/areas-atuacao": {
+      "get": {
+        "tags": ["Áreas de Atuação"],
+        "summary": "Lista todas as áreas de atuação",
+        "description": "Retorna uma lista de todas as áreas de atuação cadastradas.",
+        "operationId": "getAllAreasAtuacao",
+        "responses": {
+          "200": {
+            "description": "Áreas de Atuação listadas com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListAreaAtuacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListAreaAtuacaoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/areas-atuacao/{id}": {
+      "get": {
+        "tags": ["Áreas de Atuação"],
+        "summary": "Busca uma área de atuação pelo ID",
+        "description": "Retorna os detalhes de uma área de atuação específica.",
+        "operationId": "getAreaAtuacaoById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID da Área de Atuação",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Área de Atuação encontrada com sucesso",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseAreaAtuacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Área de Atuação não encontrada",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseAreaAtuacaoResponseDTO"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseAreaAtuacaoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FormacaoAcademicaRequestDTO": {
+        "required": ["curso", "dataConclusao", "instituicao"],
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "curso": { "maxLength": 255, "minLength": 0, "type": "string" },
+          "instituicao": { "maxLength": 255, "minLength": 0, "type": "string" },
+          "dataConclusao": { "type": "string", "format": "date" }
+        }
+      },
+      "BaseResponseFormacaoAcademicaResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": {
+            "$ref": "#/components/schemas/FormacaoAcademicaResponseDTO"
+          },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "FormacaoAcademicaResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "curso": { "type": "string" },
+          "instituicao": { "type": "string" },
+          "dataConclusao": { "type": "string", "format": "date" }
+        }
+      },
+      "ExperienciaProfissionalRequestDTO": {
+        "required": ["cargo", "dataInicio", "empresa"],
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "cargo": { "maxLength": 255, "minLength": 0, "type": "string" },
+          "empresa": { "maxLength": 255, "minLength": 0, "type": "string" },
+          "dataInicio": { "type": "string", "format": "date" },
+          "dataFim": { "type": "string", "format": "date" },
+          "descricao": { "type": "string" }
+        }
+      },
+      "BaseResponseExperienciaProfissionalResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": {
+            "$ref": "#/components/schemas/ExperienciaProfissionalResponseDTO"
+          },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ExperienciaProfissionalResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "cargo": { "type": "string" },
+          "empresa": { "type": "string" },
+          "dataInicio": { "type": "string", "format": "date" },
+          "dataFim": { "type": "string", "format": "date" },
+          "descricao": { "type": "string" }
+        }
+      },
+      "CertificacaoRequestDTO": {
+        "required": ["dataConclusao", "nome"],
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nome": { "maxLength": 255, "minLength": 0, "type": "string" },
+          "instituicao": { "maxLength": 255, "minLength": 0, "type": "string" },
+          "dataConclusao": { "type": "string", "format": "date" }
+        }
+      },
+      "BaseResponseCertificacaoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/CertificacaoResponseDTO" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "CertificacaoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nome": { "type": "string" },
+          "instituicao": { "type": "string" },
+          "dataConclusao": { "type": "string", "format": "date" }
+        }
+      },
+      "EnderecoRequestDTO": {
+        "required": [
+          "bairro",
+          "cep",
+          "cidade",
+          "estado",
+          "logradouro",
+          "numero",
+          "tipoEndereco"
+        ],
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "logradouro": { "maxLength": 255, "minLength": 0, "type": "string" },
+          "numero": { "maxLength": 20, "minLength": 0, "type": "string" },
+          "complemento": { "maxLength": 255, "minLength": 0, "type": "string" },
+          "bairro": { "maxLength": 100, "minLength": 0, "type": "string" },
+          "cidade": { "maxLength": 100, "minLength": 0, "type": "string" },
+          "estado": { "maxLength": 2, "minLength": 0, "type": "string" },
+          "cep": { "maxLength": 9, "minLength": 0, "type": "string" },
+          "pais": { "maxLength": 50, "minLength": 0, "type": "string" },
+          "tipoEndereco": {
+            "type": "string",
+            "enum": [
+              "RESIDENCIAL",
+              "COMERCIAL",
+              "ESCRITORIO",
+              "COBRANCA",
+              "ENTREGA",
+              "OUTRO"
+            ]
+          }
+        }
+      },
+      "PessoaRequestDTO": {
+        "required": ["cpf", "dataNascimento", "nomeCompleto", "usuario"],
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "usuario": { "$ref": "#/components/schemas/UserRequestDTO" },
+          "nomeCompleto": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string"
+          },
+          "cpf": {
+            "maxLength": 14,
+            "minLength": 11,
+            "pattern": "^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$|^\\d{11}$",
+            "type": "string"
+          },
+          "dataNascimento": { "type": "string", "format": "date" },
+          "telefones": {
+            "maxItems": 10,
+            "minItems": 0,
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "enderecos": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EnderecoRequestDTO" }
+          }
+        }
+      },
+      "ProfissionalUpdateRequest": {
+        "required": ["id", "numeroOab", "usaMarketplace"],
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "pessoa": { "$ref": "#/components/schemas/PessoaRequestDTO" },
+          "numeroOab": { "type": "string" },
+          "usaMarketplace": { "type": "boolean" },
+          "empresaId": { "type": "string", "format": "uuid" },
+          "planoId": { "type": "string", "format": "uuid" },
+          "locaisAtuacaoIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" }
+          },
+          "areaAtuacaoIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" }
+          },
+          "idiomaIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" }
+          },
+          "tipoAtendimentoIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" }
+          },
+          "certificacoes": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CertificacaoRequestDTO" }
+          },
+          "experiencias": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExperienciaProfissionalRequestDTO"
+            }
+          },
+          "formacoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormacaoAcademicaRequestDTO"
+            }
+          }
+        }
+      },
+      "UserRequestDTO": {
+        "required": ["email"],
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "maxLength": 255, "minLength": 0, "type": "string" },
+          "senha": { "maxLength": 255, "minLength": 8, "type": "string" },
+          "nomeCompleto": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string"
+          },
+          "cpf": { "maxLength": 14, "minLength": 0, "type": "string" },
+          "telefone": { "maxLength": 20, "minLength": 0, "type": "string" },
+          "fotoUrl": { "type": "string" }
+        }
+      },
+      "AreaAtuacaoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nome": { "type": "string" },
+          "descricao": { "type": "string" }
+        }
+      },
+      "BaseResponseProfissionalResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/ProfissionalResponseDTO" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "DocumentoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nomeArquivo": { "type": "string" },
+          "urlS3": { "type": "string" },
+          "tipoDocumento": { "type": "string" }
+        }
+      },
+      "EnderecoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "logradouro": { "type": "string" },
+          "numero": { "type": "string" },
+          "complemento": { "type": "string" },
+          "bairro": { "type": "string" },
+          "cidade": { "type": "string" },
+          "estado": { "type": "string" },
+          "cep": { "type": "string" },
+          "pais": { "type": "string" },
+          "tipoEndereco": {
+            "type": "string",
+            "enum": [
+              "RESIDENCIAL",
+              "COMERCIAL",
+              "ESCRITORIO",
+              "COBRANCA",
+              "ENTREGA",
+              "OUTRO"
+            ]
+          }
+        }
+      },
+      "IdiomaResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nome": { "type": "string" },
+          "codigo": { "type": "string" },
+          "nivel": { "type": "string" }
+        }
+      },
+      "LocalAtuacaoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nome": { "type": "string" }
+        }
+      },
+      "PessoaResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "usuario": { "$ref": "#/components/schemas/UserResponseDTO" },
+          "nomeCompleto": { "type": "string" },
+          "cpf": { "type": "string" },
+          "dataNascimento": { "type": "string", "format": "date" },
+          "telefones": { "type": "array", "items": { "type": "string" } },
+          "enderecos": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EnderecoResponseDTO" }
+          }
+        }
+      },
+      "ProfissionalResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "pessoa": { "$ref": "#/components/schemas/PessoaResponseDTO" },
+          "numeroOab": { "type": "string" },
+          "statusProfissional": { "type": "string" },
+          "usaMarketplace": { "type": "boolean" },
+          "fazParteDePlano": { "type": "boolean" },
+          "empresaId": { "type": "string", "format": "uuid" },
+          "planoId": { "type": "string", "format": "uuid" },
+          "tenantId": { "type": "string", "format": "uuid" },
+          "certificacoes": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CertificacaoResponseDTO" }
+          },
+          "documentos": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DocumentoResponseDTO" }
+          },
+          "experiencias": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExperienciaProfissionalResponseDTO"
+            }
+          },
+          "formacoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormacaoAcademicaResponseDTO"
+            }
+          },
+          "locaisAtuacao": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/LocalAtuacaoResponseDTO" }
+          },
+          "areasAtuacao": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AreaAtuacaoResponseDTO" }
+          },
+          "idiomas": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/IdiomaResponseDTO" }
+          },
+          "tiposAtendimento": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TipoAtendimentoResponseDTO"
+            }
+          },
+          "rolesProfissional": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoleProfissionalResponseDTO"
+            }
+          }
+        }
+      },
+      "RoleProfissionalResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" }
+        }
+      },
+      "TipoAtendimentoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nome": { "type": "string" }
+        }
+      },
+      "UserResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nomeCompleto": { "type": "string" },
+          "email": { "type": "string" },
+          "cpf": { "type": "string" },
+          "telefone": { "type": "string" },
+          "fotoUrl": { "type": "string" },
+          "userType": {
+            "type": "string",
+            "enum": ["CLIENTE", "ADVOGADO", "PLATAFORMA_ADMIN", "SOCIO"]
+          },
+          "userStatus": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE",
+              "PENDING_APPROVAL",
+              "REJECTED",
+              "PENDING"
+            ]
+          }
+        }
+      },
+      "ProfissionalCreateRequest": {
+        "required": [
+          "cpf",
+          "dataNascimento",
+          "nomeCompleto",
+          "numeroOab",
+          "planoId",
+          "tenantId",
+          "usaMarketplace",
+          "usuario"
+        ],
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "usuario": { "$ref": "#/components/schemas/UserRequestDTO" },
+          "nomeCompleto": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string"
+          },
+          "cpf": {
+            "maxLength": 14,
+            "minLength": 11,
+            "pattern": "^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$|^\\d{11}$",
+            "type": "string"
+          },
+          "dataNascimento": { "type": "string", "format": "date" },
+          "telefones": {
+            "maxItems": 10,
+            "minItems": 0,
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "enderecos": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EnderecoRequestDTO" }
+          },
+          "numeroOab": { "maxLength": 50, "minLength": 5, "type": "string" },
+          "usaMarketplace": { "type": "boolean" },
+          "planoId": { "type": "string", "format": "uuid" },
+          "tenantId": { "type": "string", "format": "uuid" },
+          "locaisAtuacaoIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" }
+          },
+          "areaAtuacaoIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" }
+          },
+          "idiomaIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" }
+          },
+          "tipoAtendimentoIds": {
+            "type": "array",
+            "items": { "type": "string", "format": "uuid" }
+          },
+          "certificacoes": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CertificacaoRequestDTO" }
+          },
+          "experiencias": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExperienciaProfissionalRequestDTO"
+            }
+          },
+          "formacoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormacaoAcademicaRequestDTO"
+            }
+          }
+        }
+      },
+      "DocumentoUploadRequest": {
+        "required": [
+          "arquivoBase64",
+          "mimeType",
+          "nomeArquivo",
+          "tipoDocumento"
+        ],
+        "type": "object",
+        "properties": {
+          "nomeArquivo": { "maxLength": 255, "minLength": 0, "type": "string" },
+          "tipoDocumento": {
+            "type": "string",
+            "enum": ["OAB", "RG", "CPF", "COMPROVANTE_ENDERECO", "OUTRO"]
+          },
+          "arquivoBase64": { "type": "string" },
+          "mimeType": { "maxLength": 100, "minLength": 0, "type": "string" }
+        }
+      },
+      "BaseResponseDocumentoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/DocumentoResponseDTO" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseBoolean": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "type": "boolean" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseListTipoAtendimentoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TipoAtendimentoResponseDTO"
+            }
+          },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseTipoAtendimentoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/TipoAtendimentoResponseDTO" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponsePageProfissionalResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": {
+            "$ref": "#/components/schemas/PageProfissionalResponseDTO"
+          },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "PageProfissionalResponseDTO": {
+        "type": "object",
+        "properties": {
+          "totalElements": { "type": "integer", "format": "int64" },
+          "totalPages": { "type": "integer", "format": "int32" },
+          "size": { "type": "integer", "format": "int32" },
+          "content": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ProfissionalResponseDTO" }
+          },
+          "number": { "type": "integer", "format": "int32" },
+          "sort": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SortObject" }
+          },
+          "first": { "type": "boolean" },
+          "last": { "type": "boolean" },
+          "numberOfElements": { "type": "integer", "format": "int32" },
+          "pageable": { "$ref": "#/components/schemas/PageableObject" },
+          "empty": { "type": "boolean" }
+        }
+      },
+      "PageableObject": {
+        "type": "object",
+        "properties": {
+          "offset": { "type": "integer", "format": "int64" },
+          "sort": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SortObject" }
+          },
+          "unpaged": { "type": "boolean" },
+          "paged": { "type": "boolean" },
+          "pageNumber": { "type": "integer", "format": "int32" },
+          "pageSize": { "type": "integer", "format": "int32" }
+        }
+      },
+      "SortObject": {
+        "type": "object",
+        "properties": {
+          "direction": { "type": "string" },
+          "nullHandling": { "type": "string" },
+          "ascending": { "type": "boolean" },
+          "property": { "type": "string" },
+          "ignoreCase": { "type": "boolean" }
+        }
+      },
+      "BaseResponseListFormacaoAcademicaResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormacaoAcademicaResponseDTO"
+            }
+          },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseListExperienciaProfissionalResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExperienciaProfissionalResponseDTO"
+            }
+          },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseListDocumentoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DocumentoResponseDTO" }
+          },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseListCertificacaoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CertificacaoResponseDTO" }
+          },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseListLocalAtuacaoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/LocalAtuacaoResponseDTO" }
+          },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseLocalAtuacaoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/LocalAtuacaoResponseDTO" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseListIdiomaResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/IdiomaResponseDTO" }
+          },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseIdiomaResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/IdiomaResponseDTO" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseListAreaAtuacaoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AreaAtuacaoResponseDTO" }
+          },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseAreaAtuacaoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/AreaAtuacaoResponseDTO" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseVoid": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "type": "object" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

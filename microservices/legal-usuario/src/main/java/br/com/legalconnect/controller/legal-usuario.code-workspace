@@ -1,0 +1,28 @@
+{
+  "folders": [
+    {
+      "path": "../../../../../../.."
+    },
+    {
+      "path": "../../../../../../../../auth-service"
+    },
+    {
+      "path": "../../../../../../../../common-lib"
+    },
+    {
+      "path": "../../../../../../../../infrastructure"
+    },
+    {
+      "path": "../../../../../../../../legalconnect-eureka-server"
+    },
+    {
+      "path": "../../../../../../../../legal-gaateway"
+    },
+    {
+      "path": "../../../../../../../../legal-advogado"
+    }
+  ],
+  "settings": {
+    "java.configuration.updateBuildConfiguration": "interactive"
+  }
+}
