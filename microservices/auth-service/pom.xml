@@ -73,11 +73,11 @@
             <scope>runtime</scope>
         </dependency>
         <!-- Flyway Core para migrações de banco de dados -->
-        <dependency>
+        <!-- <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
-            <!-- A versão será gerenciada pela seção dependencyManagement -->
-        </dependency>
+            A versão será gerenciada pela seção dependencyManagement
+        </dependency> -->
         <!-- Flyway para PostgreSQL (necessário se você usa recursos específicos do PostgreSQL no
         Flyway) -->
         <dependency>
@@ -124,7 +124,11 @@
             <artifactId>common-lib</artifactId>
             <version>1.0.0</version>
         </dependency>
-
+        <dependency>
+            <groupId>br.com.legalconnect.common</groupId>
+            <artifactId>common-tenent</artifactId>
+            <version>1.0.0</version>
+        </dependency>
         <!-- Lombok for boilerplate code reduction -->
         <dependency>
             <groupId>org.projectlombok</groupId>

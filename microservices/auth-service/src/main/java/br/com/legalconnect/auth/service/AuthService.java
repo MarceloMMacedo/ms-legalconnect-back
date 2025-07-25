@@ -226,10 +226,10 @@ public class AuthService {
             log.warn("Falha no registro: E-mail '{}' já cadastrado.", request.getEmail());
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_REGISTERED);
         }
-        if (userRepository.existsByCpf(request.getCpf())) {
-            log.warn("Falha no registro: CPF '{}' já cadastrado.", request.getCpf());
-            throw new BusinessException(ErrorCode.INVALID_CPF);
-        }
+        // if (userRepository.existsByCpf(request.getCpf())) {
+        // log.warn("Falha no registro: CPF '{}' já cadastrado.", request.getCpf());
+        // throw new BusinessException(ErrorCode.INVALID_CPF);
+        // }
         // 2. Busca o tenant padrão
         // 2. Busca o tenant padrão ou cria um novo se não existir
         Tenant defaultTenant = tenantRepository.findBySchemaName(defaultTenantIds)

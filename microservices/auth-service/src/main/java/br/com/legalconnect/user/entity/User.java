@@ -62,7 +62,7 @@ public class User extends BaseEntity implements UserDetails { // Implementa User
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email; // Endereço de e-mail principal do usuário (único por schema de tenant)
 
-    @Column(name = "cpf", nullable = false, unique = true, length = 14)
+    @Column(name = "cpf", unique = true, length = 14)
     private String cpf; // Número do Cadastro de Pessoa Física do usuário (único por schema de tenant)
 
     @Column(name = "telefone", length = 20)

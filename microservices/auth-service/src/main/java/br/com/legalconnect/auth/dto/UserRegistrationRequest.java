@@ -2,7 +2,6 @@ package br.com.legalconnect.auth.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,9 +33,10 @@ public class UserRegistrationRequest {
     @Size(max = 255, message = "O e-mail deve ter no máximo 255 caracteres.")
     private String email;
 
-    @NotBlank(message = "O CPF é obrigatório.")
-    @Pattern(regexp = "^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$", message = "Formato de CPF inválido. Use XXX.XXX.XXX-XX")
-    private String cpf;
+    // @NotBlank(message = "O CPF é obrigatório.")
+    // @Pattern(regexp = "^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$", message = "Formato de
+    // CPF inválido. Use XXX.XXX.XXX-XX")
+    // private String cpf;
 
     @Size(max = 20, message = "O telefone deve ter no máximo 20 caracteres.")
     private String telefone;
@@ -47,7 +47,8 @@ public class UserRegistrationRequest {
     // minúscula, número, caractere especial)
     private String senha;
 
-    @NotBlank(message = "O tipo de usuário é obrigatório.")
-    private String userType; // Adicionado para especificar o tipo de usuário (CLIENTE, ADVOGADO, SOCIO,
-                             // PLATAFORMA_ADMIN)
+    // @NotBlank(message = "O tipo de usuário é obrigatório.")
+    // private String userType; // Adicionado para especificar o tipo de usuário
+    // (CLIENTE, ADVOGADO, SOCIO,
+    // // PLATAFORMA_ADMIN)
 }

@@ -12,7 +12,7 @@ import br.com.legalconnect.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/usuarios")
+@RequestMapping("/api/v1/usuarios/up-data")
 @RequiredArgsConstructor
 public class UserController {
 
