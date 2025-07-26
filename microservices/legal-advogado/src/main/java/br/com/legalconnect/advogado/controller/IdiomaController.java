@@ -1,7 +1,5 @@
 package br.com.legalconnect.advogado.controller;
 
-import static br.com.legalconnect.enums.StatusResponse.SUCESSO;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -15,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.legalconnect.advogado.application.dto.response.IdiomaResponseDTO;
 import br.com.legalconnect.advogado.application.service.IdiomaService;
 import br.com.legalconnect.common.dto.BaseResponse;
+import br.com.legalconnect.enums.StatusResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -54,7 +53,7 @@ public class IdiomaController {
                         @Parameter(description = "ID do idioma") @PathVariable UUID id) {
                 IdiomaResponseDTO response = idiomaService.findIdiomaById(id);
                 return ResponseEntity.ok(BaseResponse.<IdiomaResponseDTO>builder()
-                                .status(SUCESSO)
+                                .status(StatusResponse.SUCESSO)
                                 .message("Idioma encontrado com sucesso.")
                                 .data(response)
                                 .timestamp(java.time.LocalDateTime.now())
@@ -77,7 +76,7 @@ public class IdiomaController {
         public ResponseEntity<BaseResponse<List<IdiomaResponseDTO>>> getAllIdiomas() {
                 List<IdiomaResponseDTO> response = idiomaService.findAllIdiomas();
                 return ResponseEntity.ok(BaseResponse.<List<IdiomaResponseDTO>>builder()
-                                .status(SUCESSO)
+                                .status(StatusResponse.SUCESSO)
                                 .message("Idiomas listados com sucesso.")
                                 .data(response)
                                 .timestamp(java.time.LocalDateTime.now())

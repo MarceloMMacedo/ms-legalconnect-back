@@ -1,13 +1,13 @@
-package br.com.legalconnect.common.common_lib;
+package br.com.legalconnect.eurekaserver;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class CommonLibApplicationTests {
+class EurekaServerApplication {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 
 }

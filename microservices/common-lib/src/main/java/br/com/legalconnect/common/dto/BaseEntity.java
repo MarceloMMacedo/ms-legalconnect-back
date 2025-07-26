@@ -1,5 +1,4 @@
 package br.com.legalconnect.common.dto;
-// common/BaseEntity.java
 
 import java.io.Serializable;
 import java.time.LocalDateTime;

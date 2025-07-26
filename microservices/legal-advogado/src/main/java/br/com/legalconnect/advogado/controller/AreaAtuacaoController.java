@@ -1,7 +1,5 @@
 package br.com.legalconnect.advogado.controller;
 
-import static br.com.legalconnect.enums.StatusResponse.SUCESSO;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -15,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.legalconnect.advogado.application.dto.response.AreaAtuacaoResponseDTO;
 import br.com.legalconnect.advogado.application.service.AreaAtuacaoService;
 import br.com.legalconnect.common.dto.BaseResponse;
+import br.com.legalconnect.enums.StatusResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -54,7 +53,7 @@ public class AreaAtuacaoController {
                         @Parameter(description = "ID da Área de Atuação") @PathVariable UUID id) {
                 AreaAtuacaoResponseDTO response = areaAtuacaoService.findAreaAtuacaoById(id);
                 return ResponseEntity.ok(BaseResponse.<AreaAtuacaoResponseDTO>builder()
-                                .status(SUCESSO)
+                                .status(StatusResponse.SUCESSO)
                                 .message("Área de Atuação encontrada com sucesso.")
                                 .data(response)
                                 .timestamp(java.time.LocalDateTime.now())
@@ -77,7 +76,7 @@ public class AreaAtuacaoController {
         public ResponseEntity<BaseResponse<List<AreaAtuacaoResponseDTO>>> getAllAreasAtuacao() {
                 List<AreaAtuacaoResponseDTO> response = areaAtuacaoService.findAllAreasAtuacao();
                 return ResponseEntity.ok(BaseResponse.<List<AreaAtuacaoResponseDTO>>builder()
-                                .status(SUCESSO)
+                                .status(StatusResponse.SUCESSO)
                                 .message("Áreas de Atuação listadas com sucesso.")
                                 .data(response)
                                 .timestamp(java.time.LocalDateTime.now())

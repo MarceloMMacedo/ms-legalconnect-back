@@ -1,0 +1,1943 @@
+```java
+/mvnw text eol=lf
+*.cmd text eol=crlf
+
+```
+```java
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+```
+```java
+# Read Me First
+The following was discovered as part of building this project:
+
+* The original package name 'br.com.legalconnect.common.common-lib' is invalid and this project uses 'br.com.legalconnect.common.common_lib' instead.
+
+# Getting Started
+
+### Reference Documentation
+For further reference, please consider the following sections:
+
+* [Official Apache Maven documentation](https://maven.apache.org/guides/index.html)
+* [Spring Boot Maven Plugin Reference Guide](https://docs.spring.io/spring-boot/3.5.3/maven-plugin)
+* [Create an OCI image](https://docs.spring.io/spring-boot/3.5.3/maven-plugin/build-image.html)
+* [Flyway Migration](https://docs.spring.io/spring-boot/3.5.3/how-to/data-initialization.html#howto.data-initialization.migration-tool.flyway)
+* [Spring Boot DevTools](https://docs.spring.io/spring-boot/3.5.3/reference/using/devtools.html)
+
+### Maven Parent overrides
+
+Due to Maven's design, elements are inherited from the parent POM to the project POM.
+While most of the inheritance is fine, it also inherits unwanted elements like `<license>` and `<developers>` from the parent.
+To prevent this, the project POM contains empty overrides for these elements.
+If you manually switch to a different parent and actually want the inheritance, you need to remove those overrides.
+
+
+```
+```java
+#!/bin/sh
+# ----------------------------------------------------------------------------
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+# ----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
+# Apache Maven Wrapper startup batch script, version 3.3.2
+#
+# Optional ENV vars
+# -----------------
+#   JAVA_HOME - location of a JDK home dir, required when download maven via java source
+#   MVNW_REPOURL - repo url base for downloading maven distribution
+#   MVNW_USERNAME/MVNW_PASSWORD - user and password for downloading maven
+#   MVNW_VERBOSE - true: enable verbose log; debug: trace the mvnw script; others: silence the output
+# ----------------------------------------------------------------------------
+
+set -euf
+[ "${MVNW_VERBOSE-}" != debug ] || set -x
+
+# OS specific support.
+native_path() { printf %s\\n "$1"; }
+case "$(uname)" in
+CYGWIN* | MINGW*)
+  [ -z "${JAVA_HOME-}" ] || JAVA_HOME="$(cygpath --unix "$JAVA_HOME")"
+  native_path() { cygpath --path --windows "$1"; }
+  ;;
+esac
+
+# set JAVACMD and JAVACCMD
+set_java_home() {
+  # For Cygwin and MinGW, ensure paths are in Unix format before anything is touched
+  if [ -n "${JAVA_HOME-}" ]; then
+    if [ -x "$JAVA_HOME/jre/sh/java" ]; then
+      # IBM's JDK on AIX uses strange locations for the executables
+      JAVACMD="$JAVA_HOME/jre/sh/java"
+      JAVACCMD="$JAVA_HOME/jre/sh/javac"
+    else
+      JAVACMD="$JAVA_HOME/bin/java"
+      JAVACCMD="$JAVA_HOME/bin/javac"
+
+      if [ ! -x "$JAVACMD" ] || [ ! -x "$JAVACCMD" ]; then
+        echo "The JAVA_HOME environment variable is not defined correctly, so mvnw cannot run." >&2
+        echo "JAVA_HOME is set to \"$JAVA_HOME\", but \"\$JAVA_HOME/bin/java\" or \"\$JAVA_HOME/bin/javac\" does not exist." >&2
+        return 1
+      fi
+    fi
+  else
+    JAVACMD="$(
+      'set' +e
+      'unset' -f command 2>/dev/null
+      'command' -v java
+    )" || :
+    JAVACCMD="$(
+      'set' +e
+      'unset' -f command 2>/dev/null
+      'command' -v javac
+    )" || :
+
+    if [ ! -x "${JAVACMD-}" ] || [ ! -x "${JAVACCMD-}" ]; then
+      echo "The java/javac command does not exist in PATH nor is JAVA_HOME set, so mvnw cannot run." >&2
+      return 1
+    fi
+  fi
+}
+
+# hash string like Java String::hashCode
+hash_string() {
+  str="${1:-}" h=0
+  while [ -n "$str" ]; do
+    char="${str%"${str#?}"}"
+    h=$(((h * 31 + $(LC_CTYPE=C printf %d "'$char")) % 4294967296))
+    str="${str#?}"
+  done
+  printf %x\\n $h
+}
+
+verbose() { :; }
+[ "${MVNW_VERBOSE-}" != true ] || verbose() { printf %s\\n "${1-}"; }
+
+die() {
+  printf %s\\n "$1" >&2
+  exit 1
+}
+
+trim() {
+  # MWRAPPER-139:
+  #   Trims trailing and leading whitespace, carriage returns, tabs, and linefeeds.
+  #   Needed for removing poorly interpreted newline sequences when running in more
+  #   exotic environments such as mingw bash on Windows.
+  printf "%s" "${1}" | tr -d '[:space:]'
+}
+
+# parse distributionUrl and optional distributionSha256Sum, requires .mvn/wrapper/maven-wrapper.properties
+while IFS="=" read -r key value; do
+  case "${key-}" in
+  distributionUrl) distributionUrl=$(trim "${value-}") ;;
+  distributionSha256Sum) distributionSha256Sum=$(trim "${value-}") ;;
+  esac
+done <"${0%/*}/.mvn/wrapper/maven-wrapper.properties"
+[ -n "${distributionUrl-}" ] || die "cannot read distributionUrl property in ${0%/*}/.mvn/wrapper/maven-wrapper.properties"
+
+case "${distributionUrl##*/}" in
+maven-mvnd-*bin.*)
+  MVN_CMD=mvnd.sh _MVNW_REPO_PATTERN=/maven/mvnd/
+  case "${PROCESSOR_ARCHITECTURE-}${PROCESSOR_ARCHITEW6432-}:$(uname -a)" in
+  *AMD64:CYGWIN* | *AMD64:MINGW*) distributionPlatform=windows-amd64 ;;
+  :Darwin*x86_64) distributionPlatform=darwin-amd64 ;;
+  :Darwin*arm64) distributionPlatform=darwin-aarch64 ;;
+  :Linux*x86_64*) distributionPlatform=linux-amd64 ;;
+  *)
+    echo "Cannot detect native platform for mvnd on $(uname)-$(uname -m), use pure java version" >&2
+    distributionPlatform=linux-amd64
+    ;;
+  esac
+  distributionUrl="${distributionUrl%-bin.*}-$distributionPlatform.zip"
+  ;;
+maven-mvnd-*) MVN_CMD=mvnd.sh _MVNW_REPO_PATTERN=/maven/mvnd/ ;;
+*) MVN_CMD="mvn${0##*/mvnw}" _MVNW_REPO_PATTERN=/org/apache/maven/ ;;
+esac
+
+# apply MVNW_REPOURL and calculate MAVEN_HOME
+# maven home pattern: ~/.m2/wrapper/dists/{apache-maven-<version>,maven-mvnd-<version>-<platform>}/<hash>
+[ -z "${MVNW_REPOURL-}" ] || distributionUrl="$MVNW_REPOURL$_MVNW_REPO_PATTERN${distributionUrl#*"$_MVNW_REPO_PATTERN"}"
+distributionUrlName="${distributionUrl##*/}"
+distributionUrlNameMain="${distributionUrlName%.*}"
+distributionUrlNameMain="${distributionUrlNameMain%-bin}"
+MAVEN_USER_HOME="${MAVEN_USER_HOME:-${HOME}/.m2}"
+MAVEN_HOME="${MAVEN_USER_HOME}/wrapper/dists/${distributionUrlNameMain-}/$(hash_string "$distributionUrl")"
+
+exec_maven() {
+  unset MVNW_VERBOSE MVNW_USERNAME MVNW_PASSWORD MVNW_REPOURL || :
+  exec "$MAVEN_HOME/bin/$MVN_CMD" "$@" || die "cannot exec $MAVEN_HOME/bin/$MVN_CMD"
+}
+
+if [ -d "$MAVEN_HOME" ]; then
+  verbose "found existing MAVEN_HOME at $MAVEN_HOME"
+  exec_maven "$@"
+fi
+
+case "${distributionUrl-}" in
+*?-bin.zip | *?maven-mvnd-?*-?*.zip) ;;
+*) die "distributionUrl is not valid, must match *-bin.zip or maven-mvnd-*.zip, but found '${distributionUrl-}'" ;;
+esac
+
+# prepare tmp dir
+if TMP_DOWNLOAD_DIR="$(mktemp -d)" && [ -d "$TMP_DOWNLOAD_DIR" ]; then
+  clean() { rm -rf -- "$TMP_DOWNLOAD_DIR"; }
+  trap clean HUP INT TERM EXIT
+else
+  die "cannot create temp dir"
+fi
+
+mkdir -p -- "${MAVEN_HOME%/*}"
+
+# Download and Install Apache Maven
+verbose "Couldn't find MAVEN_HOME, downloading and installing it ..."
+verbose "Downloading from: $distributionUrl"
+verbose "Downloading to: $TMP_DOWNLOAD_DIR/$distributionUrlName"
+
+# select .zip or .tar.gz
+if ! command -v unzip >/dev/null; then
+  distributionUrl="${distributionUrl%.zip}.tar.gz"
+  distributionUrlName="${distributionUrl##*/}"
+fi
+
+# verbose opt
+__MVNW_QUIET_WGET=--quiet __MVNW_QUIET_CURL=--silent __MVNW_QUIET_UNZIP=-q __MVNW_QUIET_TAR=''
+[ "${MVNW_VERBOSE-}" != true ] || __MVNW_QUIET_WGET='' __MVNW_QUIET_CURL='' __MVNW_QUIET_UNZIP='' __MVNW_QUIET_TAR=v
+
+# normalize http auth
+case "${MVNW_PASSWORD:+has-password}" in
+'') MVNW_USERNAME='' MVNW_PASSWORD='' ;;
+has-password) [ -n "${MVNW_USERNAME-}" ] || MVNW_USERNAME='' MVNW_PASSWORD='' ;;
+esac
+
+if [ -z "${MVNW_USERNAME-}" ] && command -v wget >/dev/null; then
+  verbose "Found wget ... using wget"
+  wget ${__MVNW_QUIET_WGET:+"$__MVNW_QUIET_WGET"} "$distributionUrl" -O "$TMP_DOWNLOAD_DIR/$distributionUrlName" || die "wget: Failed to fetch $distributionUrl"
+elif [ -z "${MVNW_USERNAME-}" ] && command -v curl >/dev/null; then
+  verbose "Found curl ... using curl"
+  curl ${__MVNW_QUIET_CURL:+"$__MVNW_QUIET_CURL"} -f -L -o "$TMP_DOWNLOAD_DIR/$distributionUrlName" "$distributionUrl" || die "curl: Failed to fetch $distributionUrl"
+elif set_java_home; then
+  verbose "Falling back to use Java to download"
+  javaSource="$TMP_DOWNLOAD_DIR/Downloader.java"
+  targetZip="$TMP_DOWNLOAD_DIR/$distributionUrlName"
+  cat >"$javaSource" <<-END
+	public class Downloader extends java.net.Authenticator
+	{
+	  protected java.net.PasswordAuthentication getPasswordAuthentication()
+	  {
+	    return new java.net.PasswordAuthentication( System.getenv( "MVNW_USERNAME" ), System.getenv( "MVNW_PASSWORD" ).toCharArray() );
+	  }
+	  public static void main( String[] args ) throws Exception
+	  {
+	    setDefault( new Downloader() );
+	    java.nio.file.Files.copy( java.net.URI.create( args[0] ).toURL().openStream(), java.nio.file.Paths.get( args[1] ).toAbsolutePath().normalize() );
+	  }
+	}
+	END
+  # For Cygwin/MinGW, switch paths to Windows format before running javac and java
+  verbose " - Compiling Downloader.java ..."
+  "$(native_path "$JAVACCMD")" "$(native_path "$javaSource")" || die "Failed to compile Downloader.java"
+  verbose " - Running Downloader.java ..."
+  "$(native_path "$JAVACMD")" -cp "$(native_path "$TMP_DOWNLOAD_DIR")" Downloader "$distributionUrl" "$(native_path "$targetZip")"
+fi
+
+# If specified, validate the SHA-256 sum of the Maven distribution zip file
+if [ -n "${distributionSha256Sum-}" ]; then
+  distributionSha256Result=false
+  if [ "$MVN_CMD" = mvnd.sh ]; then
+    echo "Checksum validation is not supported for maven-mvnd." >&2
+    echo "Please disable validation by removing 'distributionSha256Sum' from your maven-wrapper.properties." >&2
+    exit 1
+  elif command -v sha256sum >/dev/null; then
+    if echo "$distributionSha256Sum  $TMP_DOWNLOAD_DIR/$distributionUrlName" | sha256sum -c >/dev/null 2>&1; then
+      distributionSha256Result=true
+    fi
+  elif command -v shasum >/dev/null; then
+    if echo "$distributionSha256Sum  $TMP_DOWNLOAD_DIR/$distributionUrlName" | shasum -a 256 -c >/dev/null 2>&1; then
+      distributionSha256Result=true
+    fi
+  else
+    echo "Checksum validation was requested but neither 'sha256sum' or 'shasum' are available." >&2
+    echo "Please install either command, or disable validation by removing 'distributionSha256Sum' from your maven-wrapper.properties." >&2
+    exit 1
+  fi
+  if [ $distributionSha256Result = false ]; then
+    echo "Error: Failed to validate Maven distribution SHA-256, your Maven distribution might be compromised." >&2
+    echo "If you updated your Maven version, you need to update the specified distributionSha256Sum property." >&2
+    exit 1
+  fi
+fi
+
+# unzip and move
+if command -v unzip >/dev/null; then
+  unzip ${__MVNW_QUIET_UNZIP:+"$__MVNW_QUIET_UNZIP"} "$TMP_DOWNLOAD_DIR/$distributionUrlName" -d "$TMP_DOWNLOAD_DIR" || die "failed to unzip"
+else
+  tar xzf${__MVNW_QUIET_TAR:+"$__MVNW_QUIET_TAR"} "$TMP_DOWNLOAD_DIR/$distributionUrlName" -C "$TMP_DOWNLOAD_DIR" || die "failed to untar"
+fi
+printf %s\\n "$distributionUrl" >"$TMP_DOWNLOAD_DIR/$distributionUrlNameMain/mvnw.url"
+mv -- "$TMP_DOWNLOAD_DIR/$distributionUrlNameMain" "$MAVEN_HOME" || [ -d "$MAVEN_HOME" ] || die "fail to move MAVEN_HOME"
+
+clean || :
+exec_maven "$@"
+
+```
+```java
+<# : batch portion
+@REM ----------------------------------------------------------------------------
+@REM Licensed to the Apache Software Foundation (ASF) under one
+@REM or more contributor license agreements.  See the NOTICE file
+@REM distributed with this work for additional information
+@REM regarding copyright ownership.  The ASF licenses this file
+@REM to you under the Apache License, Version 2.0 (the
+@REM "License"); you may not use this file except in compliance
+@REM with the License.  You may obtain a copy of the License at
+@REM
+@REM    http://www.apache.org/licenses/LICENSE-2.0
+@REM
+@REM Unless required by applicable law or agreed to in writing,
+@REM software distributed under the License is distributed on an
+@REM "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+@REM KIND, either express or implied.  See the License for the
+@REM specific language governing permissions and limitations
+@REM under the License.
+@REM ----------------------------------------------------------------------------
+
+@REM ----------------------------------------------------------------------------
+@REM Apache Maven Wrapper startup batch script, version 3.3.2
+@REM
+@REM Optional ENV vars
+@REM   MVNW_REPOURL - repo url base for downloading maven distribution
+@REM   MVNW_USERNAME/MVNW_PASSWORD - user and password for downloading maven
+@REM   MVNW_VERBOSE - true: enable verbose log; others: silence the output
+@REM ----------------------------------------------------------------------------
+
+@IF "%__MVNW_ARG0_NAME__%"=="" (SET __MVNW_ARG0_NAME__=%~nx0)
+@SET __MVNW_CMD__=
+@SET __MVNW_ERROR__=
+@SET __MVNW_PSMODULEP_SAVE=%PSModulePath%
+@SET PSModulePath=
+@FOR /F "usebackq tokens=1* delims==" %%A IN (`powershell -noprofile "& {$scriptDir='%~dp0'; $script='%__MVNW_ARG0_NAME__%'; icm -ScriptBlock ([Scriptblock]::Create((Get-Content -Raw '%~f0'))) -NoNewScope}"`) DO @(
+  IF "%%A"=="MVN_CMD" (set __MVNW_CMD__=%%B) ELSE IF "%%B"=="" (echo %%A) ELSE (echo %%A=%%B)
+)
+@SET PSModulePath=%__MVNW_PSMODULEP_SAVE%
+@SET __MVNW_PSMODULEP_SAVE=
+@SET __MVNW_ARG0_NAME__=
+@SET MVNW_USERNAME=
+@SET MVNW_PASSWORD=
+@IF NOT "%__MVNW_CMD__%"=="" (%__MVNW_CMD__% %*)
+@echo Cannot start maven from wrapper >&2 && exit /b 1
+@GOTO :EOF
+: end batch / begin powershell #>
+
+$ErrorActionPreference = "Stop"
+if ($env:MVNW_VERBOSE -eq "true") {
+  $VerbosePreference = "Continue"
+}
+
+# calculate distributionUrl, requires .mvn/wrapper/maven-wrapper.properties
+$distributionUrl = (Get-Content -Raw "$scriptDir/.mvn/wrapper/maven-wrapper.properties" | ConvertFrom-StringData).distributionUrl
+if (!$distributionUrl) {
+  Write-Error "cannot read distributionUrl property in $scriptDir/.mvn/wrapper/maven-wrapper.properties"
+}
+
+switch -wildcard -casesensitive ( $($distributionUrl -replace '^.*/','') ) {
+  "maven-mvnd-*" {
+    $USE_MVND = $true
+    $distributionUrl = $distributionUrl -replace '-bin\.[^.]*$',"-windows-amd64.zip"
+    $MVN_CMD = "mvnd.cmd"
+    break
+  }
+  default {
+    $USE_MVND = $false
+    $MVN_CMD = $script -replace '^mvnw','mvn'
+    break
+  }
+}
+
+# apply MVNW_REPOURL and calculate MAVEN_HOME
+# maven home pattern: ~/.m2/wrapper/dists/{apache-maven-<version>,maven-mvnd-<version>-<platform>}/<hash>
+if ($env:MVNW_REPOURL) {
+  $MVNW_REPO_PATTERN = if ($USE_MVND) { "/org/apache/maven/" } else { "/maven/mvnd/" }
+  $distributionUrl = "$env:MVNW_REPOURL$MVNW_REPO_PATTERN$($distributionUrl -replace '^.*'+$MVNW_REPO_PATTERN,'')"
+}
+$distributionUrlName = $distributionUrl -replace '^.*/',''
+$distributionUrlNameMain = $distributionUrlName -replace '\.[^.]*$','' -replace '-bin$',''
+$MAVEN_HOME_PARENT = "$HOME/.m2/wrapper/dists/$distributionUrlNameMain"
+if ($env:MAVEN_USER_HOME) {
+  $MAVEN_HOME_PARENT = "$env:MAVEN_USER_HOME/wrapper/dists/$distributionUrlNameMain"
+}
+$MAVEN_HOME_NAME = ([System.Security.Cryptography.MD5]::Create().ComputeHash([byte[]][char[]]$distributionUrl) | ForEach-Object {$_.ToString("x2")}) -join ''
+$MAVEN_HOME = "$MAVEN_HOME_PARENT/$MAVEN_HOME_NAME"
+
+if (Test-Path -Path "$MAVEN_HOME" -PathType Container) {
+  Write-Verbose "found existing MAVEN_HOME at $MAVEN_HOME"
+  Write-Output "MVN_CMD=$MAVEN_HOME/bin/$MVN_CMD"
+  exit $?
+}
+
+if (! $distributionUrlNameMain -or ($distributionUrlName -eq $distributionUrlNameMain)) {
+  Write-Error "distributionUrl is not valid, must end with *-bin.zip, but found $distributionUrl"
+}
+
+# prepare tmp dir
+$TMP_DOWNLOAD_DIR_HOLDER = New-TemporaryFile
+$TMP_DOWNLOAD_DIR = New-Item -Itemtype Directory -Path "$TMP_DOWNLOAD_DIR_HOLDER.dir"
+$TMP_DOWNLOAD_DIR_HOLDER.Delete() | Out-Null
+trap {
+  if ($TMP_DOWNLOAD_DIR.Exists) {
+    try { Remove-Item $TMP_DOWNLOAD_DIR -Recurse -Force | Out-Null }
+    catch { Write-Warning "Cannot remove $TMP_DOWNLOAD_DIR" }
+  }
+}
+
+New-Item -Itemtype Directory -Path "$MAVEN_HOME_PARENT" -Force | Out-Null
+
+# Download and Install Apache Maven
+Write-Verbose "Couldn't find MAVEN_HOME, downloading and installing it ..."
+Write-Verbose "Downloading from: $distributionUrl"
+Write-Verbose "Downloading to: $TMP_DOWNLOAD_DIR/$distributionUrlName"
+
+$webclient = New-Object System.Net.WebClient
+if ($env:MVNW_USERNAME -and $env:MVNW_PASSWORD) {
+  $webclient.Credentials = New-Object System.Net.NetworkCredential($env:MVNW_USERNAME, $env:MVNW_PASSWORD)
+}
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$webclient.DownloadFile($distributionUrl, "$TMP_DOWNLOAD_DIR/$distributionUrlName") | Out-Null
+
+# If specified, validate the SHA-256 sum of the Maven distribution zip file
+$distributionSha256Sum = (Get-Content -Raw "$scriptDir/.mvn/wrapper/maven-wrapper.properties" | ConvertFrom-StringData).distributionSha256Sum
+if ($distributionSha256Sum) {
+  if ($USE_MVND) {
+    Write-Error "Checksum validation is not supported for maven-mvnd. `nPlease disable validation by removing 'distributionSha256Sum' from your maven-wrapper.properties."
+  }
+  Import-Module $PSHOME\Modules\Microsoft.PowerShell.Utility -Function Get-FileHash
+  if ((Get-FileHash "$TMP_DOWNLOAD_DIR/$distributionUrlName" -Algorithm SHA256).Hash.ToLower() -ne $distributionSha256Sum) {
+    Write-Error "Error: Failed to validate Maven distribution SHA-256, your Maven distribution might be compromised. If you updated your Maven version, you need to update the specified distributionSha256Sum property."
+  }
+}
+
+# unzip and move
+Expand-Archive "$TMP_DOWNLOAD_DIR/$distributionUrlName" -DestinationPath "$TMP_DOWNLOAD_DIR" | Out-Null
+Rename-Item -Path "$TMP_DOWNLOAD_DIR/$distributionUrlNameMain" -NewName $MAVEN_HOME_NAME | Out-Null
+try {
+  Move-Item -Path "$TMP_DOWNLOAD_DIR/$MAVEN_HOME_NAME" -Destination $MAVEN_HOME_PARENT | Out-Null
+} catch {
+  if (! (Test-Path -Path "$MAVEN_HOME" -PathType Container)) {
+    Write-Error "fail to move MAVEN_HOME"
+  }
+} finally {
+  try { Remove-Item $TMP_DOWNLOAD_DIR -Recurse -Force | Out-Null }
+  catch { Write-Warning "Cannot remove $TMP_DOWNLOAD_DIR" }
+}
+
+Write-Output "MVN_CMD=$MAVEN_HOME/bin/$MVN_CMD"
+
+```
+```java
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.12</version> <!-- Usando a versão que você sugeriu -->
+        <relativePath /> <!-- lookup parent from repository -->
+    </parent>
+
+    <groupId>br.com.legalconnect.common</groupId> <!-- Alterado conforme sua sugestão -->
+    <artifactId>common-lib</artifactId>
+    <version>1.0.0</version>
+    <name>LegalConnect Common Library</name>
+    <description>Common utilities, entities, and configurations for LegalConnect microservices</description>
+    <packaging>jar</packaging> <!-- Define este como um JAR de biblioteca -->
+
+    <properties>
+        <java.version>17</java.version> <!-- Defina a versão do Java que você está usando -->
+        <lombok.version>1.18.30</lombok.version> <!-- Versão explícita para Lombok -->
+        <org.mapstruct.version>1.5.5.Final</org.mapstruct.version> <!-- Versão explícita para
+        MapStruct -->
+        <springdoc.version>2.3.0</springdoc.version> <!-- Versão explícita para SpringDoc -->
+        <flyway.version>9.22.3</flyway.version> <!-- Versão explícita para Flyway -->
+    </properties>
+
+    <dependencies>
+        <!-- Spring Boot Starter Validation para anotações de validação em DTOs -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency> -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.zaxxer</groupId>
+                    <artifactId>HikariCP</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- Spring Context para anotações como @Configuration, @Component, etc. -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+        <!-- Spring Security Core para GrantedAuthority (usado em UserDetails, por exemplo) -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency> -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version> <!-- Usando a versão definida nas propriedades -->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${org.mapstruct.version}</version> <!-- Usando a versão definida nas propriedades -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${org.mapstruct.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok-mapstruct-binding</artifactId>
+                            <version>0.2.0</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+```java
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+wrapperVersion=3.3.2
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.10/apache-maven-3.9.10-bin.zip
+
+```
+```java
+{
+  "java.configuration.updateBuildConfiguration": "interactive"
+}
+
+```
+```java
+legalconnect/
+├── common-lib/
+│   ├── pom.xml                                 # Configurações do Maven para a biblioteca comum
+│   └── src/
+│       └── main/
+│           └── java/
+│               └── br/com/legalconnect/common/
+│                   ├── BaseEntity.java         # Entidade base para todos os modelos de dados
+│                   ├── config/
+│                   │   ├── FlywayMultiTenantConfig.java # Configuração Flyway para multitenancy (se global)
+│                   │   ├── OpenApiConfig.java           # Configuração OpenAPI/Swagger UI
+│                   │   └── WebConfig.java               # Configurações CORS e MVC gerais
+│                   ├── constants/
+│                   │   ├── ErrorCode.java               # Códigos de erro padronizados
+│                   │   └── Roles.java                   # Constantes para papéis de usuário
+│                   ├── dto/
+│                   │   ├── BaseResponse.java            # DTO base para respostas da API
+│                   │   └── SuccessResponseDTO.java      # DTO para respostas de sucesso simples
+│                   ├── exception/
+│                   │   ├── BusinessException.java       # Exceção de negócio personalizada
+│                   │   └── GlobalExceptionHandler.java  # Manipulador global de exceções
+│                   ├── multitenancy/
+│                   │   ├── HibernateMultiTenantConfig.java # Configuração Hibernate para multitenancy
+│                   │   ├── SchemaMultiTenantConnectionProvider.java # Provedor de conexão multi-tenant
+│                   │   ├── SchemaTenantIdentifierResolver.java    # Resolvedor de identificador de tenant
+│                   │   ├── TenantContext.java                     # Contexto da thread para o tenant atual
+│                   │   └── TenantFilter.java                    # Filtro HTTP para extrair o tenant ID
+│                   └── util/
+│                       └── ValidatorUtil.java           # Utilitários de validação (ex: CPF, CNPJ)
+```
+```java
+package br.com.legalconnect.common.dto;
+// common/BaseEntity.java
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class BaseEntity
+ * @brief Classe base abstrata para todas as entidades persistentes.
+ *        Fornece campos comuns como ID, data de criação e data de atualização.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@SuperBuilder
+@MappedSuperclass // Indica que esta classe é uma superclasse mapeada para outras entidades
+public abstract class BaseEntity implements Serializable {
+
+    private static final Logger log = LoggerFactory.getLogger(BaseEntity.class);
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    protected UUID id; // Identificador único da entidade
+
+    @Column(name = "created_at", nullable = false)
+    protected LocalDateTime createdAt; // Data e hora de criação do registro
+
+    @Column(name = "updated_at", nullable = false)
+    protected LocalDateTime updatedAt; // Data e hora da última atualização do registro
+
+    /**
+     * Define a data de criação antes de persistir a entidade.
+     */
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        log.debug("Criando entidade: {}. Data de criação: {}", this.getClass().getSimpleName(), createdAt);
+    }
+
+    /**
+     * Atualiza a data de atualização antes de atualizar a entidade.
+     */
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+        log.debug("Atualizando entidade: {}. ID: {}. Data de atualização: {}", this.getClass().getSimpleName(), id,
+                updatedAt);
+    }
+}
+
+```
+```java
+package br.com.legalconnect.common.dto;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import br.com.legalconnect.enums.StatusResponse;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * @class BaseResponse
+ * @brief DTO base para padronizar as respostas da API.
+ *
+ *        Inclui campos comuns para todas as respostas, como status, mensagem,
+ *        timestamp e, opcionalmente, uma lista de erros.
+ *        Utiliza Lombok para reduzir boilerplate (getters, setters,
+ *        construtores, builder).
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL) // Inclui apenas campos não nulos na serialização JSON
+public class BaseResponse<T> {
+
+    private StatusResponse status; // Status da resposta (ex: StatusResponse.SUCESSO, StatusResponse.ERRO,
+                                   // "WARNING")
+    private String message; // Mensagem descritiva da resposta
+    private LocalDateTime timestamp; // Data e hora da resposta
+    private T data; // Payload da resposta (dados de sucesso)
+    private List<String> errors; // Lista de mensagens de erro, se houver
+}
+```
+```java
+package br.com.legalconnect.common.dto;
+
+import java.time.LocalDateTime;
+
+import br.com.legalconnect.enums.StatusResponse;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+/**
+ * @class SuccessResponseDTO
+ * @brief DTO para respostas de sucesso simples da API.
+ *
+ *        Estende {@link BaseResponse} e é usado para indicar operações
+ *        bem-sucedidas
+ *        que podem ou não retornar dados específicos.
+ */
+@Data
+@EqualsAndHashCode(callSuper = true) // Inclui campos da superclasse no equals e hashCode
+public class SuccessResponseDTO extends BaseResponse {
+
+    /**
+     * Construtor padrão para uma resposta de sucesso.
+     * Define o status como StatusResponse.SUCESSO e o timestamp atual.
+     */
+    public SuccessResponseDTO() {
+        this.setStatus(StatusResponse.SUCESSO);
+        this.setTimestamp(LocalDateTime.now());
+    }
+
+    /**
+     * Construtor para uma resposta de sucesso com uma mensagem específica.
+     *
+     * @param message A mensagem descritiva do sucesso.
+     */
+    public SuccessResponseDTO(String message) {
+        this(); // Chama o construtor padrão para definir status e timestamp
+        this.setMessage(message);
+    }
+}
+```
+```java
+package br.com.legalconnect.common.exception;
+
+import org.springframework.http.HttpStatus;
+
+import lombok.Getter;
+
+/**
+ * @class BusinessException
+ * @brief Exceção personalizada para representar erros de negócio na aplicação.
+ *
+ *        Esta exceção é lançada quando uma regra de negócio não é satisfeita.
+ *        Ela encapsula um {@link ErrorCode} e, opcionalmente, argumentos para
+ *        formatar
+ *        a mensagem de erro, além de um status HTTP para a resposta da API.
+ */
+@Getter
+public class BusinessException extends RuntimeException {
+
+    private final ErrorCode errorCode; // O código de erro padronizado
+    private final String[] args; // Argumentos para formatar a mensagem do erro
+    private final HttpStatus httpStatus; // Status HTTP associado a esta exceção
+
+    public BusinessException(ErrorCode errorCode, HttpStatus httpStatus, String args) {
+        super(args);
+        this.errorCode = errorCode;
+        this.args = new String[] { args, errorCode.getMessage() };
+        this.httpStatus = httpStatus;
+    }
+
+    /**
+     * Construtor para BusinessException com um ErrorCode e status HTTP padrão
+     * (BAD_REQUEST).
+     *
+     * @param errorCode O código de erro que define o tipo de exceção de negócio.
+     * @param args      Argumentos opcionais para formatar a mensagem do erro.
+     */
+    public BusinessException(ErrorCode errorCode, String... args) {
+        this(errorCode, HttpStatus.BAD_REQUEST, args); // Por padrão, erros de negócio são BAD_REQUEST
+    }
+
+    /**
+     * Construtor para BusinessException com um ErrorCode e um status HTTP
+     * específico.
+     *
+     * @param errorCode  O código de erro que define o tipo de exceção de negócio.
+     * @param httpStatus O status HTTP a ser retornado na resposta da API.
+     * @param args       Argumentos opcionais para formatar a mensagem do erro.
+     */
+    public BusinessException(ErrorCode errorCode, HttpStatus httpStatus, String... args) {
+        super(errorCode.getFormattedMessage(args)); // Define a mensagem da exceção usando a mensagem formatada do
+                                                    // ErrorCode
+        this.errorCode = errorCode;
+        this.args = args;
+        this.httpStatus = httpStatus;
+
+    }
+
+    /**
+     * @brief Retorna a mensagem de erro formatada.
+     * @return A mensagem de erro formatada.
+     */
+    @Override
+    public String getMessage() {
+        return errorCode.getFormattedMessage(args);
+    }
+
+    /**
+     * @brief Retorna o código de erro.
+     * @return O código de erro.
+     */
+    public String getCode() {
+        return errorCode.getCode();
+    }
+}
+```
+```java
+package br.com.legalconnect.common.exception;
+
+import lombok.Getter;
+
+/**
+ * @enum ErrorCode
+ * @brief Enumeração que define códigos de erro padronizados para a aplicação.
+ *
+ *        Cada código de erro possui uma mensagem associada, facilitando a
+ *        padronização
+ *        de respostas de erro na API e a internacionalização ou localização
+ *        futura.
+ */
+@Getter
+public enum ErrorCode {
+    // Erros gerais de validação
+    DADOS_INVALIDOS("001", "Dados fornecidos são inválidos."),
+    REQUISICAO_MAL_FORMADA("002", "A requisição está mal formada."),
+    PARAMETRO_AUSENTE("003", "Parâmetro obrigatório ausente."),
+
+    // Erros de entidade / negócio
+    ENTIDADE_NAO_ENCONTRADA("100", "Entidade não encontrada."),
+    EMPRESA_NAO_ENCONTRADA("101", "Empresa não encontrada."),
+    PROFISSIONAL_NAO_ENCONTRADO("102", "Profissional não encontrado."),
+    CLIENTE_NAO_ENCONTRADO("103", "Cliente não encontrado."),
+    ADMINISTRADOR_NAO_ENCONTRADO("104", "Administrador não encontrado."),
+    PLANO_NAO_ENCONTRADO("105", "Plano não encontrado."),
+    USER_NAO_ENCONTRADO("106", "Usuário associado não encontrado."),
+
+    // Erros de duplicidade
+    CNPJ_DUPLICADO("200", "CNPJ já cadastrado."),
+    CPF_DUPLICADO("201", "CPF já cadastrado."),
+    OAB_DUPLICADA("202", "Número da OAB já cadastrado."),
+    EMAIL_DUPLICADO("203", "Email já cadastrado."),
+    NOME_PLANO_DUPLICADO("204", "Nome do plano já cadastrado."),
+
+    // Erros de integridade
+    INTEGRIDADE_VIOLADA("300", "Violação de integridade de dados."),
+    RECURSO_EM_USO("301", "Recurso não pode ser excluído pois está em uso."),
+
+    // Erros de sistema / internos
+    ERRO_INTERNO_SERVIDOR("500", "Ocorreu um erro interno no servidor."),
+    SERVICO_INDISPONIVEL("503", "Serviço temporariamente indisponível."),
+
+    // Erros Gerais/Comuns (1000-1999)
+    GENERIC_ERROR("1000", "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde."),
+    INVALID_INPUT("1001", "Dados de entrada inválidos."),
+    RESOURCE_NOT_FOUND("1002", "Recurso não encontrado."),
+    UNAUTHORIZED_ACCESS("1003", "Acesso não autorizado. Credenciais inválidas ou ausentes."),
+    FORBIDDEN_ACCESS("1004", "Acesso negado. Você não tem permissão para realizar esta ação."),
+    SERVICE_UNAVAILABLE("1005", "O serviço está temporariamente indisponível. Tente novamente mais tarde."),
+    TOO_MANY_REQUESTS("1006", "Muitas requisições. Por favor, aguarde e tente novamente."),
+    VALIDATION_ERROR("1007", "Erro de validação nos dados fornecidos."),
+    DATABASE_ERROR("1008", "Erro ao acessar o banco de dados."),
+    INTEGRATION_ERROR("1009", "Erro de integração com serviço externo."),
+
+    // Erros de Autenticação e Autorização (2000-2999)
+    INVALID_CREDENTIALS("2000", "Credenciais de autenticação inválidas."),
+    ACCOUNT_LOCKED("2001", "Sua conta está bloqueada."),
+    ACCOUNT_DISABLED("2002", "Sua conta está desativada."),
+    TOKEN_EXPIRED("2003", "O token de acesso expirou."),
+    INVALID_TOKEN("2004", "O token de acesso é inválido."),
+    REFRESH_TOKEN_EXPIRED("2005", "O refresh token expirou. Faça login novamente."),
+    INVALID_REFRESH_TOKEN("2006", "O refresh token é inválido."),
+    USER_NOT_FOUND("2007", "Usuário não encontrado."),
+    EMAIL_ALREADY_REGISTERED("2008", "Este e-mail já está cadastrado."),
+    PASSWORD_RESET_FAILED("2009", "Falha ao redefinir a senha."),
+    INVALID_CURRENT_PASSWORD("2010", "A senha atual fornecida está incorreta."), // Novo erro
+    PASSWORD_RESET_TOKEN_INVALID("2011", "Token de redefinição de senha inválido."), // Novo erro
+    PASSWORD_RESET_TOKEN_EXPIRED("2012", "Token de redefinição de senha expirado."), // Novo erro
+    PASSWORD_RESET_TOKEN_USED("2013", "Token de redefinição de senha já utilizado."), // Novo erro
+    PASSWORD_RESET_TOKEN_EXCEEDED("2014", "Limite de redefinições de senha excedido."), // Novo erro
+
+    // Erros de Negócio Específicos (3000-3999) - Exemplo
+    TENANT_NOT_FOUND("3000", "Tenant não encontrado."),
+    TENANT_DISABLED("3001", "O tenant está desativado."),
+    SUBSCRIPTION_EXPIRED("3002", "Sua assinatura expirou."),
+    PLAN_NOT_ACTIVE("3003", "O plano selecionado não está ativo."),
+    SERVICE_LIMIT_EXCEEDED("3004", "Limite de serviços agendáveis excedido para o seu plano."),
+    ADVOCATE_NOT_AVAILABLE("3005", "Advogado não disponível no horário selecionado."),
+    APPOINTMENT_CONFLICT("3006", "Conflito de agendamento. O horário já está ocupado."),
+    PAYMENT_FAILED("3007", "Falha no processamento do pagamento."),
+    INVALID_PROMO_CODE("3008", "Código promocional inválido ou expirado."),
+    DOCUMENT_UPLOAD_FAILED("3009", "Falha ao fazer upload do documento."),
+    INVALID_DOCUMENT_FORMAT("3010", "Formato de documento inválido."),
+
+    // Erros de Validação de Campo (4000-4999) - Mais específicos, geralmente
+    // tratados por @Valid
+    FIELD_REQUIRED("4000", "O campo '%s' é obrigatório."),
+    INVALID_FORMAT("4001", "O campo '%s' possui formato inválido."),
+    MIN_LENGTH("4002", "O campo '%s' deve ter no mínimo %d caracteres."),
+    MAX_LENGTH("4003", "O campo '%s' deve ter no máximo %d caracteres."),
+    INVALID_EMAIL("4004", "O e-mail fornecido é inválido."),
+    INVALID_CPF("4005", "O CPF fornecido é inválido."),
+    INVALID_CNPJ("4006", "O CNPJ fornecido é inválido."),
+    PASSWORD_TOO_WEAK("4007", "A senha é muito fraca."),
+    DATE_IN_PAST("4008", "A data não pode ser no passado."),
+    INVALID_ENUM_VALUE("4009", "Valor inválido para o campo '%s'.");
+
+    private final String code;
+    private final String message;
+
+    /**
+     * Construtor para ErrorCode.
+     *
+     * @param code    O código único do erro.
+     * @param message A mensagem descritiva do erro.
+     */
+    ErrorCode(String code, String message) {
+        this.code = code;
+        this.message = message;
+    }
+
+    /**
+     * @brief Retorna a mensagem de erro formatada com argumentos.
+     * @param args Argumentos para formatar a mensagem.
+     * @return A mensagem de erro formatada.
+     */
+    public String getFormattedMessage(Object... args) {
+        return String.format(this.message, args);
+    }
+}
+
+```
+```java
+package br.com.legalconnect.common.exception;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.WebRequest;
+
+import br.com.legalconnect.common.dto.BaseResponse;
+import br.com.legalconnect.enums.StatusResponse;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * @class GlobalExceptionHandler
+ * @brief Manipulador global de exceções para a aplicação Spring Boot.
+ *
+ *        Esta classe intercepta exceções lançadas em qualquer parte da
+ *        aplicação
+ *        e as transforma em respostas de erro padronizadas da API, utilizando
+ *        {@link BaseResponse}.
+ *        Lida com {@link BusinessException} e exceções de validação do Spring,
+ *        além de capturar exceções genéricas.
+ */
+@Slf4j
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+        /**
+         * @brief Manipula exceções de negócio personalizadas
+         *        ({@link BusinessException}).
+         *
+         *        Retorna uma resposta de erro com o status HTTP e a mensagem definidos
+         *        na BusinessException.
+         *
+         * @param ex      A exceção de negócio lançada.
+         * @param request A requisição web atual.
+         * @return Uma {@link ResponseEntity} contendo a {@link BaseResponse} de erro.
+         */
+        @ExceptionHandler(BusinessException.class)
+        public ResponseEntity<BaseResponse> handleBusinessException(BusinessException ex, WebRequest request) {
+                log.warn("Business Exception: {} - Path: {}", ex.getMessage(), request.getDescription(false));
+
+                BaseResponse errorResponse = BaseResponse.builder()
+                                .status(StatusResponse.ERRO)
+                                .message(ex.getMessage())
+                                .errors(List.of(ex.getCode())) // Adiciona o código de erro como parte dos erros
+                                .timestamp(LocalDateTime.now())
+                                .errors(Arrays.asList(ex.getArgs())) // Adiciona os argumentos da exceção como parte dos
+                                .build();
+
+                return new ResponseEntity<>(errorResponse, ex.getHttpStatus());
+        }
+
+        /**
+         * @brief Manipula exceções de validação de argumentos de método
+         *        ({@link MethodArgumentNotValidException}).
+         *
+         *        Ocorre quando a validação de um DTO de entrada falha (ex:
+         *        campos @NotNull, @Size).
+         *        Coleta todos os erros de campo e os retorna em uma lista na resposta.
+         *
+         * @param ex      A exceção de validação.
+         * @param request A requisição web atual.
+         * @return Uma {@link ResponseEntity} contendo a {@link BaseResponse} com os
+         *         erros de validação.
+         */
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+        public ResponseEntity<BaseResponse> handleValidationExceptions(MethodArgumentNotValidException ex,
+                        WebRequest request) {
+                List<String> errors = ex.getBindingResult().getAllErrors().stream()
+                                .map(error -> {
+                                        String fieldName = (error instanceof FieldError)
+                                                        ? ((FieldError) error).getField()
+                                                        : error.getObjectName();
+                                        String errorMessage = error.getDefaultMessage();
+                                        return String.format("Campo '%s': %s", fieldName, errorMessage);
+                                })
+                                .collect(Collectors.toList());
+
+                log.warn("Validation Exception: {} - Errors: {} - Path: {}", ex.getMessage(), errors,
+                                request.getDescription(false));
+
+                BaseResponse errorResponse = BaseResponse.builder()
+                                .status(StatusResponse.ERRO)
+                                .message(ErrorCode.VALIDATION_ERROR.getMessage())
+                                .errors(errors)
+                                .timestamp(LocalDateTime.now())
+                                .build();
+
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+
+        /**
+         * @brief Manipula todas as outras exceções não tratadas especificamente.
+         *
+         *        Captura qualquer {@link Exception} genérica, registra o erro e retorna
+         *        uma resposta de erro genérica com status HTTP 500 (Internal Server
+         *        Error).
+         *
+         * @param ex      A exceção genérica.
+         * @param request A requisição web atual.
+         * @return Uma {@link ResponseEntity} contendo a {@link BaseResponse} de erro
+         *         genérico.
+         */
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<BaseResponse> handleGlobalException(Exception ex, WebRequest request) {
+                log.error("Unhandled Exception: {} - Path: {}", ex.getMessage(), request.getDescription(false), ex);
+
+                BaseResponse errorResponse = BaseResponse.builder()
+                                .status(StatusResponse.ERRO)
+                                .message(ErrorCode.GENERIC_ERROR.getMessage())
+                                .errors(List.of(ErrorCode.GENERIC_ERROR.getCode())) // Adiciona o código de erro
+                                                                                    // genérico
+                                .timestamp(LocalDateTime.now())
+                                .build();
+
+                return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+}
+```
+```java
+package br.com.legalconnect.common.exception;
+
+/**
+ * @class Roles
+ * @brief Classe de constantes para os papéis (roles) de usuário na aplicação.
+ *
+ *        Define os nomes dos papéis como constantes estáticas para evitar erros
+ *        de digitação
+ *        e centralizar a gestão dos papéis utilizados na segurança da
+ *        aplicação.
+ */
+public final class Roles {
+
+    // Papéis de Usuário
+    public static final String ROLE_ADMIN = "ROLE_ADMIN"; // Administrador do sistema
+    public static final String ROLE_TENANT_ADMIN = "ROLE_TENANT_ADMIN"; // Administrador de um tenant específico
+    public static final String ROLE_ADVOCATE = "ROLE_ADVOCATE"; // Advogado
+    public static final String ROLE_CLIENT = "ROLE_CLIENT"; // Cliente final
+    public static final String ROLE_USER = "ROLE_USER"; // Usuário genérico (pode ser usado para usuários logados sem um
+                                                        // papel específico mais alto)
+
+    // Prefixos e Sufixos (se necessário, para Spring Security, por exemplo)
+    public static final String PREFIX = "ROLE_"; // Prefixo padrão para papéis no Spring Security
+
+    /**
+     * Construtor privado para evitar instanciação.
+     */
+    private Roles() {
+        // Construtor privado para garantir que a classe não seja instanciada.
+        // É uma classe de utilidade com apenas constantes estáticas.
+    }
+
+    /**
+     * @brief Converte um nome de papel para o formato esperado pelo Spring Security
+     *        (com prefixo "ROLE_").
+     * @param roleName O nome do papel sem o prefixo.
+     * @return O nome do papel com o prefixo "ROLE_".
+     */
+    public static String withPrefix(String roleName) {
+        if (roleName != null && !roleName.startsWith(PREFIX)) {
+            return PREFIX + roleName;
+        }
+        return roleName;
+    }
+
+    /**
+     * @brief Remove o prefixo "ROLE_" de um nome de papel.
+     * @param roleName O nome do papel com ou sem o prefixo.
+     * @return O nome do papel sem o prefixo "ROLE_".
+     */
+    public static String withoutPrefix(String roleName) {
+        if (roleName != null && roleName.startsWith(PREFIX)) {
+            return roleName.substring(PREFIX.length());
+        }
+        return roleName;
+    }
+}
+```
+```java
+package br.com.legalconnect.common.util;
+
+import java.util.InputMismatchException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * @class ValidatorUtil
+ * @brief Classe utilitária para validações comuns, como CPF e CNPJ.
+ *
+ *        Contém métodos estáticos para validar documentos brasileiros,
+ *        que são frequentemente necessários em aplicações de negócio.
+ */
+public final class ValidatorUtil {
+
+    private static final String EMAIL_REGEX = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(EMAIL_REGEX);
+
+    /**
+     * Construtor privado para evitar instanciação.
+     */
+    private ValidatorUtil() {
+        // Construtor privado para garantir que a classe não seja instanciada.
+        // É uma classe de utilidade com apenas métodos estáticos.
+    }
+
+    /**
+     * @brief Valida se um CPF é válido.
+     *
+     *        Implementa o algoritmo de validação de CPF brasileiro,
+     *        incluindo a verificação dos dígitos verificadores.
+     *
+     * @param cpf O número do CPF (apenas dígitos).
+     * @return True se o CPF for válido, false caso contrário.
+     */
+    public static boolean isValidCPF(String cpf) {
+        if (cpf == null || cpf.length() != 11 || cpf.matches("(\\d)\\1{10}")) {
+            return false; // CPF nulo, com tamanho diferente de 11 ou com todos os dígitos iguais
+        }
+
+        char dig10, dig11;
+        int sm, i, r, num, peso;
+
+        try {
+            // Calculo do 1o. Digito Verificador
+            sm = 0;
+            peso = 10;
+            for (i = 0; i < 9; i++) {
+                num = (int) (cpf.charAt(i) - 48);
+                sm = sm + (num * peso);
+                peso = peso - 1;
+            }
+
+            r = 11 - (sm % 11);
+            if ((r == 10) || (r == 11))
+                dig10 = '0';
+            else
+                dig10 = (char) (r + 48);
+
+            // Calculo do 2o. Digito Verificador
+            sm = 0;
+            peso = 11;
+            for (i = 0; i < 10; i++) {
+                num = (int) (cpf.charAt(i) - 48);
+                sm = sm + (num * peso);
+                peso = peso - 1;
+            }
+
+            r = 11 - (sm % 11);
+            if ((r == 10) || (r == 11))
+                dig11 = '0';
+            else
+                dig11 = (char) (r + 48);
+
+            // Verifica se os dígitos calculados conferem com os dígitos informados.
+            return (dig10 == cpf.charAt(9)) && (dig11 == cpf.charAt(10));
+        } catch (InputMismatchException erro) {
+            return false;
+        }
+    }
+
+    /**
+     * @brief Valida se um CNPJ é válido.
+     *
+     *        Implementa o algoritmo de validação de CNPJ brasileiro,
+     *        incluindo a verificação dos dígitos verificadores.
+     *
+     * @param cnpj O número do CNPJ (apenas dígitos).
+     * @return True se o CNPJ for válido, false caso contrário.
+     */
+    public static boolean isValidCNPJ(String cnpj) {
+        if (cnpj == null || cnpj.length() != 14 || cnpj.matches("(\\d)\\1{13}")) {
+            return false; // CNPJ nulo, com tamanho diferente de 14 ou com todos os dígitos iguais
+        }
+
+        char dig13, dig14;
+        int sm, i, r, num, peso;
+
+        try {
+            // Calculo do 1o. Digito Verificador
+            sm = 0;
+            peso = 2;
+            for (i = 11; i >= 0; i--) {
+                num = (int) (cnpj.charAt(i) - 48);
+                sm = sm + (num * peso);
+                peso = peso + 1;
+                if (peso == 10)
+                    peso = 2;
+            }
+
+            r = sm % 11;
+            if ((r == 0) || (r == 1))
+                dig13 = '0';
+            else
+                dig13 = (char) ((11 - r) + 48);
+
+            // Calculo do 2o. Digito Verificador
+            sm = 0;
+            peso = 2;
+            for (i = 12; i >= 0; i--) {
+                num = (int) (cnpj.charAt(i) - 48);
+                sm = sm + (num * peso);
+                peso = peso + 1;
+                if (peso == 10)
+                    peso = 2;
+            }
+
+            r = sm % 11;
+            if ((r == 0) || (r == 1))
+                dig14 = '0';
+            else
+                dig14 = (char) ((11 - r) + 48);
+
+            // Verifica se os dígitos calculados conferem com os dígitos informados.
+            return (dig13 == cnpj.charAt(12)) && (dig14 == cnpj.charAt(13));
+        } catch (InputMismatchException erro) {
+            return false;
+        }
+    }
+
+    /**
+     * @brief Valida se um endereço de e-mail é válido.
+     *
+     *        Utiliza uma expressão regular para verificar o formato do e-mail.
+     *
+     * @param email O endereço de e-mail a ser validado.
+     * @return True se o e-mail for válido, false caso contrário.
+     */
+    public static boolean isValidEmail(String email) {
+        if (email == null) {
+            return false;
+        }
+        Matcher matcher = EMAIL_PATTERN.matcher(email);
+        return matcher.matches();
+    }
+}
+```
+```java
+package br.com.legalconnect.enums;
+
+public enum StatusResponse {
+    SUCESSO,
+    ERRO,
+    AVISO;
+}
+
+```
+```java
+spring.application.name=common-lib
+
+# Configuração Multi-Tenant
+# spring.jpa.properties.hibernate.multiTenancy=SCHEMA 
+# spring.jpa.properties.hibernate.tenant_identifier_resolver=br.com.legalconnect.common.multitenancy.HeaderTenantIdentifierResolver
+# # For application.properties
+# spring.jpa.properties.hibernate.multi_tenant_connection_provider=br.com.legalconnect.common.multitenancy.SchemaMultiTenantConnectionProvider
+# # Configuração do tenant
+# application.tenant.header-name=X-Tenant-ID
+# application.tenant.default-id=public
+
+# # Configurações do DataSource
+spring.datasource.url=jdbc:postgresql://localhost:5432/jusplatform_db
+spring.datasource.username=jususer
+spring.datasource.password=juspassword
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.main.allow-bean-definition-overriding=true
+springdoc.packages-to-scan=br.com.legalconnect
+springdoc.paths-to-match=/api/v1/**
+springdoc.openapi.version=3.0.1
+spring.flyway.enabled=true
+spring.flyway.url=${spring.datasource.url}
+spring.flyway.user=${spring.datasource.username}
+spring.flyway.password=${spring.datasource.password}
+spring.flyway.locations=classpath:db/migration
+```
+```java
+PK
+    7EúZ            	   META-INF/PK   7EúZeU´ï   £      META-INF/MANIFEST.MFeA
+0E÷Bî0´¸(dW³ª(H[º©&cÁÛWwîß{ÿwÈþE³èåÙ'6p,ª°PÈéz5Ðáóú°¡*«©nÜ[ß&6ñ¤KEbAÙbúî%F61Ó `S¡õÏyýS~ì+ªøPK
+    7EúZ               br/PK
+    7EúZ               br/com/PK
+    7EúZ               br/com/legalconnect/PK
+    7EúZ               br/com/legalconnect/common/PK
+    7EúZ               br/com/legalconnect/common/dto/PK
+    7EúZ            %   br/com/legalconnect/common/exception/PK
+    7EúZ                br/com/legalconnect/common/util/PK
+    7EúZ               br/com/legalconnect/enums/PK
+    7EúZ               META-INF/maven/PK
+    7EúZ            *   META-INF/maven/br.com.legalconnect.common/PK
+    7EúZ            5   META-INF/maven/br.com.legalconnect.common/common-lib/PK   6EúZÙëÛî       application.propertiesMnÛ0÷>dTÓ´Zvda ¨»èN#E²$eÃ(z.z ëèÏq]-¼ßÌ¼yOÁye*Îi% *k¸3aÆ¦U±XÜ$+kJUµ^~¿ü²É¦ÕQ±¯hÀDz
+Ãî¼uè£ÂÀkU 77ÞÓâmW7+Úb??WMT¥B{VïÑgç$k¬@kÈÅÃ²8,ãý ôé4çË84Ü$¬OÎ¯ríeù(tBCr÷¤ûz¡[QcQquöyÕ«½BÚ$N)1yÝÏú@¿y±§õ<,±ÚÏÌ\[Ðëâ¿0t+×ak[/p1$©ú
+o½Îv²KgC¬(±ïz¦Ú
+Ð5Uïß=¼Mwmpbi}ËbnJè&ÙDvß3ÖË¾g0éEÍ&dpÂú¿ãë:PÖöÀ
+ÃÈeTç³y%Ê¢o§Û¥$E<CEË 3û?x¬{¶(ê,§Òý}zwwÆÐÏf¨Îig åÙÃï'¥>àÈ(4Ês5ÓSÂíÙt~^¢dï<;fpÙp2~®iz¼lê~ÎÅõIt,e6ªò}ý/PK   7EúZ^!f  R	  A   br/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder.class¥UÛrE=cË^IYð-¶0\À	+å²Ü!YÉÁmì âTÙI¨âi¤ìW;®Ý«ò|U¨<ð|EÏîÆ-¡²J;==Ó}NoO÷Ì?ÿ¾ú@
+ß1I9Sf}ÎO¸ððÀÝm=mÍ0]¡ÔkNùiy,m\Íàµ"·­:n xÐVaHf¡£B××Ê­óXlZê«½i½+_DÒ'ÆfBÙÕ2p<ÙÙðDñ¶Ì2äbüÄðÀ)7Ç`òLÔó6p¡Ð×Â_§_[N¹µì·©Ú<Ø }Ò%¥Ä£{ì§E,ã]+6ÞÃûgµ§#0X'<è]ù¦Ó<K¯Ü<ïáÍÓ1\µq
+×J~$*lsýLêCÅ:fxèô{^de !%µ¡|Á0Ó¡xÔí´D´Ï[­Ì'9xÊ#iôl1§%EPë Îb¿8~¿9pu¿áí×½5"ØuÎÒx5CÇû½ÐÊÌ#ÞZDÂ<¹îFøb?!Âðó¿U5nDW@'ÜSN&[ÆáÎ(ù7Hæµz]ÑEôsµqèúÆCy­¿§{ªµÅ4å4Ós¾klé_Xo«X[¸ÏP¾pT u¥t¬#~VB<3Zkx`áÓ³ë«½dx¢D¢´·x[« ~y³3Ãt~ âÕ¦RGÝãá]}ÆÑôÐ ó_;DÁÔÂË£ÁP}#i}Éw¤_c·¯^F9½k¬Ì`ïP£FÀãXPÌõAXøáÆ`aê|¸)½I©qî:]ÓtNÒHÍ&Ì-ÈR"-0ó²Ñøië$É©Ê`¿%Ò8,^Å*vj¸Iò£3+IFDeò3pÆÐ+·þUy·~¹Zefv)Aí¡3ôa2³¸üÅmÚ^ÀAs£¬!\8%¼KÛ¥Á£z¹yìÉ(ÕÝÃÇøäTÿfáóì¹[©üë/¼Cb.$^á
+08Â4¾s]ÉâÊè¾Àü
+_'ò<y²­ÒWÇió´§Í\[ØÆC,ÿPK   7EúZÄÝ÷  »  /   br/com/legalconnect/common/dto/BaseEntity.class¥VßWGþlÑÖ²mÕZ
+ Ä¦
+H
+ÐmífwÝÍ¦=¶§MúZ¬Zí9íoý£zzgv	!¬-çø¹?¾{ï7wîæïþøÀ,Ü4úSWÑÃè¶þ®ùVk×ÐíEÝçktb9î÷'ó7SH"¥ ­b *ÃdÍÓ·¡Ù¼®Ûë8Üð á:é»ÚÞâ·ßò0¤9ï3øÏ C*2=ÕnQÅQJÒvëÙëÕµýðÊ6!ÔëÜ+&ñÃTÉ³tÇtsÂºÉoä~üi:GøzÎä9´¯yý³+Äiâ¸*ÞÅIa­;uínm*aHÖ¹_²õVáè.+Ò@
+iÆc*rgÈôèÉ¿j56_ÑÁÇöT}ÏrêÅÅs*Îã¥Ñ[C¿Ékm*úzþ w¥7ëÉäFÅy¿­ÛÖü÷ó¤®Ä
+L©¸K}IiaÚ¾ekëëåEY&jx!èý¨¼Ä|¨â2®0$f,Çòçèó)|)×(ëC÷ØÄÞv¡mÙ&÷JJü¥QÄYs¸Io ä%Ýð]O´)]Ù.ïçò®|ò`ß)§«U9µ ®fÓ¸×vDoX-óãúºo¹5Çq¬{¾®5¹×²Z>w®Í"ÃD¤êw¸'Än·9%[¾8×üÅ[{ÒqqU§"­K®Ýn8ÂÊÝ_ì]<§mÛ¢¨
+2|ÒuJÒ|K®IK¦b9|¥Ý¨qo- "+úNôÐ9ÆýGQ1U9ô%Sz¹ÈìW=¾2¡uÃØ¬2¾?|ø=F]ÌÀj³oÂ0² º°¤ù·)æ|xû\sU÷èj}":½jÕzèX|+
+dAC?=2
+ìîÛª¦{ß q\ßðäÚ
+\æ{=°ÚÚç{*ÿÆÈ®utrÆ°ÃÑ®ºmÏàKà5³WÈ´c8Ù+Ëz³ÉÍjd+¼å/sÑÞÄ¤Z&º<9 8 (>Nãs^Í-ÄécCß1zCq1MI¶@û#ô.ÑºHçÛK¸CjúÄêaZ?!râ³-THÒ.ÚÒ¯à
+Éî~NÖÂK°çPeð)³Ç
+/0ò§
+Ï ¼Â{qì]Vé7K^ W1D#ô,®ás¨î¡J« É,h½ó[)¦»åbt3¬nÆ)j¡ºÙOË`õ¦c]Ñ æÌE¿I$ÍwEî¼!#_Æä!"ÐGëéÂïø 0õW£ ÖEé´^§tD ¤9&a ±û¤ßêû´ûöýÃøZæü
+	PÕLæ Ñ*ÌEi_;E±.tÓÆbÐ¥¶×Yéu.D:×"{/E:0ÃK»R(Lg;=Þ§»8Jt8J]2rQv#ÇÃ(Hå°Aç²
+9xXÈL7dFBÒ¿¬QÏô"`-Gçq©RÙäKÜø
+Ã;Ö=³ÔÝîtícZmÙ¹ÞVvi¹KÂ§þPK   7EúZ& ç:    E   br/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder.class½WmSÛF~µv ¸@´ÄMõô%R ¥¤1Æyi¿í+(ÈG:3þþvÆtÒþþ¨L÷$Ù`,<fpúÁ·w{»ûìî­îÖÿ¾}óe¼H`ÃqhE!õrÃâö±S~)*!7mS®0ëÙÝqa<Ðî]£âÔKìq«âØ6i(FÍ±ªt5îÇÂ«;¶'æ/Ö¦U.Y÷$
+!W²%ìFÍ3¾LKwI9ñ¾$Rñð<¾'&
+G¾¥kÚ{¾àI\b&J^«3¤QÅ1
+N[÷¹%ZùS¦qa¤Ê%ï´äÄú@Ãf) áºK¤¹4-£`zr)«gÈPs¸¦â:Ã¯zÿùèüÔøºc9éuv71Ç
+
+|ÒQuJú!·bçÞm1ÛíÏ[VCÓ5~ Ö»ÂåSSîÓNÅA[?-ós"¢({6¥Ò¥ò.3"ùnµYwª¤,¶ØnÔÊÂ-ñ²å¡J÷.wMµ#rß¤ðV#Oô_OuÚUoal×xâW¡ÕÎPxÙDÚrß©>â.¯	)Ôäþ.´â~Q|ïÅ»°ÛrúgýÔ/}¾ówh>2ïíäü¾?Ô	``^õ®{r >Z'­F^7b´¬Ö~&¤¹x6àtZOÆ%=òÖó¥»Ýç¿ÒÍbH[¦ºî.»­¤	mÞ÷MÇ£%µæ8Ò.¯·¡À¶ãØQïÐ#ºê0LûÐ9¡WÁÓ´Á+Òq_1üv¼>CÁÀè&·«ðæsÐ¨÷~:Õµ!þSï§44±Î-«hJ±4Ç¥<D½ôWËìæµ°SRÓv/¤ªÍQ4hdYA{@çë®[Üó]ÈãØe¸ÑWjâxÆpµ·(5R0®Ss5DýÂ(ÔdÒlHµz>¥NÎ§Ôá¦?¿E?êÄÚëÛ¤¯´cÄ1h¶J)Nî5Ø4Æ§4Æ|æ|F£às|At±s(#G¾$=en {ñÜÂ4üip*	
+ªÙßäéxhú+£ì§B÷¿¦í$¾B{¯o4¯hÉ6Ú]ÚÄRÚÅ¾ÑÔ©ô@l£åi{þuhO£]î-8ûÅ½;í½[´âN·qW9{Q¸é¾qÆ¡ªkãÎ´q¿%æ*Öh¦p ýsÏsMÂoÒ6)ÑM
+¿ôk|íLÖÙ®ú
+]ÐÖwße_¦êU2ô>jÓËIyèéÂÍ¸£!ò¾÷é&øt?#ÙôûEZMvJÇ:çHÿPK   7EúZ¾cÔ:    1   br/com/legalconnect/common/dto/BaseResponse.classµX[wWþÆÖhFò8¾¤3MNãª²,GÅ ò¥I¤u*;Áv\ÒBÛ±<±K3®friJÃýZ
+O<°, ex(kñòÂÿ'JÙûÌE·±¸Äñ}ÎþÎÞçìëIþòÏ·`?VÐ#áÑj®hWresË(mË2./Tl+·éÚ¹³c®Î®m9æxãäl­TÞ4«IHi-Y%w^Bozb=	I
+}Ð$Lv¡$9®áÖ	BÔ>ÓªUÜªÀfXá
+ TLÇ1¶HÒpáºqÃÈ
+k6TKÖ k8û$$ÜA]£²+A÷ ¼+ØE£|ÎpÍ54â0]vÓpf¹6®Ó©ê~
+Gp.`V«v.0èájn©+w&I¨cÞ1	jÑ°Î?_3ÊFÒí'bðN`ºeº«¾Y²éÎ
+D
+)Hk`¥­zø´|µMjÈbJB´-F¼ÔµÑ9
+ã4B¯Õ-y$ÀGØ·}PÃ#ø¹¶ælÖàß¡Öð|Ô»ýyß¦Ã¸Ñª)ÌhÅYuÛp¶ìMSâbâ´3Îb¡éúÞEè7rÍ¼tMB*ÊíW¦:¯á0Z1vÌÛ*î%ôZdË¥cZéöÿ«H¤#C­¶,ò¯¿¶6#a¼ÅX³í{ç	¦lx-aaèê¢,¼çBÉ2k
+³ºfliåÙµ|»çÿ{¥³t]¾É°¸u£Zb¾Ö»]"§Lu£djus77Ý àdrzB¸$ÕÁ{8%áÔ~*ÝyÎO¬S¤/î¶½yÙ¨Ó59sNCVDÄ'ïÓ¦d>Þ3­8AG0BÄÓtg&ø2AL·¦0#j]4#%¬i»Û¯}ìÚñ ehbµ>Ì°ô{Üp~@°ºÀhXIWö×xzJïë
+¦wvv?9±¸³dìú!&_^Y\:Ow]$#VM§V¦Z­7Së·H6Wö§gQ];¨u/vD{¢Hh÷|{_úÿ(§ðê4lÒÑµ§}lºj×ªEóB]1Ôè­¦÷ÂJÍâÓ¬ùëeÙt!$,ð-¯åÝrî:9Ö!Ç!(wæV±\Ûä:#$áTWÇëÔåKËÏ._)(.)L.¹ü9kÛ®ãV]¯8q|%×qKÁW¹}ZDýþ%ë½cúVóúÚ£èÚÕÞhÌpè	}Ü°6Ë¦3^°íÚîþ-¬i#WÔøÓû÷a_ÄQ.¯\sFÅ7$nôQÚË9);æg	að³G/Kæ¤	ÊáEÈêBÙpTDQð	ü'NRð=z¹u³r8Üû;2¾7%ÛJõÄã8½±RôÑÃu¢zø	-Fz!Þ½ôÊ_ôEú¥n8CH %¢ieFþ£þÒÕ·Ðûs¢%\¢oF$oßeÑ³¾¼ëÌ3¿Â[z¶ÃÇè«y ¬`Æµ¦+B	½[#Äõ·ëP=l#Ä
+µ;Þ¡8zðú&j7Ò*îÄy6\§5zGÕ[ÅèBì´öq\õÅhdÆ3¿ò¹£Bî!áËeªOH®kûbmT¡(Â$<OD)éïTÉ²§ýI<¥d¨S%û(9(<çH+YoT2Ò©/ÃÖxWBÞEâùêFIç%7PR«wªÖKähµG(µCµGBµ´8!²ÔJ¥±ÖïMf~
+9vgòPßÜ{gòP²»xq|9K|lêÏèÓcï`è6´)=vL^Îò7®Ë¿áÛè×e=Þ :W²üUuAªRtµ4OdùÔJú l Ê÷eù«é}Ò|Q(v®k³ã+ÞC;Þ)Ü7?á­õPYû%¶h­üÛDÅð¾Q2Ê×q¨8ÊØ¡ÃPP%e¢T|:r¨~Ó°J¨>ü\±KÖàµ{¾×<ýÏÓZUaEý(PßÅ!)ú«Jïâ°G&þ=8ß$çÇø?,ü<â¸`½2{ûÎ>¡&&é`ÒHnN£k"èï^ÉþNTbÝÍð9:8³MÁ£NÞ2uùçæDÐÄ¡Ç|Ê!å±NæeÁC°¦óqÁ¬xÀ:WK	Y`ïþM{ñ¸Äñ%Ôê!÷}7D0 Pøy
+D0\Å4n`pIâ"êVºå[ú7$ß#H*Iä HÒ{$´>ïáÈÁB5/ù°xÃZÙºêæå:>áoQÛ8õ]Ñ<ÚHþtØÅ7È<l»ÿ7go³[=rÚNÑð6Î­o´¡ã¥Ú:^*ìË²À77Ð·ðxk	Õ;ló2>ãäïã4±8Ñ<3Yjn)j>=FÝ!£ËÅú~¡iÞÛfÐßRâÆÖ#(nN½qÅuYmÌçE}Lô õ¡8ûFdÑY(73î0õrÿY:G}/ñe
+gPðúý¢IåðUuÎ
+6ßRi|~¿N%ïÓK4¶¾ïâû§u*m?Ä ÿPK   7EúZ»¡Ãð  Å  7   br/com/legalconnect/common/dto/SuccessResponseDTO.classTKSAþ&Éf°/!¨ É._ðÅ£*"AÞe]ÜÝh?Åà)õ,^ýMeÏf	o$éÞé¯¿þ¦'¿ÿ~ÿ`O!¬"¢AAÁØrr¦]ÍUÄ¯¶e	Óªmå¶=;÷»â¥p÷lËÑù²Uö13ÙÍ8b«HhhÆ9IXµª+zÜ«¹0jñÕâr±¸Î ¯]6+@*:5t!Å0ýâÅi
+·¾´AÕâ®ð¨ËÎn&Ð^}úq¡¿ã9¯\¹5Ûä%î
+òHË~ÏÎd×Î9â÷1¨!!É ëñêÃPæÜ,I!°4×5c!AÉjïPÝÞ µÂ­¢ï­Êá&CÏi)2Y	4¦a·b&·ßÖxåÌúÖ.IÏ¾3Õ ËÃQ!Oº24¡aS_âniÑÞþ\¬2DNÇZÙÏkÕ-álð­
+ER~SÜ)K?F¼R.dæÌû¸ðFó4JÕR§`è,¯do¿à¯
+O8T'æÙÍÏ¤ÌÁ5Oböq´@ÅöJÂah§ù0ßø^ÐAÔn­âQ&5(Ú5Ç+eù¥ÿ4é)	Ò?ùÉ§H6GÞ*E­Ýú>þjíú7t70ðÂ!Ü&Bì ÙAz{iò0M­;¡UÂP]¡UKìUÝhàÚ!ÙQBC&B"õ5OHrw÷ñ>íFëIZeépêÆçnÔuan1£Q
+}ÿG´þ	J¤nüBò#pÝødaBo`Ôwuc©ûP%R~á&L²YÌÑ÷^j&O±æ)Úû¤dü YtRóã-J³%ÛW$ú~RGôQZÅ*1w¨O|>ù Q%ùùôEj©·G¾°ýóOþPK   7EúZ(;ó  ã  <   br/com/legalconnect/common/exception/BusinessException.classµTkOÓP~Î.l+Ep0°(\·QèÀ:Âá!	ñéF­Å®S?ùÔpILôø£ïéFY¶lüÒséû\Þ÷=çüþóã5¬	ðÁB@D=£GêU)«FIÙ©¶^Ñ²Ú­CÏªnèöcX<w·-Ý(e{	AÑa¹`)E³¢µZ.¡m¾Q1
+E»$U6jUÝÐªÕ&fY¦õÔ<Ðr±d/®1´º0ë!DEba¾;R¡¤ÙÛäR-Ñb(hO'?,b7ªUª2¾ñq·ôÐ¶Oò¶j×(x:gZ%¥zÂ£ÞYjEûhZÇ
+P¶Ü0ßÆÆEÜå`z7Ö½ÝÉ¾zÍï
+¤?É{=Åpï¶¸yôÈ:±Ç0#bqªsÓ´*ªmknUgãÍÀ#òñ(4gE$yCÄToÐÑÿÉÅ+êo]³?G'÷y­RÐ¬]µP¦hÎ,ªå=ÕÒùº±°uêÂJgÛîCÓ¶Ù 3¾­ÙæÁK·5$6».g¯DªkÓéOÓï¸ÞuçÄâ	>h>§³$ÓISèæäÍUÔ6u^ßá¶Ís1º!azÛ ?¢üA¢Y_Og¤ûGcnÂE¥hõæ'åÔ<CHþDß¾?ß$ÏÑ?CL;ôÂ|§ï0@¤AH01¢ rvå:ppfÜsfÜÏ MïÓ¼ÏO _ Mà.6¼åÊO£ '¿clîWhº]\v¼éÊ
+®¬àäïsÄ">GìRhª!ôÀÜµ$'SçvúWêiÒ]Ä5,ÑËºLì+M©K®Éõ ¹©KÏÔ¦éË-S0ò)ù8El}uMô8ÿ8¢u±!ÊøÑàHÓÈÿ9Ç9­ø­&|ØÅ/v¯4ðAo6.øU¢kyâXjÇ<Á'jõ/PK   7EúZN,Ç¨  Ì&  4   br/com/legalconnect/common/exception/ErrorCode.classY	|\Uõ>ç%inÓ×ö5î¥îmJÛ,Ý÷ÉÌ¤Ì¤3I e	¯3/éÔyaPAYQQÄìòX-hÜ÷í¯¸ïî»{îìèà×/ùîwÎ½÷sÏ½¯|ú_§ÝÆÁZ06-lL¹¹Y§ßÎ¦Ü|ÞIsó)g ¡"[¹ig* TPSfáx²7ë	¶Gé'Æöçm§r'LªÜÍIDuGÑP0ÞÛlïm':á L3ÁTYÁD°#Ò÷»XWDÎ0a¦KDÖéH,u%|³L¨çI"H28ä4f+ÉÂÎD¼-LFã1ZÅ]\éæ0]Ú£j	H°PIÃÑX4ÉI§°X	OëlÆâ&,UIÛÌÁrV¨ñ¡Xç½áîÎvZeÂj54=ÔÙ6vd­	
+<¶pÎ0a=§6Ò¶µÚhB#¯5ïôê4ÐÂkRTö't*z¢ñvßùf¶ðZPw"I[éèíN²é6¶«¡ÙåVÙ'È;m¹
++¡;MØÅ³3R¢p4ÙE{"íJ°Ç½¼©ýX$
+õ*Wl4¡GüJ%ÓÎî.56!¢Fê©$âÝå2ÞE×«áý&ÐÁ»»ÄÑ#po0$jüLªqJµ5Gb£;L±±^p¤ôPP­í\µ&âî«zîUõIv±uÒ.vÍ+vQ1l¨Ç³84l
+&##CM8Â^uÆkÂy~t$BHX`;ÏÚkÂì¶AAèêmF8GMHñ*C}µtLèãwÅR"gwFzä	1±gy	YNy"ÒFá?Ð;Á6oËí¥R\hB×«OÇèÜL(«¡yºíH0¬b¼cÄá"NðÁdò¬xBM2ÑM¸ÝG¬; õV,èÕ&\ÊÇ}½#ßR	/7áÚúkM¸R	çO*¤Ý²êõ&\¥T§¿»P²ËÊ7p
+g¯+ÒêÇêM&\ËÞÙ·p>vÝ­ÉP"Ú©jd¥o3áz6V
+ýC]t&ÕØÛM¸;eå´G;¢]cöNnbI0Ü»ô	sPÞmÂÍ¼`ggÊºCz`u>Åï1áV®ÎàaIßInã^Iõö8YÙõûL¸gÇCÝlJý,òp	wóåRñ0,åûp¯	÷ñÚ¢ö0ãJxî7áªX}ÐÕP]½íØþ®~È5<{ý¨	9H\×jäC&R#ÓK´³Mñ6áIÅÃ<]jà#&<íß¦~Ù¨tV$xP~Ì!6«lÐÒHÅëý	Ïe$ÖÝÑK?vs,?iÂ§àÓµ+¢×@Ó9/÷9PÏÕÂ§Mø<|¡&uóe~ÍÚöãö ½1kçû7Æ'7¤ý|¹¾bÂWákàA$_ÎÑ:ílÙ÷Ñ½³fu(k;GÉR!ïß9zåýÃoÂÿ!LÙÉgJ{¨PÖL´®íQûÿ¶	ÏÁwèu¢P&
+ê»&¼ Tµ9§X´û:ø>ü ~hÂàÇt>ÇÑÜ}n!g¶O2÷9ã²v¢J@!T566	øÂÒ°vòLÉ¨C·»L~pèdVý¾¡Öú+µû_#ìlÓ©IbÚ#`ªyæf¿§sa9SÌÝ¥¦t¥¡
+ð6Óö¦?±I¿Ð¨Ó.ÝsJ7à-dúíÒÐC°ËE'_rÈb¦¿ESc£R×äK´vy#O¥W*hçõ¥M
+u=ä
+NÑD9[`
++Öª&[pû2Å"U,­v¬Ü%ù<u,ohãP6£V7r¡À¬Ü$pÂâ`:GåUäáÂ$úÅOcýfs¨;)Æî$º¥ç³nÀô4ì.Nr E7!Ñ$F+.&£f
+è¨©&8N9IQÕjËYEQ[Iïj1E
+×°Ö@û
+Ê9´´ æDýzëYOÛ¨Þ~9;(£5³ÂµòssNö2Àa 'g[IÞ¢6´¢Ðq³¶.6*¥¤¿ Cý§ÎQÄv±íysÂIE?^t E§ -Ý¯æv3E¿v\ \To$ÕÄ!ñ[(8å@9p¨ÃñÔ8W9¤cV «]ÛØÖ} auR
+
+ÝåJNnÀ-Øã:ÊäÓâºÐÉá^©ÛPÍÓ|­çsG%ÐIÕgº3È/W¥;èû¥ %»V©U`§vJHÐCE7
+Ú¿£ÏÅè! "°[Ë)ågQÑÛ:; ðÒFÏ¥÷|0EÐWÚå[È\ÌK
+4YfÔ²*ÙÅ[®w5ñA½Úªx£F9éqSC÷jßÇ !GGiljAv¦+¨Ú]ä5&0­½ÒI£ã`\gJ¥C'û¿'%Ðõßb{H`F{§j{E £)ÑÎFúá#´·Ñ©²ûËÊ6àOyë×Þ¶
+ o:uªDÑµGÓW¹×êÉö,Em»M`2ÛÚô"Å
+µ)y£OÈ'´
+ÕùÅ
+ùôò'¤»}TÈNpÁñy_MÆÍ\«ÑbG'|Pþi[ïe$íd{À×h[*É+éÛ:Y¶ª°l?'G³îeG÷ìÀ«´
+ò
+ô-?^¦^_ÊjuÀ7i5ÕäÉu<Pr_áäyIº [&qFà[µJîz%ÅC÷²È
+¼Q[P9½> ãë>ºmùç6Ú¸Èºýü$»ß­=PÉÜB½o¼q3¾Wë©(n£pø
+x ËïÐZ*»T©ÄõÃMXlLo=!ð^mCEð~
+o=f«ÊQùì£[¬°© òÇTx/øV7QÖDXÔC»TÖ>d%5<7°2½TàÃÚþ(U[W%Ô;ºv9:
+Wü6¦"xªísô¯ø¶¥xaÃÿ²U*2YÝ½\%pH; 2ùÂºöL.SrÆy >zúÖK¿Fà'Éº
+=¦çRG±ó¥IÒw­ÀÏi%Eèºvµv\¡+ñu¿¬Å¯[u,èUÉS*
+ö¨*¿^à7´öO/ßqÿ-:YJ½}_<CÍp£Àç´mûyz3l»ÒÔÏ|zèä £.OÓº!+ÿe=9»Ià÷´3:8? ë8tûgÕrÕezÌ-èµDrr³Àk'tv~°%äæû²çWÂÇ.øºwSåíèV¿ÐèPý.v]ô4ó@ÁåÉ~øIb÷ûNÜ&ð·ÚÎ×ï¨CC¥3ýlsSú9\¶ê~Uwü£6¦ögzÅ´>ûbz²®VS¦i¡)ïø7¶RîÔ¢ÚøÓA÷ñnÌQ¹Oà¿Ébª7¹Á¤lºâ«WW«î2úÁMúQ­õMÂ oÁUcôn±XÎèü¸ÆTmØ,iÜG¦AuÇTPsC÷ç397°2M"¯ü1C{hõß=<1Ç!µMÂMñJ»¾Ç7ÔSÂ§M6cÇG=}_Rÿ¤0N×ú-ÂXBo`Ò«õK<-eÚ`«0VÐÉ¬ôHÒåÊªZûhª%	cµVnÆZZ}îæ=îªª¶®¢gq6Ù.
+Ëzì,½.FÎ?{#qTß}F£i4ÍêK?¡é©Ð²fíËþ§/×yu?g¶Ó4VÎu
+]öÑ,1áI¾,×¾üêÛÝíQÏ2rëû®ÎÓQ¤/ê§tÌMÓ7$ýJ S:!¨[áÐwþ
+-®qiêY©ÉL?7G[=É*'ûØ¥ï¢~§¤Ï\ÉIwè/|eÿÿûL§Ù~ZDOé ç:cÿ>dØºÃ]©¬ÿUkÔÚZÇýÇ®ç=j¤[.¤¶ðá±
+Êõ¾&ú°þ ÷ÍWÿpª¦3}¬÷q¶ó|\èãbú¸ÂÇÕ>6ø¸ÞÇF[|Üâãvwù¸×ÇV#>ðñ 1ùØåãY>ññ</ð1åc³>º>|,ûxÂÇK|¼ÔÇ+|¼ÒÇ«|¼ÆÇk}¼ÎÇë}¼ÑÇ|¼ÙÇ[}¼ÍÇ;|¼ÛÇû||ÀÇ}|ØÇÇ|<åã>>íãÏ(¤,?ßa|A¡µ@ý!ý.`ªÑb4S¯ÙD¿-£ºQÿÔyðì£ð§á³¤ßÐØLNá±TG_5¶ÁúM`0[W
+ÃTzc´ÞØJZelSsÛéç4¶]N?«¿×*vv.TQ±ÒÖ-z¾Þ°þøVÃüêGàùÖC5ý#çyF)<AliÔØÁ­l·jxÃÕ<é¬jc§Æ.hh Ýìz\aì5öù»ÚMË2§6<Ï¯{¾7~S'xÎ9Z4<çT#h´R°üí9r!#ìÇv# ××o÷¦ß#IoìL4¶êÔÅ¡ñ»4Àg­à«<¨J®ö 6y¸Æ£FrxÓk=°2yØ"jqó	\D0Õ%TË¦y°Àô`
+ÁtÖÌð`ÁL,6Ìò`+A½;¤»	Nó`ÁlBs<h#ëA`íó=,ð A°ÐnEMpºç,öà|%ØÒK=è'XæÁqåäVx0@°Ò"Á*	V{ðJ5¼`­4xðu¼à®&XïÁ	6xðf¼ Ñ<xA³ï"hñàM¼`³·lñàN­ÜC°Í÷l÷à;<ðvzðÁ.'ØíÁ{<x`¯%ØçÁÇ¤0Úý:ÙSÒºk<A©®ÿIUýOëþüò!¨bâ7Õõ¿­ÿµLü¡¦þõf¢¿N©ÿ[ý?ÎÄ¿jëÿ-±#±JH¬89©9aM8Uâ4&çhrºU+qDÉù¬·È\JÍä"MÎµÈvÄL.Ñä"«Nâé0¹LK­iI\ÁäJM®²L«%®er&×YÓ%!që4ÙhÑz$¶0¹A­·HÜÆd&wXÄw3¹I{­Y÷Iler«&ÃV½ÄÄýLîÐdÔ¢=)±ÉÝY§IK<Ää>M&­Ù»$ö0ÒäÙÖ©ð&Û4y5Wâù/`2ªÉ£Å-%Ña²]ýÖ|Ç$g2®É¬µ@bN¢ËdBZ%$ìÖä µHâE_ÉäÙ¼Ä¢\¼Jâ¥L£ÉË­Å¯øZ&Ï×äë¬%_/ñj&mM^c$¾QâµL¦5ùk©Äë$¾É~MÞ`Q~ß.ñL×äMÖrïx39M¾ÇZ!ñV'ÐäíÖJïx'EMÞm­xÄûÔäýÕÌ?Èä+5éYk$>$ñ&_¥ÉÇ¬µxÉË4ùa«Aâ?Âäk4ùQkÄIü8¯Óä3Õá³?ÅäÕüµ^âg%~É7jòÖ_ø&ß¬É¯Y%~]â7|«&¿e5Jü¶Äï0y&¿kQm¿ ñûL¾C?´%þHâO|&fµHü¹Ä_2y&mmø/2ù^MþÞÚ,ñÿÄäíüEçå¯ÿÎäü§µUâ¿¤LÞÃ¤aXÛ¤Q%&ß¯ÉZk»44êü&Mk4¦Kc&&gY;¥Q/Ó|Ds¬]Ò+ùL>®ÉÖni,Æb&ÐdÀÚ#¥ÒXÎäS\iíÆ*i¬aò£l°öIc4Ö3ùñÇÁ³Vº-ÖÑSÞôo==$=pç@æB=Ã|¸À
+ôl¾ÁS°¾B¯Ò³ù°ëa9®U¸Vã!hÀ>XÀ¼6âÐ§ 	¿ ÍøChÁ¿Â&cl6Ãz0m5:`qvÁ.ãM°Û8	{Ga¯ñØg¼ AãÐZU¡ª%®Úª(´Uû«p êj8Xu´ÓßQõ,ÄªxÕÐY=U/Du#$«#ÐU}º«]8\}%©¾	Î©~ Î­óª¿	çWÿ
+zk¸ f.Ø5gÀÑ Ý8ÿp:`DÏüPK   7EúZó¢	  K  A   br/com/legalconnect/common/exception/GlobalExceptionHandler.classÍX	\×ÿ¿ea`0hmDE]P\k1,j`]º î"5±Ã2,£³3dv$GÓ3IïôLÓ6½Ò6míI Mjz¤mjïûnÓ¦÷}i¿÷fw9v@PÛæÇ7ï}ï;þï»Þ<úÄ© le^<(àQ"²#ÊÐ#ØÛ}DÛE
+¡ÙÛ
+ü5%(FyÝV n&ºPô¸i´O$M# «ý¶F£]ºÙ­èáìûnÅèÑUêf¡"bZ@JïÝt$1	Õ
+c>Ãò¦tJ3ÔTª*·³¾ê¦[ªêªÚ»}(C¹
+q	ÃæY)åcÊàK¨vM)	áMdmiF"8°XÂ¥2à2Bã~¾Ôk)IuÐ´ÕnfØê1;`©7¤ÕèT»£Îa>IÙ¡¦â[é?à*ê)xªËe,CÈTp¼EÛ¯öçoL=>V`¥j«°aí¸õØf II©Q5Õo)ÂGêNkz×#DHÍakõÄ&I°~ÔH¨±ëünüT#LNëá
+G£{j]UpÛôa=6Èx62l¿@Ý)2RB CÒ?{-.3nÇ&Wb3F2ë·û]ÜábÈ*ÃWóøÈCf:A4HØ*c¶_±i[Ó;ºÇìe¨ö»x^d2©°¤QFB¦jY¦E`ÆüSÉ.aì°KÆn43,l-©RPÅ}b«íôF)É0fs@>ÐyZJø:9A²áÚ-çöÊhÃ>ç­D'ùîCíöËè@g6£0-K¢}EJÊ9©Uþ³<¥.p¡PD?C`n±pÃ·´ÙgÛý,]Ø°5{[{XÆ3 0µ»$	µ5$xZ6ã¤ô!ÄyQ#e·¹øâlpgé²		}24ah.ùwkFO EµûÌ:tR5ìVÓîPt­gB±)#¶ÕiaÃ46
+ð­Sµ&î ¡#)Áa\oÝ\63ÈÜt=·
+Þó·d¤`$g©JrBP:gû=ÔLÈÄ1r¥¿_bX6¾7mÄ2;3r#np³[ðÌlLæó¦L*däÿÜ¦×ÍgáÙ#ã¹xG2u\BQdNh\îfmR(ÛqdÜæ9Ó|/,ÆiWGî¨òZçòú^ó>á%¼Ix)MÜïÙÔ¾ÝKxWâUëgÕ1	x,óv4Fw4¶7ïm=Ìëo´)¸0¡ó¸å%¸¯p·×áõ+gów÷íÇÚ)yÍ*ãû>ÑtöÌÐK¾÷ofX8[ýV÷r°E¡âH¾]Æ;8¥»Â­áhsÈÛ·Û÷.ïæÆU6·¶£­Ã±p´#uÈ$¼¡æ»SSõÇñ>ïç¸X¬øpÃñ>_{nvNbu&Zsq³)j¯BÉ"Ócê|êYµfUjM}Õª§ñ!	Êxtqpb©×´íÞ©N_x&×²ñ	ñ1|rÄÔfx§Â#M	éíWMÒT*XÇ Òñéº´¦ÝªÕ®tëª¸PùîP,¿g&½vF>¸uvîî~å!¡Gt¹ÜåÞDûã^Ëf¾g¨¢1éìQ)­o9_í(AZÙ;Ð¦óQ|UÜxï_7§ÞÓ©Êm
+i«<ÑÄ´AÂ"v<9oÛÈÎ%Ñ´ÁûÏ-¥Ó6iÐ'ë§ÕUô-J6àâµEÒÔe÷¬-I¸Ç?³s´Fÿu7ÞvaêMíMNCýÙtQ=¶!?¹ñ;ûdÆlîXéøÇìÇ`OLÉÿ»¯tÊpïÿA¹¹RWÝ=Jõô1W½áwr/ûn5îsá@©³÷¼kà¥Ò,ÒuîZ)µbñ£-J&4âzæ¢/f¦­¸ºSãóKÝæz.a.ù+D§eñ®ÛjìÐâ¢ 4¦M
+¹ÒïTjA~çÃïñ	ñ'üÄqK4cÀ<J·x?íPz³}Æ¼äÄ·³ý(³ÉàèªæÑt0¥é6òr~È÷Öä¯]i¶,Ã_VOÿÙfâÁ÷wñ?Âãex½<ÚíJÅ`¡Ëgº³Y!&1ÝÁf&¥Ó!ÆrRÅCWP*Pü»4h\(~¡· ¸d °ö$Ø	xðhó'éWvð)<*}gáGiÖKÏ¶aH¥kG°`]Á*=ÃR/­.ÆÔñ\A«FQ?kF±cO§÷ÖQDé}×¶Æ¡.NyýItßÓc5Jèw*±KqÝé6ÑÜ¤öfú»
+Û±!Ô=k]2zòÑgðY¡{>ÏÇJñ|øÍx ´|Yü
+¾JÏù´åkôÿõ`qÁàø¦c0+D&iRTÃQFÞÀp
+iÐhÈC6ß:ç{pÁVÊ§«È_ëòÖÅº
+3ÅÆðâqñ²¼@ªËÁC Ô{9*K¼ÃxMÊf²hÁB´âRìG5:ÑkÑDÏ]8@+Ã!]G×#Ãè"PÚäC)M |K Î T}ÄéÛ$«/ßÉø³öÝéüù÷ñË&ù1urtÞCçN®ÂµÎ[&¡ó61¸o¢å\gïä9+Èñ+a£l`|e"nÄÜ<Ák:sxtI	<:3xì!ËgðºØüXG&Æî ÈèYWû0ßÒÚ38>÷Þ©v÷Gèç-£Ø(Nö"qb{	¸6þ¥X	í«Ætýþ± \à§$v)*ð3yðsà)I}1~üåÂH2¨¢xgtBD÷xô/#d~)Lü0Ïþ¿ÉøÂoIö_ð7üÿ¢
+¢[O¨?AûoÆXüPK   7EúZ¿_çô  £  0   br/com/legalconnect/common/exception/Roles.classT]SÓ@=K¡
+¡åûÃ* ÈwEª"¢*2v¦¤}p¶aÐ4é$[¢þ
+|Á|ôÁåx7-R :<$»çî¹÷½»É¯ß'? ,"©£ÃhB¡}ïó¸Åíøz~O!¸`Ú¦|ÆÜ
+AcåÝ¸áãØááØ6ñT èØqq`4i¶éXÂÓ 34m®§t	¡56´SÊJ×´wtOrWzoL¹ËÐ3¾È|×I®;ÃèB7C_DÂ±
+.U
+Í(ßÃX½ÜË!å¨7>\£]ZÂÞQº´ËZ¸Æ
+ô34{å¼W5Ø3ªSû\ZYKe:ë1"§î¶¸U:ü¤\2³ÉUr5³Zkk=±KjfhñCt*Éi%O~àu6¹©a¼ol&WSoÎ¶`hK¶ÈyáæxÞÊcpk»¦ÂÕ`£Ü5©YSé«§Úë'êõ+>KÑ/RµHVr£°ÆKÕêíkBî:ÛÜ¥e)\R¨T§,O³õ¬Sv
+±j*¾îL«ÞQò²ãHê:/UªxmA<ÖñOCWÇ¿À0rÖfÓÞw
+¢ÚíÊXåtÜCÏµw¡J¬}ÉímI;N¡\¿|lÿJÌDúûôÅçÜ¥«HpËÊRÌk o*è$c§¨ïnÂâ'¼F¯d;Ãàÿ©$S!ã>Bô½AD1A0Ü$Ô[jðmÂÃ5xðh
+#<^'OÖàfèMÄ(2C#£±)öìO¹CoÝ7ÓFJ¢Y¸BÂ]LÓØ8º¡
+¼¢Q­õÆ~¢+ÖÙ|¯Ðc'è bG´ð+¶Ò²!;Ý9«Ú{dÔÅeÝx ¤EÒÌ_¥\U)JJ½¥/øcD/=$±YúÌÕEÏõÕ(C5`hÔ?GÏ"û
+axe¬ úPK   7EúZíÊ  l
+  3   br/com/legalconnect/common/util/ValidatorUtil.class­ïoSUÇ¿§?vûkãRè! µûÑa¶Áæ0hÇd@Ø]{éîhoKw(Î¨!
+/4Ñ	(þHöf¾@Í øB%¾7£/4?Ãù½··Ý`#ÄhÒÞsÎsó<ç|Ï9?ý}ûøàS+ 7ªäIå¼Í(z:zx|RMUÝ®{Máã>xààÀÀî#FAÓÓtÏ¨zÚ°Ü=¨ð5¦Â£;Ú§Íår +²P§BMñãtO¾«¡AJ¡q5
+û%¬Øh-)Z&:¨çFB²\HªyCËé¬[»sÚõh°!'°Q u¼Mæ²ÑV2É®ó°¦!ÓKQ+-¥¹Â1ª}ñÓÃ}GX_Ø@AM«¢Ãa¨½ËÍxRÂ ±U î~
+èçYGÔsEUOª]á%i¥ELÓ°)gó2iåà,Ä	Z§^PZ_îk=ÑÞºëtóÖHëÉæ¦½»GÛXÃ^N,im7Û··ìÞb3@;:x
+×2*e]®JÀ_õÈÀþçKSùþ>e(ºÁÂÕK±Y×tu¨WGq3w0K*ãJA3Ç¶ÑeLhd,ÿWõfZ6eú÷QC½îîhg¿ßîóø)sRãr»òêTZ(°Ù§LåLæÏð#<PòöÎåjLäRÃJAÉª§ð÷44|ÐNßi·;2©ç'¶Ó@V1Áu«¥v)°e<ÝÉ}Ë}#¹b!©î³ª|@63 :x|<XíèÀkÔÂ1oûnøpæ)LaZ#7!nX®1~}VZ¸°;Ùð4v±õb7ô` Ç89~üPdì¿@$X=×àvÎ:÷È¾ä¹B.Ùû6GB®9¬ÛS±ªPUHÛ\©tÉ%fæÿý
+²?¹CnÙ÷	|lÐ+·wÏXö±÷ºÒ_éû!{*!{ê#²1®cåúì³zk.çìns§__ð+êxZSõü6R¡­i£¸Qlàmkb:)|¿}ï§÷0<EåRTí,_õ,öàöâ"zñ&½ÞÁ3xã1Ï±7¸ê&qqfLà7Y5xUèÄjÆîfùî¤cmßÐ¶6ódíÙ;Ü[É¶ý^ú9±ñûØsqo½ÝÛègOb>å^<fU¹N¶ûù?µbfdÎ	Á_ã<E([,ÜóÜie§±vÁ(lc]/q¹:0	Lh6Xì°ûÀj,ÀÖ. æ:Ð²<c1)$É¾ë¨rTÌÏÌÿl2a"q
+ÞÛUF¬ZöÜ)23nàÛ³8®Z Zõ²¨ý¿*¨½Ê{RåQYÆ3h@àM6r>KÝ2T-ÃÈáò#dg0ÅÞyð"¸ÀX/á
+Azð]Å+øÓøö¼/ñ:ná
+Br	wñwp÷è]F¯0Krg-¸®TlßÒvÈÂ,Ïl¥Ù»Üë!½»ô¾³Ñ;·môð½Þ½EèÝ'þeô¨Õ2èÍcÛAX÷Ãò6½±YbYG©¸È«oÜ7QesX/éªÈ&ª_¡o7ÏaÛ,Í¥
+©ð¿W©ä5Ôð)Øi=¿ÖR^Sn«Õ"NªrÒ!6^åò¾Éz¬¹`Ë-´}zó]Vª*kj%¿ÏYoý PK   7EúZ¹û  à  .   br/com/legalconnect/enums/StatusResponse.classTmOÓP~îÚ­[ídàN×P§àKBfB2Ye	ñSWê(éZÓv|ö'ÉHh4|öGÏ½
+b4isóîûÏß <Ç3	½vÐ5<§cyvàûßëF[q/j:ÑûÀd
+I¤ss½f
+Ùúyã¹@ZCÈµf³Á4hÜ\kmÂsYÃr£ØZ«oÖL¹·çO¢"Q9
+c¸J²¶øÃ^®ïZ{áY~Çh´wI¸¸¦`RC×)ñB¤©=Ëë9wKúèuÏ¢å3]¿³|2úÓnà&Cªêún¼Â0®Ü(·ÒHªÔüt44þó®{(ñ92"y½|IPÎ_òz°MC©»¾óª×m;á«ígåÅ/"_lËkY¡Ëª²ou~vF!÷Òwí×VHØ	yuñK yâ 6;0pÛõ-!cºrt&éåmRÕö#­þ5øêù;X¡T3è¶óÂåµ&,påÕ
+½	úfäÕI¾ÿ afÇ\ï,1ä×Q"~¬B~©}d?áÊ1òÉ¢)q&¿9${Õ<=Âø1ç'NñïÓS°0Bç¥íøÀ©´lDâbBP:ÄÔþ<à]¥Lêä!ÝDÈbNå8lÉ,ZH}ÛúÌ-¹O[É>Mòli,Q_àæ0xáÅæoI¸} I3²0aÜI
+C=Bñ Ùýßy/#Ks.Pé'e>ÆOPK   )EúZÆn,ò    <   META-INF/maven/br.com.legalconnect.common/common-lib/pom.xmlÅXÛnÛ6¾ÏSpF/6 g.PÜe	Ò­pÐ`iÝRíÐ¡D¤d{EfØÅ»ÜäÅöd)>ÉiÅ7!ùó?|ÿ
+_Ï
+*éqïÀßï!³t|Ü»~î½ê½ìJ4êT÷nµÎ ÁM}arK}!ÇÁå»àk¸ì!ø³ÔG3ÅêÓéÔZÚþþþAðëÅð
+.'Øc©Ò8%´¼©Ø²CA°¶ÊmZE2S±Ûô,¡ëÞÀ
+
+S~ã ØÓ0hí9²Kj·°c)òìçx ì}IÀk$qB§BÞù:*Å,5a¢aÓ]ñ¥KM¥çdAlq·ôÑàÐïûý0¨Ö(üÂóÐµÂi,¶®¼ÿS ßr
+AîÿF*SÉräy
+nr@µ Xß¢ dÂ¸Ë3äÔ@#)$i&ÓBÎëûaPa±×">Ïés"ÒÂÅl$"]@áäp°º@62¡ #¶z*mt¯%5p<Î¢e|jlûçRðÊ`h´:uZ¡SË
+Y$±¥pÄ1UD²ÌÜ $Ë5ãL3ª^Bfèò?@ÛjÏÆ¹´á©XZbF¤PTPMÖUL;<0L°4°VKÓ±" ¬D <AoO~A1E8lÁ*ÙIQiôk8zì×ø|­ ÜpÍ[ kñÌ(wQÖ$.HÜ-Dø¯üCpÂ}'é¦@g¿ÿ0M´a4´ÄmÆ&±)-s¤ÿoàwúò0XM²QTÍÿgWö^[ªËËX]ß?4Aµ|°Ù¤+K&HÿÏ§x^óøÞïÿ0x°½õ¹%n&dÃóUg4¡·£Ápu¡¡ò +WyÐ
+æ,¶qì$àTh|ÿ×ý¿Tp+ì1¬2	:{ÿNµ­ªÅÍ­]*eQë»¦ZMÚö?»²Sº¢fÕéðÜ8]µÚËg¢qWÍµH ù®WÞA½FÉÆZãÿ7 °7Éðçvé¿ãÙÊÜñ»Ã^~>ðWVè]Îôr°
+èÓfË{iÖI&RhÐ5ñ?ÝÝ]I¦]ò¡Wäé9X,©3÷ÄÀ2>Éõ­°G_B¿mÅ»6~F5fzÎhqñÕD°*5énzu0t' ;Å&qDVÁ	¼ÐØ7s§]ôzpÃÃÛñUþvÅ(Y)ýv ]·`1a6°ë'ì>n£æ9Ò®¡ðx-~në PE¸âÚ3âÇ­ØªÐøQ2Cd4Æ0X·ÌÚÝE»ROÀhÐvÀcå<ûT°¬ÊjL¿Ðz y
+éÖxy|ñaiâþ¸"ÙØiÄQÎx3)2ÃSëA[/wWôÙ&åw÷¡ä³¡³·ÃÁ|^1nüöòßzf®RÓª
+Á¥ðÚTBý©ea*¯?^2ºKØdù¶ª°t·CXo\°Ùº]ßñ¯ïzYåG¡°­6<O	Þ¥æsã#PÙ÷ûktW@lçä	
+ÉBTjGU©,BöÁn0üPK   7EúZFÙÖE   J   C   META-INF/maven/br.com.legalconnect.common/common-lib/pom.propertiesK,*ÉLKL.ñL±MÎÏÍÍÏÓÍÉLâåJ/Ê/- %éõrRÓsóóòRKô êx¹ÊR3óól
+õôx¹ PK
+    7EúZ            	          íA    META-INF/PK   7EúZeU´ï   £              ¤'   META-INF/MANIFEST.MFPK
+    7EúZ                      íAÜ   br/PK
+    7EúZ                      íAý   br/com/PK
+    7EúZ                      íA"  br/com/legalconnect/PK
+    7EúZ                      íAT  br/com/legalconnect/common/PK
+    7EúZ                      íA  br/com/legalconnect/common/dto/PK
+    7EúZ            %          íAÊ  br/com/legalconnect/common/exception/PK
+    7EúZ                       íA
+  br/com/legalconnect/common/util/PK
+    7EúZ                      íAK  br/com/legalconnect/enums/PK
+    7EúZ                      íA  META-INF/maven/PK
+    7EúZ            *          íA°  META-INF/maven/br.com.legalconnect.common/PK
+    7EúZ            5          íAø  META-INF/maven/br.com.legalconnect.common/common-lib/PK   6EúZÙëÛî               ¤K  application.propertiesPK   7EúZ^!f  R	  A           ¤m  br/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder.classPK   7EúZÄÝ÷  »  /           ¤2	  br/com/legalconnect/common/dto/BaseEntity.classPK   7EúZ& ç:    E           ¤v  br/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder.classPK   7EúZ¾cÔ:    1           ¤  br/com/legalconnect/common/dto/BaseResponse.classPK   7EúZ»¡Ãð  Å  7           ¤  br/com/legalconnect/common/dto/SuccessResponseDTO.classPK   7EúZ(;ó  ã  <           ¤á  br/com/legalconnect/common/exception/BusinessException.classPK   7EúZN,Ç¨  Ì&  4           ¤V"  br/com/legalconnect/common/exception/ErrorCode.classPK   7EúZó¢	  K  A           ¤P6  br/com/legalconnect/common/exception/GlobalExceptionHandler.classPK   7EúZ¿_çô  £  0           ¤I@  br/com/legalconnect/common/exception/Roles.classPK   7EúZíÊ  l
+  3           ¤C  br/com/legalconnect/common/util/ValidatorUtil.classPK   7EúZ¹û  à  .           ¤{I  br/com/legalconnect/enums/StatusResponse.classPK   )EúZÆn,ò    <           ¤GL  META-INF/maven/br.com.legalconnect.common/common-lib/pom.xmlPK   7EúZFÙÖE   J   C           ¤Q  META-INF/maven/br.com.legalconnect.common/common-lib/pom.propertiesPK      	  9R    
+```
+```java
+spring.application.name=common-lib
+
+# Configuração Multi-Tenant
+# spring.jpa.properties.hibernate.multiTenancy=SCHEMA 
+# spring.jpa.properties.hibernate.tenant_identifier_resolver=br.com.legalconnect.common.multitenancy.HeaderTenantIdentifierResolver
+# # For application.properties
+# spring.jpa.properties.hibernate.multi_tenant_connection_provider=br.com.legalconnect.common.multitenancy.SchemaMultiTenantConnectionProvider
+# # Configuração do tenant
+# application.tenant.header-name=X-Tenant-ID
+# application.tenant.default-id=public
+
+# # Configurações do DataSource
+spring.datasource.url=jdbc:postgresql://localhost:5432/jusplatform_db
+spring.datasource.username=jususer
+spring.datasource.password=juspassword
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.main.allow-bean-definition-overriding=true
+springdoc.packages-to-scan=br.com.legalconnect
+springdoc.paths-to-match=/api/v1/**
+springdoc.openapi.version=3.0.1
+spring.flyway.enabled=true
+spring.flyway.url=${spring.datasource.url}
+spring.flyway.user=${spring.datasource.username}
+spring.flyway.password=${spring.datasource.password}
+spring.flyway.locations=classpath:db/migration
+```
+```java
+Êþº¾   = K
+      java/lang/Object <init> ()V	  	 
+   ;br/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder id Ljava/util/UUID;
+     self ?()Lbr/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder;	     	createdAt Ljava/time/LocalDateTime;	     	updatedAt
+      java/lang/String valueOf &(Ljava/lang/Object;)Ljava/lang/String;      ! makeConcatWithConstants J(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String; Code LineNumberTable LocalVariableTable this =Lbr/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder; LocalVariableTypeTable ELbr/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder<TC;TB;>; O(Ljava/util/UUID;)Lbr/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder; MethodParameters 	Signature (Ljava/util/UUID;)TB; X(Ljava/time/LocalDateTime;)Lbr/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder; (Ljava/time/LocalDateTime;)TB; ()TB; build -()Lbr/com/legalconnect/common/dto/BaseEntity; ()TC; toString ()Ljava/lang/String; <C:Lbr/com/legalconnect/common/dto/BaseEntity;B:Lbr/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder<TC;TB;>;>Ljava/lang/Object; 
+SourceFile BaseEntity.java NestHost : )br/com/legalconnect/common/dto/BaseEntity BootstrapMethods =
+ > ? @   A $java/lang/invoke/StringConcatFactory (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite; C <BaseEntity.BaseEntityBuilder(id=, createdAt=, updatedAt=) InnerClasses BaseEntityBuilder G %java/lang/invoke/MethodHandles$Lookup I java/lang/invoke/MethodHandles Lookup!                          "   A     *· ±    #        $        % &   '        % (     )  "   P     
+*+µ *¶ 
+°    #        $       
+ % &     
+    '       
+ % (   *      +    ,   -  "   P     
+*+µ *¶ 
+°    #        $       
+ % &     
+    '       
+ % (   *      +    .   -  "   P     
+*+µ *¶ 
+°    #        $       
+ % &     
+    '       
+ % (   *      +    .    +    / 0 1  +    2  3 4  "   W     *´ ¸ *´ ¸ *´ ¸ º   °    #        $        % &   '        % (    +    5 6    7 8    9 ;     <  B D      9 E	 F H J 
+```
+```java
+Êþº¾   = o
+      java/time/LocalDateTime now ()Ljava/time/LocalDateTime;	  	 
+   )br/com/legalconnect/common/dto/BaseEntity 	createdAt Ljava/time/LocalDateTime;	     	updatedAt	     log Lorg/slf4j/Logger;  +Criando entidade: {}. Data de criaÃ§Ã£o: {}
+      java/lang/Object getClass ()Ljava/lang/Class;
+      ! java/lang/Class 
+getSimpleName ()Ljava/lang/String; # $ % & ' org/slf4j/Logger debug 9(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V ) ;Atualizando entidade: {}. ID: {}. Data de atualizaÃ§Ã£o: {}	  + , - id Ljava/util/UUID; # / & 0 ((Ljava/lang/String;[Ljava/lang/Object;)V
+  2 3 4 <init> ()V	 6 + 7 ;br/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder	 6 		 6 
+ ; < = > ? org/slf4j/LoggerFactory 	getLogger %(Ljava/lang/Class;)Lorg/slf4j/Logger; A java/io/Serializable RuntimeVisibleAnnotations Ljakarta/persistence/Id; $Ljakarta/persistence/GeneratedValue; strategy $Ljakarta/persistence/GenerationType; UUID Ljakarta/persistence/Column; name 
+created_at nullable     
+updated_at onCreate Code LineNumberTable LocalVariableTable this +Lbr/com/legalconnect/common/dto/BaseEntity;  Ljakarta/persistence/PrePersist; onUpdate Ljakarta/persistence/PreUpdate; @(Lbr/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder;)V b =Lbr/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder; LocalVariableTypeTable ALbr/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder<**>; MethodParameters 	Signature D(Lbr/com/legalconnect/common/dto/BaseEntity$BaseEntityBuilder<**>;)V getId ()Ljava/util/UUID; getCreatedAt getUpdatedAt setId (Ljava/util/UUID;)V setCreatedAt (Ljava/time/LocalDateTime;)V setUpdatedAt <clinit> 
+SourceFile BaseEntity.java &Ljakarta/persistence/MappedSuperclass; NestMembers InnerClasses BaseEntityBuilder!    @        , -  B     C   D  Ee F G     B     H  Is J KZ L     B     H  Is M KZ L   N 4  O   Z     $*¸ µ *¸ µ 
+² *¶ ¶ *´ ¹ " ±    P       4  5  6 # 7 Q       $ R S   B     T    U 4  O   `     .*¸ µ 
+² (½ Y*¶ ¶ SY*´ *SY*´ 
+S¹ . ±    P       >  ? - A Q       . R S   B     V    3 W  O   c     *· 1*+´ 5µ **+´ 8µ *+´ 9µ 
+±    P        Q        R S      X Y  Z        X [  \    X  ]    ^  _ `  O   /     *´ *°    P       ' Q        R S    a   O   /     *´ °    P       * Q        R S    b   O   /     *´ 
+°    P       - Q        R S    c d  O   :     *+µ *±    P        Q        R S      , -  \    ,   e f  O   :     *+µ ±    P        Q        R S         \       g f  O   :     *+µ 
+±    P        Q        R S         \       3 4  O   /     *· 1±    P        Q        R S    h 4  O   !      	¸ :³ ±    P       #  i    j B     k   l     6 m   
+  6  n	
+```
+```java
+Êþº¾   = Z
+      java/lang/Object <init> ()V	  	 
+   ?br/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder status *Lbr/com/legalconnect/enums/StatusResponse;	     message Ljava/lang/String;	     	timestamp Ljava/time/LocalDateTime;	     data Ljava/lang/Object;	     errors Ljava/util/List;  +br/com/legalconnect/common/dto/BaseResponse
+     ! z(Lbr/com/legalconnect/enums/StatusResponse;Ljava/lang/String;Ljava/time/LocalDateTime;Ljava/lang/Object;Ljava/util/List;)V
+ # $ % & ' java/lang/String valueOf &(Ljava/lang/Object;)Ljava/lang/String;   ) * + makeConcatWithConstants n(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String; 	Signature TT; $Ljava/util/List<Ljava/lang/String;>; Code LineNumberTable LocalVariableTable this ALbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder; LocalVariableTypeTable FLbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder<TT;>; m(Lbr/com/legalconnect/enums/StatusResponse;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder; MethodParameters r(Lbr/com/legalconnect/enums/StatusResponse;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder<TT;>; U(Ljava/lang/String;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder; Z(Ljava/lang/String;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder<TT;>; \(Ljava/time/LocalDateTime;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder; a(Ljava/time/LocalDateTime;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder<TT;>; U(Ljava/lang/Object;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder; K(TT;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder<TT;>; S(Ljava/util/List;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder; l(Ljava/util/List<Ljava/lang/String;>;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder<TT;>; build /()Lbr/com/legalconnect/common/dto/BaseResponse; 4()Lbr/com/legalconnect/common/dto/BaseResponse<TT;>; toString ()Ljava/lang/String; (<T:Ljava/lang/Object;>Ljava/lang/Object; 
+SourceFile BaseResponse.java NestHost BootstrapMethods L
+ M N O * P $java/lang/invoke/StringConcatFactory (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite; R TBaseResponse.BaseResponseBuilder(status=, message=, timestamp=, data=, errors=) InnerClasses BaseResponseBuilder V %java/lang/invoke/MethodHandles$Lookup X java/lang/invoke/MethodHandles Lookup !                         ,    -     ,    .       /   A     *· ±    0        1        2 3   4        2 5     6  /   M     *+µ *°    0        1        2 3         4        2 5   7      ,    8   9  /   M     *+µ 
+*°    0        1        2 3         4        2 5   7      ,    :   ;  /   M     *+µ *°    0        1        2 3         4        2 5   7      ,    <   =  /   W     *+µ *°    0        1        2 3         4        2 5       -  7      ,    >   ?  /   W     *+µ *°    0        1        2 3         4        2 5       .  7      ,    @  A B  /   X     » Y*´ *´ 
+*´ *´ *´ · °    0        1        2 3   4        2 5   ,    C  D E  /   b     &*´ ¸ "*´ 
+*´ ¸ "*´ ¸ "*´ ¸ "º (  °    0        1       & 2 3   4       & 2 5    ,    F G    H I     J     K  Q S       T 	 U W Y 
+```
+```java
+Êþº¾   =   ?br/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder
+     <init> ()V	  	 
+   +br/com/legalconnect/common/dto/BaseResponse status *Lbr/com/legalconnect/enums/StatusResponse;	     message Ljava/lang/String;	     	timestamp Ljava/time/LocalDateTime;	     data Ljava/lang/Object;	     errors Ljava/util/List;
+      canEqual (Ljava/lang/Object;)Z
+  " # $ 	getStatus ,()Lbr/com/legalconnect/enums/StatusResponse;
+ & ' ( )   java/lang/Object equals
+  + , - 
+getMessage ()Ljava/lang/String;
+  / 0 1 getTimestamp ()Ljava/time/LocalDateTime;
+  3 4 5 getData ()Ljava/lang/Object;
+  7 8 9 	getErrors ()Ljava/util/List;
+ & ; < = hashCode ()I
+ ? @ A B C java/lang/String valueOf &(Ljava/lang/Object;)Ljava/lang/String;   E F G makeConcatWithConstants n(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ &  	Signature TT; $Ljava/util/List<Ljava/lang/String;>; builder C()Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder; Code LineNumberTable ^<T:Ljava/lang/Object;>()Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder<TT;>; LocalVariableTable this -Lbr/com/legalconnect/common/dto/BaseResponse; LocalVariableTypeTable 2Lbr/com/legalconnect/common/dto/BaseResponse<TT;>; ()TT; &()Ljava/util/List<Ljava/lang/String;>; 	setStatus -(Lbr/com/legalconnect/enums/StatusResponse;)V MethodParameters 
+setMessage (Ljava/lang/String;)V setTimestamp (Ljava/time/LocalDateTime;)V setData (Ljava/lang/Object;)V (TT;)V 	setErrors (Ljava/util/List;)V '(Ljava/util/List<Ljava/lang/String;>;)V o other this$status other$status this$message 
+other$message this$timestamp other$timestamp 	this$data 
+other$data this$errors other$errors 0Lbr/com/legalconnect/common/dto/BaseResponse<*>; 
+StackMapTable PRIME I result $status $message 
+$timestamp $data $errors toString z(Lbr/com/legalconnect/enums/StatusResponse;Ljava/lang/String;Ljava/time/LocalDateTime;Ljava/lang/Object;Ljava/util/List;)V (Lbr/com/legalconnect/enums/StatusResponse;Ljava/lang/String;Ljava/time/LocalDateTime;TT;Ljava/util/List<Ljava/lang/String;>;)V (<T:Ljava/lang/Object;>Ljava/lang/Object; 
+SourceFile BaseResponse.java RuntimeVisibleAnnotations .Lcom/fasterxml/jackson/annotation/JsonInclude; value 6Lcom/fasterxml/jackson/annotation/JsonInclude$Include; NON_NULL NestMembers BootstrapMethods 
+    F  $java/lang/invoke/StringConcatFactory (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;  @BaseResponse(status=, message=, timestamp=, data=, errors=) InnerClasses BaseResponseBuilder  4com/fasterxml/jackson/annotation/JsonInclude$Include  ,com/fasterxml/jackson/annotation/JsonInclude Include  %java/lang/invoke/MethodHandles$Lookup  java/lang/invoke/MethodHandles Lookup !  &                       I    J     I    K  	 L M  N          » Y· °    O        I    P  # $  N   A     *´ °    O        Q        R S   T        R U    , -  N   A     *´ 
+°    O         Q        R S   T        R U    0 1  N   A     *´ °    O       ! Q        R S   T        R U    4 5  N   A     *´ °    O       " Q        R S   T        R U   I    V  8 9  N   A     *´ °    O       # Q        R S   T        R U   I    W  X Y  N   L     *+µ ±    O        Q        R S         T        R U   Z       [ \  N   L     *+µ 
+±    O        Q        R S         T        R U   Z       ] ^  N   L     *+µ ±    O        Q        R S         T        R U   Z       _ `  N   V     *+µ ±    O        Q        R S         T        R U       J  Z      I    a  b c  N   V     *+µ ±    O        Q        R S         T        R U       K  Z      I    d  )    N  Ü  
+   ×+*¦ ¬+Á  ¬+À M,*¶  ¬*¶ !N,¶ !:-Ç Æ § -¶ % ¬*¶ *:,¶ *:Ç Æ § 
+¶ % ¬*¶ .:,¶ .:Ç Æ § 
+¶ % ¬*¶ 2:	,¶ 2:
+	Ç 
+Æ § 
+	
+¶ % ¬*¶ 6:,¶ 6:Ç Æ § 
+¶ % ¬¬    O        Q    
+   × R S     × e    Â f S  $ ³ g   * ­ h   G  i   M  j   l k k   r e l    F m  	  @ n  
+ ¶ ! o   ¼  p   T       × R U    Â f q  r   A ü  ý  & &ý  & &	ý  & &	ý  & &	ý  & &	 Z    e       N   K     +Á ¬    O        Q        R S      f   T        R U   Z    f   < =  N  ö     ;<=*¶ !N;h-Ç +§ -¶ :`=*¶ *:;hÇ +§ ¶ :`=*¶ .:;hÇ +§ ¶ :`=*¶ 2:;hÇ +§ ¶ :`=*¶ 6:;hÇ +§ ¶ :`=¬    O        Q   R     R S     s t    u t  
+  v   # h w   > M x   Y 2 y   t  z   T        R U   r   ã 
+ÿ    & ÿ    & ÿ    & & ÿ    & & ÿ    & & & ÿ    & & & ÿ    & & & & ÿ    & & & & ÿ    & & & & & ÿ    & & & & &   { -  N   b     &*¶ !¸ >*¶ **¶ .¸ >*¶ 2¸ >*¶ 6¸ >º D  °    O        Q       & R S   T       & R U       N   A     *· H±    O        Q        R S   T        R U     |  N   ¢      *· H*+µ *,µ 
+*-µ *µ *µ ±    O        Q   >      R S                                      T          R U        J       K  Z              I    }  I    ~         
+    e                         	   @    
+```
+```java
+Êþº¾   = A
+      +br/com/legalconnect/common/dto/BaseResponse <init> ()V	  	 
+   (br/com/legalconnect/enums/StatusResponse SUCESSO *Lbr/com/legalconnect/enums/StatusResponse;
+      1br/com/legalconnect/common/dto/SuccessResponseDTO 	setStatus -(Lbr/com/legalconnect/enums/StatusResponse;)V
+      java/time/LocalDateTime now ()Ljava/time/LocalDateTime;
+     setTimestamp (Ljava/time/LocalDateTime;)V
+  
+     ! 
+setMessage (Ljava/lang/String;)V # SuccessResponseDTO()
+  % & ' canEqual (Ljava/lang/Object;)Z
+  ) * ' equals
+  , - . hashCode ()I Code LineNumberTable LocalVariableTable this 3Lbr/com/legalconnect/common/dto/SuccessResponseDTO; message Ljava/lang/String; MethodParameters toString ()Ljava/lang/String; o Ljava/lang/Object; other 
+StackMapTable result I 
+SourceFile SuccessResponseDTO.java !            /   I     *· *² ¶ 
+*¸ ¶ ±    0              1        2 3     !  /   F     
+*· *+¶ ±    0       $  % 	 & 1       
+ 2 3     
+ 4 5  6    4    7 8  /   -     "°    0        1        2 3    * '  /   z     ++*¦ ¬+Á  ¬+À M,*¶ $ ¬*+· ( ¬¬    0        1        + 2 3     + 9 :    ; 3  <    ü  	 6    9   & '  /   9     +Á ¬    0        1        2 3      ; :  6    ;   - .  /   ;     *· +<¬    0        1        2 3     = >   ?    @
+```
+```java
+Êþº¾   = =
+      java/lang/RuntimeException <init> (Ljava/lang/String;)V	  	 
+   6br/com/legalconnect/common/exception/BusinessException 	errorCode 0Lbr/com/legalconnect/common/exception/ErrorCode;  java/lang/String
+      .br/com/legalconnect/common/exception/ErrorCode 
+getMessage ()Ljava/lang/String;	     args [Ljava/lang/String;	     
+httpStatus %Lorg/springframework/http/HttpStatus;	     !  #org/springframework/http/HttpStatus BAD_REQUEST
+  #  $ k(Lbr/com/legalconnect/common/exception/ErrorCode;Lorg/springframework/http/HttpStatus;[Ljava/lang/String;)V
+  & ' ( getFormattedMessage '([Ljava/lang/Object;)Ljava/lang/String;
+  * +  getCode j(Lbr/com/legalconnect/common/exception/ErrorCode;Lorg/springframework/http/HttpStatus;Ljava/lang/String;)V Code LineNumberTable LocalVariableTable this 8Lbr/com/legalconnect/common/exception/BusinessException; Ljava/lang/String; MethodParameters F(Lbr/com/legalconnect/common/exception/ErrorCode;[Ljava/lang/String;)V getErrorCode 2()Lbr/com/legalconnect/common/exception/ErrorCode; getArgs ()[Ljava/lang/String; 
+getHttpStatus '()Lorg/springframework/http/HttpStatus; 
+SourceFile BusinessException.java !                        ,  -   {     #*-· *+µ *½ 
+Y-SY+¶ Sµ *,µ ±    .          
+    "  /   *    # 0 1     #      #      #  2  3   
+            4  -   L     
+*+² ,· "±    .   
+    & 	 ' /        
+ 0 1     
+      
+    3   	         $  -   q     *+-¶ %· *+µ *-µ *,µ ±    .       2 	 4  5  6  8 /   *     0 1                     3   
+              -   6     *´ *´ ¶ %°    .       @ /        0 1    +   -   2     *´ ¶ )°    .       H /        0 1    5 6  -   /     *´ °    .        /        0 1    7 8  -   /     *´ °    .        /        0 1    9 :  -   /     *´ °    .        /        0 1    ;    <
+```
+```java
+Êþº¾   =K  .br/com/legalconnect/common/exception/ErrorCode	     DADOS_INVALIDOS 0Lbr/com/legalconnect/common/exception/ErrorCode;	   	  REQUISICAO_MAL_FORMADA	     PARAMETRO_AUSENTE	     ENTIDADE_NAO_ENCONTRADA	     EMPRESA_NAO_ENCONTRADA	     PROFISSIONAL_NAO_ENCONTRADO	     CLIENTE_NAO_ENCONTRADO	     ADMINISTRADOR_NAO_ENCONTRADO	     PLANO_NAO_ENCONTRADO	    !  USER_NAO_ENCONTRADO	  # $  CNPJ_DUPLICADO	  & '  
+CPF_DUPLICADO	  ) *  
+OAB_DUPLICADA	  , -  EMAIL_DUPLICADO	  / 0  NOME_PLANO_DUPLICADO	  2 3  INTEGRIDADE_VIOLADA	  5 6  RECURSO_EM_USO	  8 9  ERRO_INTERNO_SERVIDOR	  ; <  SERVICO_INDISPONIVEL	  > ?  
+GENERIC_ERROR	  A B  
+INVALID_INPUT	  D E  RESOURCE_NOT_FOUND	  G H  UNAUTHORIZED_ACCESS	  J K  FORBIDDEN_ACCESS	  M N  SERVICE_UNAVAILABLE	  P Q  TOO_MANY_REQUESTS	  S T  VALIDATION_ERROR	  V W  DATABASE_ERROR	  Y Z  INTEGRATION_ERROR	  \ ]  INVALID_CREDENTIALS	  _ `  ACCOUNT_LOCKED	  b c  ACCOUNT_DISABLED	  e f  
+TOKEN_EXPIRED	  h i  
+INVALID_TOKEN	  k l  REFRESH_TOKEN_EXPIRED	  n o  INVALID_REFRESH_TOKEN	  q r  USER_NOT_FOUND	  t u  EMAIL_ALREADY_REGISTERED	  w x  PASSWORD_RESET_FAILED	  z {  INVALID_CURRENT_PASSWORD	  } ~  PASSWORD_RESET_TOKEN_INVALID	     PASSWORD_RESET_TOKEN_EXPIRED	     PASSWORD_RESET_TOKEN_USED	     PASSWORD_RESET_TOKEN_EXCEEDED	     TENANT_NOT_FOUND	     TENANT_DISABLED	     SUBSCRIPTION_EXPIRED	     PLAN_NOT_ACTIVE	     SERVICE_LIMIT_EXCEEDED	     ADVOCATE_NOT_AVAILABLE	     APPOINTMENT_CONFLICT	     PAYMENT_FAILED	  ¡ ¢  INVALID_PROMO_CODE	  ¤ ¥  DOCUMENT_UPLOAD_FAILED	  § ¨  INVALID_DOCUMENT_FORMAT	  ª «  FIELD_REQUIRED	  ­ ®  INVALID_FORMAT	  ° ±  
+MIN_LENGTH	  ³ ´  
+MAX_LENGTH	  ¶ ·  
+INVALID_EMAIL	  ¹ º  INVALID_CPF	  ¼ ½  INVALID_CNPJ	  ¿ À  PASSWORD_TOO_WEAK	  Â Ã  DATE_IN_PAST	  Å Æ  INVALID_ENUM_VALUE	  È É Ê $VALUES 1[Lbr/com/legalconnect/common/exception/ErrorCode;
+ Ì Í Ê Î Ï clone ()Ljava/lang/Object;
+ Ñ Ò Ó Ô Õ java/lang/Enum valueOf 5(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/Enum;
+ Ñ × Ø Ù <init> (Ljava/lang/String;I)V	  Û Ü Ý code Ljava/lang/String;	  ß à Ý message
+ â ã ä å æ java/lang/String format 9(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;  é 001 ë !Dados fornecidos sÃ£o invÃ¡lidos.
+  í Ø î :(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V 	 ñ 002 ó !A requisiÃ§Ã£o estÃ¡ mal formada.  ö 003 ø  ParÃ¢metro obrigatÃ³rio ausente.  û 100 ý Entidade nÃ£o encontrada.   101 Empresa nÃ£o encontrada.  102 Profissional nÃ£o encontrado. 
+ 103 Cliente nÃ£o encontrado.  104 Administrador nÃ£o encontrado.  105 Plano nÃ£o encontrado. ! 106 #UsuÃ¡rio associado nÃ£o encontrado. $ 200  CNPJ jÃ¡ cadastrado. '# 201% CPF jÃ¡ cadastrado. *( 202* NÃºmero da OAB jÃ¡ cadastrado. -- 203/ Email jÃ¡ cadastrado. 02 2044 Nome do plano jÃ¡ cadastrado. 37 3009 #ViolaÃ§Ã£o de integridade de dados. 6< 301> 2Recurso nÃ£o pode ser excluÃ­do pois estÃ¡ em uso. 9A 500C $Ocorreu um erro interno no servidor. <F 503H 'ServiÃ§o temporariamente indisponÃ­vel. ?K 1000M BOcorreu um erro inesperado. Por favor, tente novamente mais tarde. BP 1001R Dados de entrada invÃ¡lidos. EU 1002W Recurso nÃ£o encontrado. HZ 1003\ ;Acesso nÃ£o autorizado. Credenciais invÃ¡lidas ou ausentes. K_ 1004a CAcesso negado. VocÃª nÃ£o tem permissÃ£o para realizar esta aÃ§Ã£o. Nd 1005f KO serviÃ§o estÃ¡ temporariamente indisponÃ­vel. Tente novamente mais tarde. Qi 1006k ;Muitas requisiÃ§Ãµes. Por favor, aguarde e tente novamente. Tn 1007p )Erro de validaÃ§Ã£o nos dados fornecidos. Ws 1008u !Erro ao acessar o banco de dados. Zx 1009z *Erro de integraÃ§Ã£o com serviÃ§o externo. ]} 2000 )Credenciais de autenticaÃ§Ã£o invÃ¡lidas. ` 2001 Sua conta estÃ¡ bloqueada. c 2002 Sua conta estÃ¡ desativada. f 2003 O token de acesso expirou. i 2004 O token de acesso Ã© invÃ¡lido. l 2005 /O refresh token expirou. FaÃ§a login novamente. o 2006 O refresh token Ã© invÃ¡lido. r  2007¢ UsuÃ¡rio nÃ£o encontrado. u¥ 2008§ !Este e-mail jÃ¡ estÃ¡ cadastrado. xª 2009¬ Falha ao redefinir a senha. {¯ 2010± (A senha atual fornecida estÃ¡ incorreta. ~´ 2011¶ *Token de redefiniÃ§Ã£o de senha invÃ¡lido. ¹ 2012» )Token de redefiniÃ§Ã£o de senha expirado. ¾ 2013À .Token de redefiniÃ§Ã£o de senha jÃ¡ utilizado. Ã 2014Å +Limite de redefiniÃ§Ãµes de senha excedido. È 3000Ê Tenant nÃ£o encontrado. Í 3001Ï O tenant estÃ¡ desativado. Ò 3002Ô Sua assinatura expirou. × 3003Ù %O plano selecionado nÃ£o estÃ¡ ativo. Ü 3004Þ :Limite de serviÃ§os agendÃ¡veis excedido para o seu plano. á 3005ã 2Advogado nÃ£o disponÃ­vel no horÃ¡rio selecionado. æ 3006è 6Conflito de agendamento. O horÃ¡rio jÃ¡ estÃ¡ ocupado. ë 3007í $Falha no processamento do pagamento. ¢ð 3008ò *CÃ³digo promocional invÃ¡lido ou expirado. ¥õ 3009÷ #Falha ao fazer upload do documento. ¨ú 3010ü Formato de documento invÃ¡lido. «ÿ 4000 O campo '%s' Ã© obrigatÃ³rio. ® 4001 &O campo '%s' possui formato invÃ¡lido. ±	 4002 /O campo '%s' deve ter no mÃ­nimo %d caracteres. ´ 4003 /O campo '%s' deve ter no mÃ¡ximo %d caracteres. · 4004  O e-mail fornecido Ã© invÃ¡lido. º 4005 O CPF fornecido Ã© invÃ¡lido. ½ 4006 O CNPJ fornecido Ã© invÃ¡lido. À" 4007$ A senha Ã© muito fraca. Ã' 4008)  A data nÃ£o pode ser no passado. Æ, 4009. "Valor invÃ¡lido para o campo '%s'.
+ 012 $values 3()[Lbr/com/legalconnect/common/exception/ErrorCode; values Code LineNumberTable D(Ljava/lang/String;)Lbr/com/legalconnect/common/exception/ErrorCode; LocalVariableTable name MethodParameters this 
+$enum$name 
+$enum$ordinal 	Signature '(Ljava/lang/String;Ljava/lang/String;)V getFormattedMessage '([Ljava/lang/Object;)Ljava/lang/String; args [Ljava/lang/Object; getCode ()Ljava/lang/String; 
+getMessage <clinit> ()V BLjava/lang/Enum<Lbr/com/legalconnect/common/exception/ErrorCode;>; 
+SourceFile ErrorCode.java@1  Ñ   D@    @ 	   @    @    @    @    @    @    @    @ !   @ $   @ '   @ *   @ -   @ 0   @ 3   @ 6   @ 9   @ <   @ ?   @ B   @ E   @ H   @ K   @ N   @ Q   @ T   @ W   @ Z   @ ]   @ `   @ c   @ f   @ i   @ l   @ o   @ r   @ u   @ x   @ {   @ ~   @    @    @    @    @    @    @    @    @    @    @    @ ¢   @ ¥   @ ¨   @ «   @ ®   @ ±   @ ´   @ ·   @ º   @ ½   @ À   @ Ã   @ Æ     Ü Ý    à Ý   É Ê    	32 4   "      
+² Ç¶ ËÀ Ì°   5        	 Ô6 4   4     
+*¸ ÐÀ °   5       7       
+8 Ý  9   8   Ø î 4   \     *+· Ö*-µ Ú*µ Þ±   5       m  n  o  p7        :       Ü Ý     à Ý 9   ; <  Ü   à  =   > ?@ 4   =     	*´ Þ+¸ á°   5       x7       	:      	AB 9   A   CD 4   /     *´ Ú°   5       d7       :    ED 4   /     *´ Þ°   5       e7       :   
+12 4  ß     ÇA½ Y² SY² SY² 
+SY² 
+SY² SY² SY² SY² SY² SY	² SY
+² "SY² %SY² (SY
+² +SY² .SY² 1SY² 4SY² 7SY² :SY² =SY² @SY² CSY² FSY² ISY² LSY² OSY² RSY² USY² XSY² [SY² ^SY² aSY ² dSY!² gSY"² jSY#² mSY$² pSY%² sSY&² vSY'² ySY(² |SY)² SY*² SY+² SY,² SY-² SY.² SY/² SY0² SY1² SY2² SY3² SY4²  SY5² £SY6² ¦SY7² ©SY8² ¬SY9² ¯SY:² ²SY;² µSY<² ¸SY=² »SY>² ¾SY?² ÁSY@² ÄS°   5        FG 4  d     H» Yçèê· ì³ » Yïðò· ì³ » Yôõ÷· ì³ 
+» Yùúü· ì³ 
+» Yþÿ· ì³ » Y· ì³ » Y	· ì³ » Y
+· ì³ » Y· ì³ » Y	· ì³ » Y
+· ì³ "» Y!"$· ì³ %» Y&')· ì³ (» Y+
+,.· ì³ +» Y013· ì³ .» Y568· ì³ 1» Y:;=· ì³ 4» Y?@B· ì³ 7» YDEG· ì³ :» YIJL· ì³ =» YNOQ· ì³ @» YSTV· ì³ C» YXY[· ì³ F» Y]^`· ì³ I» Ybce· ì³ L» Yghj· ì³ O» Ylmo· ì³ R» Yqrt· ì³ U» Yvwy· ì³ X» Y{|~· ì³ [» Y· ì³ ^» Y· ì³ a» Y · ì³ d» Y!· ì³ g» Y"· ì³ j» Y#· ì³ m» Y$¡· ì³ p» Y£%¤¦· ì³ s» Y¨&©«· ì³ v» Y­'®°· ì³ y» Y²(³µ· ì³ |» Y·)¸º· ì³ » Y¼*½¿· ì³ » YÁ+ÂÄ· ì³ » YÆ,ÇÉ· ì³ » YË-ÌÎ· ì³ » YÐ.ÑÓ· ì³ » YÕ/ÖØ· ì³ » YÚ0ÛÝ· ì³ » Yß1àâ· ì³ » Yä2åç· ì³ » Yé3êì· ì³ » Yî4ïñ· ì³  » Yó5ôö· ì³ £» Yø6ùû· ì³ ¦» Yý7þ · ì³ ©» Y8· ì³ ¬» Y9
+· ì³ ¯» Y:
+· ì³ ²» Y;· ì³ µ» Y<· ì³ ¸» Y=· ì³ »» Y >!#· ì³ ¾» Y%?&(· ì³ Á» Y*@+-· ì³ Ä¸/³ Ç±   5  
+ B      "  3  D  V  j      ©  ¾  Ó   è ! ý " #' &< 'Q *f +{ . /¥ 0º 1Ï 2ä 3ù 4 5# 68 7M :b ;w < =¡ >¶ ?Ë @à Aõ B
+ C D4 EI F^ Gs H K L² MÇ NÜ Oñ P Q R0 SE TZ Uo Y Z [® \Ã ]Ø ^í _ ` a, bA  =   HI   J
+```
+```java
+Êþº¾   =
+      java/lang/Object <init> ()V	  	 
+   ;br/com/legalconnect/common/exception/GlobalExceptionHandler log Lorg/slf4j/Logger;  !Business Exception: {} - Path: {}
+      6br/com/legalconnect/common/exception/BusinessException 
+getMessage ()Ljava/lang/String;      2org/springframework/web/context/request/WebRequest getDescription (Z)Ljava/lang/String;       org/slf4j/Logger warn 9(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+ " # $ % & +br/com/legalconnect/common/dto/BaseResponse builder C()Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder;	 ( ) * + , (br/com/legalconnect/enums/StatusResponse ERRO *Lbr/com/legalconnect/enums/StatusResponse;
+ . / 0 1 2 ?br/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder status m(Lbr/com/legalconnect/enums/StatusResponse;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder;
+ . 4 5 6 message U(Ljava/lang/String;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder;
+  8 9  getCode ; < = > ? java/util/List of $(Ljava/lang/Object;)Ljava/util/List;
+ . A B C errors S(Ljava/util/List;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder;
+ E F G H I java/time/LocalDateTime now ()Ljava/time/LocalDateTime;
+ . K L M 	timestamp \(Ljava/time/LocalDateTime;)Lbr/com/legalconnect/common/dto/BaseResponse$BaseResponseBuilder;
+  O P Q getArgs ()[Ljava/lang/String;
+ S T U V W java/util/Arrays asList %([Ljava/lang/Object;)Ljava/util/List;
+ . Y Z [ build /()Lbr/com/legalconnect/common/dto/BaseResponse; ] 'org/springframework/http/ResponseEntity
+  _ ` a 
+getHttpStatus '()Lorg/springframework/http/HttpStatus;
+ \ c  d >(Ljava/lang/Object;Lorg/springframework/http/HttpStatusCode;)V
+ f g h i j <org/springframework/web/bind/MethodArgumentNotValidException getBindingResult 0()Lorg/springframework/validation/BindingResult; l m n o p ,org/springframework/validation/BindingResult getAllErrors ()Ljava/util/List; ; r s t stream ()Ljava/util/stream/Stream;   v w x apply ()Ljava/util/function/Function; z { | } ~ java/util/stream/Stream map 8(Ljava/util/function/Function;)Ljava/util/stream/Stream;
+      java/util/stream/Collectors toList ()Ljava/util/stream/Collector; z    collect 0(Ljava/util/stream/Collector;)Ljava/lang/Object;  0Validation Exception: {} - Errors: {} - Path: {}
+ f      ((Ljava/lang/String;[Ljava/lang/Object;)V	      .br/com/legalconnect/common/exception/ErrorCode VALIDATION_ERROR 0Lbr/com/legalconnect/common/exception/ErrorCode;
+  	      #org/springframework/http/HttpStatus BAD_REQUEST %Lorg/springframework/http/HttpStatus;  "Unhandled Exception: {} - Path: {}
+     java/lang/Exception  ¢ £  error	  ¥ ¦  
+GENERIC_ERROR
+  8	  © ª  INTERNAL_SERVER_ERROR ¬ )org/springframework/validation/FieldError
+ « ® ¯  getField
+ ± ² ³ ´  *org/springframework/validation/ObjectError 
+getObjectName
+ ± ¶ ·  getDefaultMessage ¹ Campo '%s': %s
+ » ¼ ½ ¾ ¿ java/lang/String format 9(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+ Á Â Ã Ä Å org/slf4j/LoggerFactory 	getLogger %(Ljava/lang/Class;)Lorg/slf4j/Logger; Code LineNumberTable LocalVariableTable this =Lbr/com/legalconnect/common/exception/GlobalExceptionHandler; handleBusinessException (Lbr/com/legalconnect/common/exception/BusinessException;Lorg/springframework/web/context/request/WebRequest;)Lorg/springframework/http/ResponseEntity; ex 8Lbr/com/legalconnect/common/exception/BusinessException; request 4Lorg/springframework/web/context/request/WebRequest; 
+errorResponse -Lbr/com/legalconnect/common/dto/BaseResponse; MethodParameters 	Signature Æ(Lbr/com/legalconnect/common/exception/BusinessException;Lorg/springframework/web/context/request/WebRequest;)Lorg/springframework/http/ResponseEntity<Lbr/com/legalconnect/common/dto/BaseResponse;>; RuntimeVisibleAnnotations :Lorg/springframework/web/bind/annotation/ExceptionHandler; value handleValidationExceptions (Lorg/springframework/web/bind/MethodArgumentNotValidException;Lorg/springframework/web/context/request/WebRequest;)Lorg/springframework/http/ResponseEntity; >Lorg/springframework/web/bind/MethodArgumentNotValidException; Ljava/util/List; LocalVariableTypeTable $Ljava/util/List<Ljava/lang/String;>; Ì(Lorg/springframework/web/bind/MethodArgumentNotValidException;Lorg/springframework/web/context/request/WebRequest;)Lorg/springframework/http/ResponseEntity<Lbr/com/legalconnect/common/dto/BaseResponse;>; handleGlobalException t(Ljava/lang/Exception;Lorg/springframework/web/context/request/WebRequest;)Lorg/springframework/http/ResponseEntity; Ljava/lang/Exception; £(Ljava/lang/Exception;Lorg/springframework/web/context/request/WebRequest;)Lorg/springframework/http/ResponseEntity<Lbr/com/legalconnect/common/dto/BaseResponse;>; #lambda$handleValidationExceptions$0 @(Lorg/springframework/validation/ObjectError;)Ljava/lang/String; ,Lorg/springframework/validation/ObjectError; 	fieldName Ljava/lang/String; errorMessage 
+StackMapTable <clinit> 
+SourceFile GlobalExceptionHandler.java :Lorg/springframework/web/bind/annotation/ControllerAdvice; BootstrapMethods ñ
+ ò ó ô õ ö "java/lang/invoke/LambdaMetafactory metafactory Ì(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite; ø &(Ljava/lang/Object;)Ljava/lang/Object; ú
+  û ä å å InnerClasses BaseResponseBuilder  %java/lang/invoke/MethodHandles$Lookup java/lang/invoke/MethodHandles Lookup !                Æ   /     *· ±    Ç       ! È        É Ê    Ë Ì  Æ   ¸     P² 
++¶ ,¹  ¹  ¸ !² '¶ -+¶ ¶ 3+¶ 7¸ :¶ @¸ D¶ J+¶ N¸ R¶ @¶ XN» \Y-+¶ ^· b°    Ç   & 	   0  2  3  4 & 5 / 6 6 7 ? 8 C : È   *    P É Ê     P Í Î    P Ï Ð  C 
+ Ñ Ò  Ó   	 Í   Ï   Ô    Õ Ö     ×  Ø[ c Î  Ù Ú  Æ  	     u+¶ e¹ k ¹ q º u  ¹ y ¸ ¹  À ;N² ½ Y+¶ SY-SY,¹  S¹  ¸ !² '¶ -² ¶ ¶ 3-¶ @¸ D¶ J¶ X:» \Y² · b°    Ç   6 
+   M  N  U $ W < X B W G Z M [ S \ Z ] ] ^ c _ h a È   4    u É Ê     u Í Û    u Ï Ð  $ Q B Ü  h 
+ Ñ Ò  Ý     $ Q B Þ  Ó   	 Í   Ï   Ô    ß Ö     ×  Ø[ c Û  à á  Æ   »     W² ½ Y+¶ SY,¹  SY+S¹ ¡ ¸ !² '¶ -² ¤¶ ¶ 3² ¤¶ §¸ :¶ @¸ D¶ J¶ XN» \Y-² ¨· b°    Ç   "    r # t ) u / v 8 w A y G z K | È   *    W É Ê     W Í â    W Ï Ð  K  Ñ Ò  Ó   	 Í   Ï   Ô    ã Ö     ×  Ø[ c â
+ ä å  Æ        -*Á « 
+*À «¶ ­§ *¶ °L*¶ µM¸½ Y+SY,S¸ º°    Ç       O  P  Q  R  S È        - £ æ     ç è    é è  ê    C »  ë   Æ   !      	¸ À³ ±    Ç         ì    í Ö     î   ï     ð  ÷ ù ü ý     . " þ 	 ÿ 
+```
+```java
+Êþº¾   = E
+      java/lang/Object <init> ()V  *br/com/legalconnect/common/exception/Roles 
+ ROLE_
+  
+    java/lang/String 
+startsWith (Ljava/lang/String;)Z      makeConcatWithConstants &(Ljava/lang/String;)Ljava/lang/String;
+     length ()I
+     	substring (I)Ljava/lang/String; 
+ROLE_ADMIN Ljava/lang/String; 
+ConstantValue  ROLE_TENANT_ADMIN ! 
+ROLE_ADVOCATE # ROLE_CLIENT % 	ROLE_USER ' PREFIX Code LineNumberTable LocalVariableTable this ,Lbr/com/legalconnect/common/exception/Roles; 
+withPrefix roleName 
+StackMapTable MethodParameters 
+withoutPrefix 
+SourceFile 
+Roles.java BootstrapMethods 8
+ 9 : ;  < $java/lang/invoke/StringConcatFactory (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite; > ROLE_ InnerClasses A %java/lang/invoke/MethodHandles$Lookup C java/lang/invoke/MethodHandles Lookup 1                 !       "  #       $  %       &  '       (  )       	      *   3     *· ±    +   
+       ,        - .   	 /   *   Q     *Æ *	¶  
+*º   °*°    +       ( 
+ )  + ,        0    1     2    0   	 3   *   T     *Æ *	¶  
+*	¶ ¶ °*°    +       4 
+ 5  7 ,        0    1     2    0    4    5 6     7  = ?   
+  @ B D 
+```
+```java
+Êþº¾   = S
+      java/lang/Object <init> ()V
+  	 
+   java/lang/String length ()I  
+(\d)\1{10}
+     matches (Ljava/lang/String;)Z
+     charAt (I)C   java/util/InputMismatchException  
+(\d)\1{13}	       -br/com/legalconnect/common/util/ValidatorUtil 
+EMAIL_PATTERN Ljava/util/regex/Pattern;
+ " # $ % & java/util/regex/Pattern matcher 3(Ljava/lang/CharSequence;)Ljava/util/regex/Matcher;
+ ( ) *  + java/util/regex/Matcher ()Z - M^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,7}$
+ " / 0 1 compile -(Ljava/lang/String;)Ljava/util/regex/Pattern; EMAIL_REGEX Ljava/lang/String; 
+ConstantValue Code LineNumberTable LocalVariableTable this /Lbr/com/legalconnect/common/util/ValidatorUtil; 
+isValidCPF num I dig10 C dig11 sm i r peso erro "Ljava/util/InputMismatchException; cpf 
+StackMapTable MethodParameters isValidCNPJ dig13 dig14 cnpj isValidEmail email Ljava/util/regex/Matcher; <clinit> 
+SourceFile ValidatorUtil.java 1       2 3  4    ,            5   3     *· ±    6   
+       7        8 9   	 :   5  H  	   Ü*Æ *¶   *
+¶  ¬>
+66	¢ "*¶ 0d6h`>d6§ÿÝpd6
+ 
+  	0<§ 
+0`<>66
+¢ "*¶ 0d6h`>d6§ÿÝpd6
+ 
+  	0=§ 
+0`=*	¶   *
+¶   § ¬:¬   × Ø   6   n    %  &  .  /  0 ( 1 3 2 ; 3 A 0 G 6 P 7 ^ 8 d : k = m > q ? { @  A  B  ?  E £ F ± G · I ¾ L Ø M Ú N 7   z  3  ; <  a  = >    ; <  ´  ? >  k m = >  ¾  ? >   ¾ @ <  ! · A <  P  B <   º C <  Ú  D E    Ü F 3   G   ^ ÿ         %ÿ        ÿ       %ÿ      @ÿ       H    F   	 I   5  ¤  	   æ*Æ *¶   *¶  ¬>66 ,*¶ 0d6h`>`6
+  6ÿ§ÿÕp6 	  	0<§ 
+d0`<>66 ,*¶ 0d6h`>`6
+  6ÿ§ÿÕp6 	  	0=§ 
+d0`=*¶   *
+¶   § ¬:¬   á â   6   ~    \  ]  e  f  g & h 1 i 9 j ? k F l I g O o U p ` q f s p v r w u x ~ y  z  {  |  } ¡ x §  ­  ¸  ¾  È  â  ä  7   z  1  ; <  c  J >    ; <  »  K >  p r J >  È  K >   È @ <  ! Á A <  U  B <   Å C <  ä  D E    æ L 3   G     ÿ         ÿ '       ÿ         ÿ        ÿ 	      ÿ '     ÿ       ÿ 	     @ÿ       H    L   	 M   5   \     *Ç ¬² *¶ !L+¶ '¬    6              7        N 3     % O  G     H    N    P   5   !      	,¸ .³ ±    6         Q    R
+```
+```java
+Êþº¾   = 9  (br/com/legalconnect/enums/StatusResponse	     SUCESSO *Lbr/com/legalconnect/enums/StatusResponse;	   	  ERRO	     AVISO	     $VALUES +[Lbr/com/legalconnect/enums/StatusResponse;
+      clone ()Ljava/lang/Object;
+      java/lang/Enum valueOf 5(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/Enum;
+     <init> (Ljava/lang/String;I)V 
+   	 
+  % & ' $values -()[Lbr/com/legalconnect/enums/StatusResponse; values Code LineNumberTable >(Ljava/lang/String;)Lbr/com/legalconnect/enums/StatusResponse; LocalVariableTable name Ljava/lang/String; MethodParameters this 
+$enum$name 
+$enum$ordinal 	Signature ()V <clinit> <Ljava/lang/Enum<Lbr/com/legalconnect/enums/StatusResponse;>; 
+SourceFile StatusResponse.java@1     @    @ 	   @          	 ( '  )   "      
+² 
+¶ À °    *        	  +  )   4     
+*¸ À °    *        ,       
+ - .   /    -      )   1     *+· ±    *        ,        0    /   	 1  2  3    4
+ & '  )   /      ½ Y² SY² SY² 
+S°    *         5 4  )   R      .» Y · !³ » Y"· !³ » Y#· !³ 
+¸ $³ 
+±    *        
+    '   3    6 7    8
+```
+```java
+artifactId=common-lib
+groupId=br.com.legalconnect.common
+version=1.0.0
+
+```
+```java
+br\com\legalconnect\common\dto\BaseEntity.class
+br\com\legalconnect\common\exception\BusinessException.class
+br\com\legalconnect\common\exception\Roles.class
+br\com\legalconnect\common\exception\GlobalExceptionHandler.class
+br\com\legalconnect\common\dto\SuccessResponseDTO.class
+br\com\legalconnect\common\dto\BaseResponse$BaseResponseBuilder.class
+br\com\legalconnect\enums\StatusResponse.class
+br\com\legalconnect\common\exception\ErrorCode.class
+br\com\legalconnect\common\dto\BaseResponse.class
+br\com\legalconnect\common\dto\BaseEntity$BaseEntityBuilder.class
+br\com\legalconnect\common\util\ValidatorUtil.class
+
+```
+```java
+E:\legalconnect\legalconnect\microservices\common-lib\src\main\java\br\com\legalconnect\common\exception\ErrorCode.java
+E:\legalconnect\legalconnect\microservices\common-lib\src\main\java\br\com\legalconnect\common\exception\GlobalExceptionHandler.java
+E:\legalconnect\legalconnect\microservices\common-lib\src\main\java\br\com\legalconnect\common\dto\BaseEntity.java
+E:\legalconnect\legalconnect\microservices\common-lib\src\main\java\br\com\legalconnect\common\dto\SuccessResponseDTO.java
+E:\legalconnect\legalconnect\microservices\common-lib\src\main\java\br\com\legalconnect\common\dto\BaseResponse.java
+E:\legalconnect\legalconnect\microservices\common-lib\src\main\java\br\com\legalconnect\common\exception\Roles.java
+E:\legalconnect\legalconnect\microservices\common-lib\src\main\java\br\com\legalconnect\common\util\ValidatorUtil.java
+E:\legalconnect\legalconnect\microservices\common-lib\src\main\java\br\com\legalconnect\common\exception\BusinessException.java
+E:\legalconnect\legalconnect\microservices\common-lib\src\main\java\br\com\legalconnect\enums\StatusResponse.java
+
+```
+```java
+
+```
+```java
+
+```

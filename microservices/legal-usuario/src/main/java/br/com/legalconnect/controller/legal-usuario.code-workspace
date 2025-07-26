@@ -7,22 +7,19 @@
       "path": "../../../../../../../../auth-service"
     },
     {
-      "path": "../../../../../../../../common-lib"
-    },
-    {
       "path": "../../../../../../../../infrastructure"
-    },
-    {
-      "path": "../../../../../../../../legalconnect-eureka-server"
-    },
-    {
-      "path": "../../../../../../../../legal-gaateway"
     },
     {
       "path": "../../../../../../../../legal-advogado"
     },
     {
       "path": "../../../../../../../../common-tenent"
+    },
+    {
+      "path": "../../../../../../../../common-lib"
+    },
+    {
+      "path": "../../../../../../../../legal-gaateway"
     }
   ],
   "settings": {

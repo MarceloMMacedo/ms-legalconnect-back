@@ -425,11 +425,18 @@ public class AuthService {
      *                           fraca.
      */
     // @Transactional
-    public void resetPassword(String token, String novaSenha) {
+    public void resetPassword(String email, String novaSenha) {
         log.info("Tentativa de redefinição de senha com token.");
 
         // 1. Busca e valida o token
-        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token).get();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(
+                        () -> {
+                            log.warn("Falha na redefinição de senha: Usuário não encontrado para o e-mail: {}", email);
+                            return new BusinessException(ErrorCode.USER_NOT_FOUND, "Usuário não encontrado.");
+                        });
+
+        PasswordResetToken resetToken = passwordResetTokenRepository.findFirstByUserId(user.getId()).get();
         if (resetToken == null) {
             log.warn("Falha na redefinição de senha: Token inválido ou não encontrado.");
             new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_INVALID,
@@ -466,7 +473,6 @@ public class AuthService {
         }
 
         // 2. Busca o usuário associado ao token
-        User user = resetToken.getUser();
         log.debug("Usuário encontrado para redefinição de senha: {}", user.getEmail());
 
         // 3. Criptografa e atualiza a nova senha

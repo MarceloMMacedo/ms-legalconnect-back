@@ -1,0 +1,53 @@
+Com certeza! Para otimizar a instrução para um prompt, vou consolidar as informações do relatório anterior em um formato direto e acionável, como se você estivesse dando as instruções a uma ferramenta de IA para criar ou refinar seu currículo.
+
+Aqui está a instrução de prompt otimizada:
+
+---
+
+**Instrução de Prompt: Criação de Currículo de Desenvolvedor Otimizado para ATS e Recrutadores**
+
+**Objetivo:** Gerar um currículo de desenvolvedor altamente otimizado para sistemas de triagem de candidatos (ATS) e recrutadores humanos, alinhado especificamente a uma vaga de emprego fornecida.
+
+**Instruções Detalhadas:**
+
+1.  **Análise da Vaga de Emprego:**
+    *   **Forneça a descrição completa da vaga de emprego.**
+    *   **Identifique e priorize as palavras-chave essenciais** da descrição da vaga. Isso inclui:
+        *   Habilidades técnicas (linguagens, frameworks, ferramentas, bancos de dados).
+        *   Habilidades interpessoais (comunicação, trabalho em equipe, resolução de problemas).
+        *   Termos e jargões específicos da indústria.
+        *   Cargos e títulos de função.
+        *   Verbos de ação.
+    *   **Inclua tanto o termo completo quanto suas abreviações/acrônimos** para palavras-chave importantes (ex: "Sistemas de Rastreamento de Candidatos (ATS)").
+
+2.  **Estrutura e Formatação (Amigável ao ATS):**
+    *   **Layout:** Utilize um formato simples, de coluna única e alinhado à esquerda. **Evite estritamente** tabelas, múltiplas colunas, caixas de texto, cabeçalhos/rodapés para informações de contato, bordas, linhas, símbolos complexos (além de marcadores padrão) e sombreamento.
+    *   **Fontes:** Use fontes profissionais padrão e altamente legíveis (ex: Arial, Calibri, Georgia, Tahoma, Verdana, Impact, Lucinda ou Trebuchet) com tamanho 11-12 pontos, de forma consistente em todo o documento.
+    *   **Caracteres Especiais:** Evite caracteres especiais ou palavras acentuadas (ex: "currículo" deve ser "curriculo"). Não use pontuação no nome.
+    *   **Títulos de Seção:** Use títulos claros, consistentes e padronizados em **MAIÚSCULAS** (ex: RESUMO, EDUCAÇÃO, EXPERIÊNCIA, HABILIDADES, PROJETOS).
+    *   **Informações de Contato:** Posicione as informações de contato diretamente no corpo do currículo, não no cabeçalho ou rodapé. A primeira linha deve conter apenas o nome.
+    *   **Datas:** Para entradas de experiência e educação, coloque as datas no lado direito da informação, sempre incluindo os meses (ex: "MM/AAAA").
+    *   **Extensão:** Mantenha o currículo conciso, idealmente em duas páginas para revisão humana.
+
+3.  **Otimização do Conteúdo:**
+    *   **Resumo Profissional/Visão Geral do Perfil:** Crie um resumo conciso, rico em palavras-chave, destacando as qualificações mais fortes e o histórico profissional relevante para a vaga. Apresente as principais habilidades técnicas de forma proeminente aqui.
+    *   **Experiência Profissional (Pontos de Bala):** Para cada ponto de bala que detalha a experiência, aplique a fórmula: **"Verbo de Ação + Conquista Quantificável + Palavra-Chave"**.
+        *   **Verbos de Ação:** Comece cada ponto de bala com um verbo de ação forte e específico que demonstre iniciativa e impacto (ex: "Arquitetou", "Desenvolveu", "Implementou", "Otimizou", "Liderou", "Depurou", "Automatizou", "Testou", "Solucionou problemas"). Varie os verbos para evitar repetição.
+        *   **Conquistas Quantificáveis:** Integre números e métricas para quantificar suas conquistas e demonstrar valor de forma tangível (ex: "reduziu o tempo de resposta em 40%", "aumentou a escalabilidade para 2 milhões de requisições por dia", "economizou US$ 2,5 milhões anualmente em custos operacionais", "melhorou a conformidade WCAG de Nível A para AAA").
+    *   **Seção de Habilidades:** Crie uma seção dedicada listando todas as habilidades técnicas e interpessoais relevantes ("obrigatórias" e "desejáveis") da descrição da vaga. Seja específico e honesto sobre os níveis de habilidade. Garanta que as habilidades listadas correspondam exatamente ao seu perfil do LinkedIn.
+    *   **Seção de Projetos (para Desenvolvedores):** Inclua uma seção separada intitulada "Projetos" ou "Projetos de Programação". Para cada projeto:
+        *   Forneça uma breve descrição (propósito, problema resolvido, seu papel).
+        *   Liste as tecnologias utilizadas (linguagens, frameworks, ferramentas).
+        *   Enfatize o impacto e os resultados com métricas (ex: "Melhorou a velocidade de processamento de dados em 25%", "Reduziu o tempo de carregamento da aplicação em 40%").
+        *   Inclua links relevantes para repositórios GitHub, demos ao vivo ou sites de portfólio.
+        *   Use pontos de bala para detalhar conquistas e habilidades específicas demonstradas.
+        *   Priorize projetos de alta qualidade e relevância para a vaga.
+
+4.  **Armadilhas a Evitar:**
+    *   **Preenchimento Excessivo de Palavras-Chave:** Integre as palavras-chave naturalmente no texto, sem sobrecarregar ou tornar o texto artificial.
+    *   **Experiências Não Relacionadas:** Limite as experiências de trabalho não diretamente relacionadas à vaga a entradas concisas, focando no que é mais relevante para a sua trajetória de desenvolvedor.
+    *   **Tecnologias Desatualizadas:** Destaque tecnologias modernas e evite referências a tecnologias obsoletas.
+    *   **Erros:** Revise rigorosamente para eliminar quaisquer erros de ortografia e gramática.
+    *   **Presença Online:** Inclua links para sua presença online profissional (LinkedIn, GitHub, portfólio) para complementar seu currículo.
+
+---
