@@ -62,8 +62,8 @@ public interface EnderecoMapper {
      * @return O objeto UUID.
      */
     @Named("mapStringToUuid")
-    default UUID mapStringToUuid(String id) {
-        return id != null ? UUID.fromString(id) : null;
+    default UUID mapStringToUuid(UUID id) {
+        return id != null ? (id) : null;
     }
 
     /**

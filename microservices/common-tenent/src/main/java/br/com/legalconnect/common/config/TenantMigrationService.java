@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
-import java.util.UUID; // Import UUID
 
 import javax.sql.DataSource;
 
@@ -47,7 +46,7 @@ public class TenantMigrationService {
     @Value("${application.tenant.default-id}") // Injeção da propriedade defaultTenantId
     private String defaultTenantIdString; // Usar String para o valor da propriedade
 
-    private UUID defaultTenantId; // Para armazenar o UUID parseado
+    private String defaultTenantId; // Para armazenar o UUID parseado
     @Autowired
     private EntityManagerFactory entityManagerFactory;
 
@@ -58,7 +57,7 @@ public class TenantMigrationService {
 
     @PostConstruct
     public void init() {
-        this.defaultTenantId = UUID.fromString(defaultTenantIdString);
+        this.defaultTenantId = (defaultTenantIdString);
     }
 
     public void setarSchemaPadrao(String schemaName) {

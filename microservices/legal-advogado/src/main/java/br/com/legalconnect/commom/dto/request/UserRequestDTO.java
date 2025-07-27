@@ -1,5 +1,7 @@
 package br.com.legalconnect.commom.dto.request;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -20,7 +22,7 @@ import lombok.Setter;
 @Builder
 public class UserRequestDTO {
     // ID é opcional para atualização (usado em PUT/PATCH)
-    private String id;
+    private UUID id;
 
     @NotBlank(message = "O e-mail do usuário é obrigatório.")
     @Email(message = "Formato de e-mail inválido.")
@@ -28,7 +30,8 @@ public class UserRequestDTO {
     private String email;
 
     @Size(min = 8, max = 255, message = "A senha do usuário deve ter no mínimo 8 caracteres.")
-    // @NotBlank(message = "A senha do usuário é obrigatória.") // Pode ser @NotBlank apenas na criação
+    // @NotBlank(message = "A senha do usuário é obrigatória.") // Pode ser
+    // @NotBlank apenas na criação
     private String senha; // Em requisições, a senha é enviada em texto limpo para ser hashed no backend
 
     @Size(max = 255, message = "O nome completo do usuário deve ter no máximo 255 caracteres.")

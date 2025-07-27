@@ -30,19 +30,23 @@ import br.com.legalconnect.common.config.TenantMigrationService;
 // muito específico e saiba o que está fazendo
 // @ComponentScan(basePackages = { "br.com.legalconnect.auth.service" })
 public class AuthServiceApplication implements CommandLineRunner {
+
     @Value("${application.tenant.default-id}") // Injeção da propriedade defaultTenantId
     private String defaultTenantIdString;
+
     @Autowired
     private TenantMigrationService tenantMigrationService;
+
     private static final Logger log = LoggerFactory.getLogger(AuthServiceApplication.class);
+
+    @Override
+    public void run(String... args) throws Exception {
+        tenantMigrationService.migrate(defaultTenantIdString);
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(AuthServiceApplication.class, args);
         log.info("LegalConnectApplication iniciada com sucesso!");
     }
 
-    @Override
-    public void run(String... args) throws Exception {
-        tenantMigrationService.migrate(defaultTenantIdString);
-    }
 }

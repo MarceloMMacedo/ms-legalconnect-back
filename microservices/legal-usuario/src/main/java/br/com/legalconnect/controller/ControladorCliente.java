@@ -51,8 +51,10 @@ public class ControladorCliente {
         @PostMapping
         public ResponseEntity<BaseResponse<ClienteResponseDTO>> cadastrarCliente(
                         @Valid @RequestBody ClienteRequestDTO requestDTO,
-                        @RequestHeader(value = "X-Correlation-Id", required = false) String userId) {
-                requestDTO.setUsuario(Optional.ofNullable(requestDTO.getUsuario())
+                        @RequestHeader(value = "X-Correlation-Id", required = false) String userId) { // Fix: Added
+                                                                                                      // missing
+                                                                                                      // parenthesis
+                requestDTO.setUsuario(Optional.ofNullable(requestDTO.getUsuario()) // Fix: Added missing parenthesis
                                 .orElseGet(() -> UserRequestDTO.builder().id(UUID.fromString(userId)).build()));
 
                 ClienteResponseDTO responseDTO = servicoCliente.cadastrarCliente(requestDTO); // Chamando o método

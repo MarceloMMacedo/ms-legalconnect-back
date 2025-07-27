@@ -102,11 +102,10 @@ public class ProfissionalController {
 
                                 if (request.getUsuario() == null) {
                                         // Se o DTO de usuário não foi fornecido no corpo, cria um com o ID do header
-                                        request.setUsuario(UserRequestDTO.builder().id(userUuid.toString()).build());
-                                } else if (request.getUsuario().getId() == null
-                                                || request.getUsuario().getId().trim().isEmpty()) {
+                                        request.setUsuario(UserRequestDTO.builder().id(userUuid).build());
+                                } else if (request.getUsuario().getId() == null) {
                                         // Se o DTO de usuário foi fornecido, mas sem ID, usa o do header
-                                        request.getUsuario().setId(userUuid.toString());
+                                        request.getUsuario().setId(userUuid);
                                 }
                         } catch (IllegalArgumentException e) {
                                 // Logar ou tratar erro se userIdHeader não for um UUID válido

@@ -79,7 +79,7 @@ public class PessoaService {
 
         // Persiste o usuário
         var newUser = new User();
-        newUser.setId(UUID.fromString(pessoaRequestDTO.getUsuario().getId()));
+        newUser.setId((pessoaRequestDTO.getUsuario().getId()));
 
         // Cria a Pessoa e associa o usuário
         Pessoa newPessoa = Pessoa.builder()

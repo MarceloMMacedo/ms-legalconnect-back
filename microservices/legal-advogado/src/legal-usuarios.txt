@@ -4374,7 +4374,7 @@ public interface EnderecoMapper {
      */
     @Named("mapStringToUuid")
     default UUID mapStringToUuid(String id) {
-        return id != null ? UUID.fromString(id) : null;
+        return id != null ? (id) : null;
     }
 
     /**
@@ -4976,7 +4976,7 @@ public class PessoaService {
 
         // Persiste o usuário
         var newUser = new User();
-        newUser.setId(UUID.fromString(pessoaRequestDTO.getUsuario().getId()));
+        newUser.setId((pessoaRequestDTO.getUsuario().getId()));
 
         // Cria a Pessoa e associa o usuário
         Pessoa newPessoa = Pessoa.builder()
@@ -5864,7 +5864,7 @@ logging.level.org.hibernate.engine.jdbc.connections.spi=INFO
 
 # ID do tenant padrão para usuários que não estão associados a um tenant específico (ex: clientes gerais)
 # Este UUID deve corresponder a um registro na tabela tb_tenant no schema global (public).
-application.tenant.default-id=00000000-0000-0000-0000-000000000001
+application.tenant.default-id=public
 
 # ===================================================================
 # Configurações do Spring Boot Actuator
