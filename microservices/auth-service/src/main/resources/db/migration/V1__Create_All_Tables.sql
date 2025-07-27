@@ -287,6 +287,7 @@ CREATE TABLE tb_user_role (
     role_id uuid NOT NULL,
     user_id uuid NOT NULL
 );
+,
 
 
 --

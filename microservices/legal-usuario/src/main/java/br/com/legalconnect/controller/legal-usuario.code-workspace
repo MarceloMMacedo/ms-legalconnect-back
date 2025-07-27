@@ -1,33 +1,43 @@
 {
   "folders": [
     {
+      "name": "legal-usuario",
       "path": "../../../../../../.."
     },
     {
+      "name": "auth-service",
       "path": "../../../../../../../../auth-service"
     },
     {
+      "name": "infrastructure",
       "path": "../../../../../../../../infrastructure"
     },
     {
+      "name": "legal-advogado",
       "path": "../../../../../../../../legal-advogado"
     },
     {
-      "path": "../../../../../../../../common-tenent"
-    },
-    {
-      "path": "../../../../../../../../common-lib"
-    },
-    {
-      "path": "../../../../../../../../legal-gaateway"
-    },
-    {
+      "name": "common-role",
       "path": "../../../../../../../../common-role"
     },
     {
+      "name": "common-tenent",
+      "path": "../../../../../../../../common-tenent"
+    },
+    {
+      "name": "common-lib",
+      "path": "../../../../../../../../common-lib"
+    },
+    {
+      "name": "legal-gaateway",
+      "path": "../../../../../../../../legal-gaateway"
+    },
+    {
+      "name": "legal-connect",
       "path": "../../../../../../../../../front/legal-connect"
     },
     {
+      "name": "legal-marketplace",
       "path": "../../../../../../../../legal-marketplace"
     }
   ],

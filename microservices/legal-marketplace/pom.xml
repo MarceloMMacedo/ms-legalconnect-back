@@ -104,14 +104,14 @@
 		<dependency>
 			<groupId>br.com.legalconnect.common</groupId>
 			<artifactId>common-lib</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.1</version>
 		</dependency>  <!-- common-lib (se aplicável, mantenha a versão
         correta) -->
-		<!-- <dependency>
-            <groupId>br.com.legalconnect.common</groupId>
-            <artifactId>common-tenent</artifactId>
-            <version>1.0.0</version>
-        </dependency> -->
+		<dependency>
+			<groupId>br.com.legalconnect.common</groupId>
+			<artifactId>common-tenent</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 
 		<!-- Lombok for boilerplate code reduction -->
 		<dependency>
