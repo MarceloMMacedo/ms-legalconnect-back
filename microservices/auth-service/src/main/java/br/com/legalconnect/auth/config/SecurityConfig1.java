@@ -38,9 +38,9 @@ import br.com.legalconnect.user.repository.UserRepository; // Importar UserRepos
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true) // Habilita segurança baseada em anotações como @PreAuthorize
-public class SecurityConfig {
+public class SecurityConfig1 {
 
-    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig1.class);
     // @Autowired
     // private JwtAuthEntryPoint unauthorizedHandler;
     @Autowired

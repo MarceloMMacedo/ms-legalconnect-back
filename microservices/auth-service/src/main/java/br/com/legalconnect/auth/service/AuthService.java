@@ -6,6 +6,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -115,8 +117,13 @@ public class AuthService {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "Credenciais inválidas.");
         }
 
+        List<String> roles = user.getRoles().stream().map(Role::getNome).toList();
+
         // Adiciona id do usuário e id do tenant aos claims do JWT
         Map<String, Object> claims = new HashMap<>();
+
+        claims.put("roles", roles);
+
         claims.put("X-Correlation-ID", user.getId());
         if (user.getTenant() != null) {
             claims.put("X-Tenant-ID", user.getTenant().getSchemaName());
@@ -583,6 +590,43 @@ public class AuthService {
             log.error("Erro ao enviar e-mail de recuperação de senha para {}: {}", to, e.getMessage(), e);
             // Opcional: Você pode relançar uma BusinessException ou tratar de outra forma
             throw new BusinessException(ErrorCode.INVALID_EMAIL, "Falha ao enviar e-mail de recuperação de senha.");
+        }
+    }
+
+    /**
+     * @brief Atualiza o status de um usuário.
+     *        Este método só pode ser acessado por usuários que NÃO POSSUAM a role
+     *        'ROLE_ADMIN'.
+     * @param userId    O ID do usuário cujo status será atualizado.
+     * @param newStatus O novo status para o usuário, deve corresponder a um valor
+     *                  do enum {@link UserStatus}.
+     * @return DTO do usuário atualizado.
+     * @throws BusinessException se o usuário não for encontrado ou se o status
+     *                           fornecido for inválido.
+     */
+    @Transactional
+    @PreAuthorize("hasRole('ROLE_ADMIN')") // Garante que usuários autenticados, mas NÃO ADMIN,
+                                           // podem usar este método.
+    public UserResponseDTO updateUserStatus(UUID userId, String newStatus) {
+        log.info("Tentativa de atualização de status para o usuário ID: {} com o novo status: {}", userId, newStatus);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.warn("Falha na atualização de status: Usuário não encontrado com ID: {}", userId);
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND, "Usuário não encontrado.");
+                });
+
+        try {
+            UserStatus statusEnum = UserStatus.valueOf(newStatus.toUpperCase());
+            user.setStatus(statusEnum);
+            user = userRepository.save(user);
+            log.info("Status do usuário {} atualizado com sucesso para: {}", userId, newStatus);
+            return userMapper.toDto(user);
+        } catch (IllegalArgumentException e) {
+            log.warn("Falha na atualização de status: Status inválido fornecido '{}' para o usuário ID: {}", newStatus,
+                    userId);
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "Status de usuário inválido: " + newStatus
+                    + ". Status permitidos: ACTIVE, INACTIVE, PENDING_APPROVAL, REJECTED, PENDING.");
         }
     }
 }

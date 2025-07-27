@@ -96,13 +96,6 @@ public class ProfissionalController {
         public ResponseEntity<BaseResponse<ProfissionalResponseDTO>> createProfissional(
                         @Valid @RequestBody ProfissionalCreateRequest request,
                         @RequestHeader(value = "X-Correlation-Id", required = false) String userIdHeader) {
-
-                // Regra de Negócio: Se o userIdHeader for fornecido e válido, usá-lo para
-                // associar o usuário ao profissional.
-                // Isso é feito no UserRequestDTO que está aninhado em PessoaRequestDTO, que por
-                // sua vez é o pai de ProfissionalCreateRequest.
-                // A lógica do PessoaService.createPessoa espera um ID no UserRequestDTO se a
-                // criação não for totalmente nova de ID.
                 if (userIdHeader != null && !userIdHeader.trim().isEmpty()) {
                         try {
                                 UUID userUuid = UUID.fromString(userIdHeader); // Validar se é um UUID válido

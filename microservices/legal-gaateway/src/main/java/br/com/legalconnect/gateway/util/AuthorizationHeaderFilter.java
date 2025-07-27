@@ -75,12 +75,10 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
             String requestPath = request.getPath().toString();
 
             // Exemplo de regra de autorização: Apenas ADMIN pode acessar
-            // /api/users/{userId}/status
-            if (requestPath.matches("/api/users/[^/]+/status")) {
-                if (userRoles == null || !userRoles.contains("ROLE_ADMIN")) {
-                    return onError(exchange, "Acesso negado. Requer ROLE_ADMIN.", HttpStatus.FORBIDDEN);
-                }
+            if (userRoles == null || !userRoles.contains("ROLE_ADMIN")) {
+                return onError(exchange, "Acesso negado. Requer ROLE_ADMIN.", HttpStatus.FORBIDDEN);
             }
+
             // Adicione mais regras de autorização aqui conforme a necessidade
             // Ex: if (requestPath.startsWith("/api/admin/") &&
             // !userRoles.contains("ROLE_ADMIN")) { ... }

@@ -2,6 +2,7 @@ package br.com.legalconnect.gateway.util;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 import java.util.function.Function;
 
 import javax.crypto.SecretKey;
@@ -55,7 +56,10 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
                 if (isTokenExpired(token)) {
                     throw new BusinessException(ErrorCode.TOKEN_EXPIRED, "Token expirado");
                 }
+                List<String> userRoles = (List<String>) claims.get("roles", List.class);
+
                 String correlationId = claims.get("X-Correlation-ID", String.class);
+
                 String tenantId = claims.get("X-Tenant-ID", String.class);
 
                 if (correlationId == null || correlationId.isBlank()) {
@@ -66,10 +70,15 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
                     throw new BusinessException(ErrorCode.TENANT_NOT_FOUND, "tenantId não encontrado no token");
                 }
 
+                if (userRoles == null || userRoles.isEmpty()) {
+                    throw new BusinessException(ErrorCode.USER_NOT_FOUND, "Role não encontrada no token");
+                }
+
                 ServerWebExchange mutated = exchange.mutate()
                         .request(builder -> {
                             builder.header("X-Correlation-ID", correlationId);
                             builder.header("X-Tenant-ID", tenantId);
+                            builder.header("X-User-Roles", String.join(",", userRoles));
 
                         })
                         .build();

@@ -202,4 +202,5 @@ public class AuthController {
                                 .status(StatusResponse.SUCESSO)
                                 .build());
         }
+
 }

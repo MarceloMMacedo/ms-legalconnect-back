@@ -20,6 +20,12 @@
     },
     {
       "path": "../../../../../../../../legal-gaateway"
+    },
+    {
+      "path": "../../../../../../../../common-role"
+    },
+    {
+      "path": "../../../../../../../../legalconnect-eureka-server"
     }
   ],
   "settings": {
