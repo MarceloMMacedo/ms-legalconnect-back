@@ -60,14 +60,10 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
 
                 String correlationId = claims.get("X-Correlation-ID", String.class);
 
-                String tenantId = claims.get("X-Tenant-ID", String.class);
+                // String tenantId = claims.get("X-Tenant-ID", String.class);
 
                 if (correlationId == null || correlationId.isBlank()) {
                     throw new BusinessException(ErrorCode.USER_NOT_FOUND, "X-Correlation-ID não encontrado no token");
-                }
-
-                if (tenantId == null || tenantId.isBlank()) {
-                    throw new BusinessException(ErrorCode.TENANT_NOT_FOUND, "tenantId não encontrado no token");
                 }
 
                 if (userRoles == null || userRoles.isEmpty()) {
@@ -77,7 +73,7 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
                 ServerWebExchange mutated = exchange.mutate()
                         .request(builder -> {
                             builder.header("X-Correlation-ID", correlationId);
-                            builder.header("X-Tenant-ID", tenantId);
+                            builder.header("X-Tenant-ID", "public");
                             builder.header("X-User-Roles", String.join(",", userRoles));
 
                         })
