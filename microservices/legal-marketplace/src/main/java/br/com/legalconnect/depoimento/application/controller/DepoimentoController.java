@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping; // Adicionada a importação para @RequestMapping no nível da classe
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -65,10 +66,12 @@ public class DepoimentoController {
                         @ApiResponse(responseCode = "401", description = "Não autorizado"),
                         @ApiResponse(responseCode = "403", description = "Acesso proibido")
         }, security = @SecurityRequirement(name = "bearerAuth")) // Referência ao esquema de segurança JWT
-        @PostMapping("/admin/depoimentos")
+        @PostMapping("/publico/depoimentos")
 
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> criarDepoimento(
-                        @RequestBody @Valid DepoimentoRequestDTO request) {
+                        @RequestBody @Valid DepoimentoRequestDTO request,
+                        @RequestHeader("X-Correlation-ID") String userId) {
+                request.setUserId(UUID.fromString(userId));
                 DepoimentoResponseDTO novoDepoimento = appService.criarDepoimento(request);
                 return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.<DepoimentoResponseDTO>builder()
                                 .data(novoDepoimento)
@@ -83,7 +86,7 @@ public class DepoimentoController {
                         @ApiResponse(responseCode = "403", description = "Acesso proibido"),
                         @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
         }, security = @SecurityRequirement(name = "bearerAuth"))
-        @PutMapping("/admin/depoimentos/{id}")
+        @PutMapping("/publico/depoimentos/{id}")
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> atualizarDepoimento(
                         @PathVariable UUID id,
                         @RequestBody @Valid DepoimentoRequestDTO request) {
@@ -100,7 +103,7 @@ public class DepoimentoController {
                         @ApiResponse(responseCode = "403", description = "Acesso proibido"),
                         @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
         }, security = @SecurityRequirement(name = "bearerAuth"))
-        @DeleteMapping("/admin/depoimentos/{id}")
+        @DeleteMapping("/publico/depoimentos/{id}")
 
         public ResponseEntity<BaseResponse<Void>> excluirDepoimento(@PathVariable UUID id) {
                 appService.excluirDepoimento(id);
@@ -115,7 +118,7 @@ public class DepoimentoController {
                         @ApiResponse(responseCode = "403", description = "Acesso proibido"),
                         @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
         }, security = @SecurityRequirement(name = "bearerAuth"))
-        @PatchMapping("/admin/depoimentos/{id}/aprovar")
+        @PatchMapping("/publico/depoimentos/{id}/aprovar")
 
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> aprovarDepoimento(@PathVariable UUID id) {
                 DepoimentoResponseDTO depoimentoAprovado = appService.aprovarDepoimento(id);
@@ -131,7 +134,7 @@ public class DepoimentoController {
                         @ApiResponse(responseCode = "403", description = "Acesso proibido"),
                         @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
         }, security = @SecurityRequirement(name = "bearerAuth"))
-        @PatchMapping("/admin/depoimentos/{id}/reprovar")
+        @PatchMapping("/publico/depoimentos/{id}/reprovar")
 
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> reprovarDepoimento(@PathVariable UUID id) {
                 DepoimentoResponseDTO depoimentoReprovado = appService.reprovarDepoimento(id);
@@ -146,7 +149,7 @@ public class DepoimentoController {
                         @ApiResponse(responseCode = "401", description = "Não autorizado"),
                         @ApiResponse(responseCode = "403", description = "Acesso proibido")
         }, security = @SecurityRequirement(name = "bearerAuth"))
-        @GetMapping("/admin/depoimentos/todos")
+        @GetMapping("/publico/depoimentos/todos")
 
         public ResponseEntity<BaseResponse<List<DepoimentoResponseDTO>>> listarTodosAdmin() {
                 List<DepoimentoResponseDTO> depoimentos = appService.listarTodos();
@@ -162,7 +165,7 @@ public class DepoimentoController {
                         @ApiResponse(responseCode = "403", description = "Acesso proibido"),
                         @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
         }, security = @SecurityRequirement(name = "bearerAuth"))
-        @GetMapping("/admin/depoimentos/{id}")
+        @GetMapping("/publico/depoimentos/{id}")
 
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> buscarDepoimentoPorIdAdmin(@PathVariable UUID id) {
                 DepoimentoResponseDTO depoimento = appService.buscarPorId(id);
