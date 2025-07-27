@@ -1,4 +1,4 @@
-package br.com.legalconnect.depoimento.infrastructure.persistence;
+package br.com.legalconnect.depoimento.infrastructure.repository;
 
 import java.util.List;
 import java.util.UUID;

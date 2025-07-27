@@ -1,16 +1,16 @@
 package br.com.legalconnect.depoimento.domain.service;
 
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
 import br.com.legalconnect.depoimento.domain.enums.DepoimentoStatus;
 import br.com.legalconnect.depoimento.domain.enums.TipoDepoimento;
 import br.com.legalconnect.depoimento.domain.model.Depoimento;
-import br.com.legalconnect.depoimento.infrastructure.persistence.DepoimentoJpaRepository;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import br.com.legalconnect.depoimento.infrastructure.repository.DepoimentoJpaRepository;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Serviço de domínio para gerenciar operações relacionadas a Depoimentos.

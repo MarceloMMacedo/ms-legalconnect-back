@@ -16,7 +16,7 @@ import br.com.legalconnect.depoimento.domain.enums.DepoimentoStatus;
 import br.com.legalconnect.depoimento.domain.enums.TipoDepoimento;
 import br.com.legalconnect.depoimento.domain.model.Depoimento;
 import br.com.legalconnect.depoimento.domain.service.DepoimentoService;
-import br.com.legalconnect.depoimento.infrastructure.persistence.DepoimentoJpaRepository;
+import br.com.legalconnect.depoimento.infrastructure.repository.DepoimentoJpaRepository;
 import br.com.legalconnect.depoimento.user.domain.service.UserService;
 import lombok.RequiredArgsConstructor;
 

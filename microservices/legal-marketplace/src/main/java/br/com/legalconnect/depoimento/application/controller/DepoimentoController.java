@@ -44,7 +44,7 @@ public class DepoimentoController {
          *               (padrão: false).
          * @return ResponseEntity com a lista de depoimentos.
          */
-        @GetMapping("/api/v1/public/depoimentos")
+        @GetMapping("/api/v1/publico/depoimentos")
         public ResponseEntity<BaseResponse<List<DepoimentoResponseDTO>>> listarParaHome(
                         @RequestParam(defaultValue = "5") int limit,
                         @RequestParam(defaultValue = "false") boolean random) {
@@ -59,12 +59,12 @@ public class DepoimentoController {
 
         /**
          * Cria um novo depoimento.
-         * Exemplo: POST /api/v1/admin/depoimentos
+         * Exemplo: POST /api/v1/publico/depoimentos
          * 
          * @param request O DTO com os dados do depoimento a ser criado.
          * @return ResponseEntity com o depoimento criado e status 201 CREATED.
          */
-        @PostMapping("/api/v1/admin/depoimentos")
+        @PostMapping("/api/v1/publico/depoimentos")
         // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> criarDepoimento(
                         @RequestBody @Valid DepoimentoRequestDTO request) {
@@ -77,13 +77,13 @@ public class DepoimentoController {
 
         /**
          * Atualiza um depoimento existente.
-         * Exemplo: PUT /api/v1/admin/depoimentos/{id}
+         * Exemplo: PUT /api/v1/publico/depoimentos/{id}
          * 
          * @param id      O ID do depoimento a ser atualizado.
          * @param request O DTO com os dados atualizados do depoimento.
          * @return ResponseEntity com o depoimento atualizado.
          */
-        @PutMapping("/api/v1/admin/depoimentos/{id}")
+        @PutMapping("/api/v1/publico/depoimentos/{id}")
         // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> atualizarDepoimento(
                         @PathVariable UUID id,
@@ -97,12 +97,12 @@ public class DepoimentoController {
 
         /**
          * Exclui um depoimento pelo ID.
-         * Exemplo: DELETE /api/v1/admin/depoimentos/{id}
+         * Exemplo: DELETE /api/v1/publico/depoimentos/{id}
          * 
          * @param id O ID do depoimento a ser excluído.
          * @return ResponseEntity com status 204 NO CONTENT.
          */
-        @DeleteMapping("/api/v1/admin/depoimentos/{id}")
+        @DeleteMapping("/api/v1/publico/depoimentos/{id}")
         // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
         public ResponseEntity<BaseResponse<Void>> excluirDepoimento(@PathVariable UUID id) {
                 appService.excluirDepoimento(id);
@@ -113,12 +113,12 @@ public class DepoimentoController {
 
         /**
          * Aprova um depoimento.
-         * Exemplo: PATCH /api/v1/admin/depoimentos/{id}/aprovar
+         * Exemplo: PATCH /api/v1/publico/depoimentos/{id}/aprovar
          * 
          * @param id O ID do depoimento a ser aprovado.
          * @return ResponseEntity com o depoimento aprovado.
          */
-        @PatchMapping("/api/v1/admin/depoimentos/{id}/aprovar")
+        @PatchMapping("/api/v1/publico/depoimentos/{id}/aprovar")
         // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> aprovarDepoimento(@PathVariable UUID id) {
                 DepoimentoResponseDTO depoimentoAprovado = appService.aprovarDepoimento(id);
@@ -130,12 +130,12 @@ public class DepoimentoController {
 
         /**
          * Reprova um depoimento.
-         * Exemplo: PATCH /api/v1/admin/depoimentos/{id}/reprovar
+         * Exemplo: PATCH /api/v1/publico/depoimentos/{id}/reprovar
          * 
          * @param id O ID do depoimento a ser reprovado.
          * @return ResponseEntity com o depoimento reprovado.
          */
-        @PatchMapping("/api/v1/admin/depoimentos/{id}/reprovar")
+        @PatchMapping("/api/v1/publico/depoimentos/{id}/reprovar")
         // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> reprovarDepoimento(@PathVariable UUID id) {
                 DepoimentoResponseDTO depoimentoReprovado = appService.reprovarDepoimento(id);
@@ -147,11 +147,11 @@ public class DepoimentoController {
 
         /**
          * Lista todos os depoimentos (uso administrativo).
-         * Exemplo: GET /api/v1/admin/depoimentos
+         * Exemplo: GET /api/v1/publico/depoimentos
          * 
          * @return ResponseEntity com a lista de todos os depoimentos.
          */
-        @GetMapping("/api/v1/admin/depoimentos")
+        @GetMapping("/api/v1/publico/depoimentos")
         // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
         public ResponseEntity<BaseResponse<List<DepoimentoResponseDTO>>> listarTodosAdmin() {
                 List<DepoimentoResponseDTO> depoimentos = appService.listarTodos();
@@ -163,12 +163,12 @@ public class DepoimentoController {
 
         /**
          * Busca um depoimento específico pelo ID (uso administrativo).
-         * Exemplo: GET /api/v1/admin/depoimentos/{id}
+         * Exemplo: GET /api/v1/publico/depoimentos/{id}
          * 
          * @param id O ID do depoimento.
          * @return ResponseEntity com o depoimento encontrado.
          */
-        @GetMapping("/api/v1/admin/depoimentos/{id}")
+        @GetMapping("/api/v1/publico/depoimentos/{id}")
         // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> buscarDepoimentoPorIdAdmin(@PathVariable UUID id) {
                 DepoimentoResponseDTO depoimento = appService.buscarPorId(id);
