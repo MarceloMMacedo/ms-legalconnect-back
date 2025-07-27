@@ -53,6 +53,8 @@ public enum ErrorCode {
     VALIDATION_ERROR("1007", "Erro de validação nos dados fornecidos."),
     DATABASE_ERROR("1008", "Erro ao acessar o banco de dados."),
     INTEGRATION_ERROR("1009", "Erro de integração com serviço externo."),
+    DEPOIMENTO_ALREADY_APPROVED("1010", "Depoimento já está aprovado."), // Erro específico do módulo de Depoimentos
+    DEPOIMENTO_ALREADY_REJECTED("1011", "Depoimento já está reprovado."), // Erro específico do módulo de Depoimentos
 
     // Erros de Autenticação e Autorização (2000-2999)
     INVALID_CREDENTIALS("2000", "Credenciais de autenticação inválidas."),

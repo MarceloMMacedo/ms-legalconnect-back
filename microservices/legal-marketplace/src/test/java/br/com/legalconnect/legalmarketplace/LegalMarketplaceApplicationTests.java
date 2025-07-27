@@ -1,10 +1,10 @@
-package br.com.legalconnect.legal_usuario;
+package br.com.legalconnect.legalmarketplace;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class LegalUsuarioApplicationTests {
+class LegalMarketplaceApplicationTests {
 
 	@Test
 	void contextLoads() {
