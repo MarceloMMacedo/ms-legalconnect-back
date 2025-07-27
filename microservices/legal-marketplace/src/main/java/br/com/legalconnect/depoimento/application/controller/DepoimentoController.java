@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping; // Adicionada a importação para @RequestMapping no nível da classe
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,6 +20,13 @@ import br.com.legalconnect.common.dto.BaseResponse;
 import br.com.legalconnect.depoimento.application.dto.DepoimentoRequestDTO;
 import br.com.legalconnect.depoimento.application.dto.DepoimentoResponseDTO;
 import br.com.legalconnect.depoimento.application.service.DepoimentoAppService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement; // Para segurança JWT
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -28,23 +36,19 @@ import lombok.RequiredArgsConstructor;
  */
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/v1") // Mover o prefixo da URL para o nível da classe
+@Tag(name = "Depoimentos", description = "Gerenciamento de depoimentos para o marketplace jurídico")
 public class DepoimentoController {
 
         private final DepoimentoAppService appService;
 
-        // --- Endpoints Públicos ---
-
-        /**
-         * Lista depoimentos para exibição na página inicial, com opções de limite e
-         * ordenação.
-         * Exemplo: GET /api/v1/public/depoimentos?limit=5&random=true
-         * 
-         * @param limit  O número máximo de depoimentos a serem retornados (padrão: 5).
-         * @param random Booleano para indicar se os depoimentos devem ser aleatórios
-         *               (padrão: false).
-         * @return ResponseEntity com a lista de depoimentos.
-         */
-        @GetMapping("/api/v1/publico/depoimentos")
+        @Operation(summary = "Lista depoimentos para a página inicial", description = "Retorna uma lista de depoimentos aprovados, com opções de limite e ordenação aleatória.", parameters = {
+                        @Parameter(name = "limit", description = "Número máximo de depoimentos a serem retornados (padrão: 5)", example = "5"),
+                        @Parameter(name = "random", description = "Indica se os depoimentos devem ser aleatórios (padrão: false)", example = "true")
+        }, responses = {
+                        @ApiResponse(responseCode = "200", description = "Depoimentos listados com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class)))
+        })
+        @GetMapping("/publico/depoimentos")
         public ResponseEntity<BaseResponse<List<DepoimentoResponseDTO>>> listarParaHome(
                         @RequestParam(defaultValue = "5") int limit,
                         @RequestParam(defaultValue = "false") boolean random) {
@@ -55,17 +59,14 @@ public class DepoimentoController {
                                 .build());
         }
 
-        // --- Endpoints de Administração (requer ROLE_PLATAFORMA_ADMIN) ---
+        @Operation(summary = "Cria um novo depoimento", description = "Cria um novo depoimento no sistema. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados do depoimento a ser criado", required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoRequestDTO.class))), responses = {
+                        @ApiResponse(responseCode = "201", description = "Depoimento criado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class))),
+                        @ApiResponse(responseCode = "400", description = "Requisição inválida"),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido")
+        }, security = @SecurityRequirement(name = "bearerAuth")) // Referência ao esquema de segurança JWT
+        @PostMapping("/admin/depoimentos")
 
-        /**
-         * Cria um novo depoimento.
-         * Exemplo: POST /api/v1/publico/depoimentos
-         * 
-         * @param request O DTO com os dados do depoimento a ser criado.
-         * @return ResponseEntity com o depoimento criado e status 201 CREATED.
-         */
-        @PostMapping("/api/v1/publico/depoimentos")
-        // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> criarDepoimento(
                         @RequestBody @Valid DepoimentoRequestDTO request) {
                 DepoimentoResponseDTO novoDepoimento = appService.criarDepoimento(request);
@@ -75,16 +76,14 @@ public class DepoimentoController {
                                 .build());
         }
 
-        /**
-         * Atualiza um depoimento existente.
-         * Exemplo: PUT /api/v1/publico/depoimentos/{id}
-         * 
-         * @param id      O ID do depoimento a ser atualizado.
-         * @param request O DTO com os dados atualizados do depoimento.
-         * @return ResponseEntity com o depoimento atualizado.
-         */
-        @PutMapping("/api/v1/publico/depoimentos/{id}")
-        // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
+        @Operation(summary = "Atualiza um depoimento existente", description = "Atualiza os dados de um depoimento pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", parameters = @Parameter(name = "id", description = "ID do depoimento a ser atualizado", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef"), requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados atualizados do depoimento", required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoRequestDTO.class))), responses = {
+                        @ApiResponse(responseCode = "200", description = "Depoimento atualizado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class))),
+                        @ApiResponse(responseCode = "400", description = "Requisição inválida"),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido"),
+                        @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @PutMapping("/admin/depoimentos/{id}")
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> atualizarDepoimento(
                         @PathVariable UUID id,
                         @RequestBody @Valid DepoimentoRequestDTO request) {
@@ -95,15 +94,14 @@ public class DepoimentoController {
                                 .build());
         }
 
-        /**
-         * Exclui um depoimento pelo ID.
-         * Exemplo: DELETE /api/v1/publico/depoimentos/{id}
-         * 
-         * @param id O ID do depoimento a ser excluído.
-         * @return ResponseEntity com status 204 NO CONTENT.
-         */
-        @DeleteMapping("/api/v1/publico/depoimentos/{id}")
-        // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
+        @Operation(summary = "Exclui um depoimento", description = "Exclui um depoimento permanentemente pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", parameters = @Parameter(name = "id", description = "ID do depoimento a ser excluído", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef"), responses = {
+                        @ApiResponse(responseCode = "204", description = "Depoimento excluído com sucesso"),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido"),
+                        @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @DeleteMapping("/admin/depoimentos/{id}")
+
         public ResponseEntity<BaseResponse<Void>> excluirDepoimento(@PathVariable UUID id) {
                 appService.excluirDepoimento(id);
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body(BaseResponse.<Void>builder()
@@ -111,15 +109,14 @@ public class DepoimentoController {
                                 .build());
         }
 
-        /**
-         * Aprova um depoimento.
-         * Exemplo: PATCH /api/v1/publico/depoimentos/{id}/aprovar
-         * 
-         * @param id O ID do depoimento a ser aprovado.
-         * @return ResponseEntity com o depoimento aprovado.
-         */
-        @PatchMapping("/api/v1/publico/depoimentos/{id}/aprovar")
-        // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
+        @Operation(summary = "Aprova um depoimento", description = "Altera o status de um depoimento para 'APROVADO'. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", parameters = @Parameter(name = "id", description = "ID do depoimento a ser aprovado", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef"), responses = {
+                        @ApiResponse(responseCode = "200", description = "Depoimento aprovado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class))),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido"),
+                        @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @PatchMapping("/admin/depoimentos/{id}/aprovar")
+
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> aprovarDepoimento(@PathVariable UUID id) {
                 DepoimentoResponseDTO depoimentoAprovado = appService.aprovarDepoimento(id);
                 return ResponseEntity.ok(BaseResponse.<DepoimentoResponseDTO>builder()
@@ -128,15 +125,14 @@ public class DepoimentoController {
                                 .build());
         }
 
-        /**
-         * Reprova um depoimento.
-         * Exemplo: PATCH /api/v1/publico/depoimentos/{id}/reprovar
-         * 
-         * @param id O ID do depoimento a ser reprovado.
-         * @return ResponseEntity com o depoimento reprovado.
-         */
-        @PatchMapping("/api/v1/publico/depoimentos/{id}/reprovar")
-        // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
+        @Operation(summary = "Reprova um depoimento", description = "Altera o status de um depoimento para 'REPROVADO'. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", parameters = @Parameter(name = "id", description = "ID do depoimento a ser reprovado", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef"), responses = {
+                        @ApiResponse(responseCode = "200", description = "Depoimento reprovado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class))),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido"),
+                        @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @PatchMapping("/admin/depoimentos/{id}/reprovar")
+
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> reprovarDepoimento(@PathVariable UUID id) {
                 DepoimentoResponseDTO depoimentoReprovado = appService.reprovarDepoimento(id);
                 return ResponseEntity.ok(BaseResponse.<DepoimentoResponseDTO>builder()
@@ -145,14 +141,13 @@ public class DepoimentoController {
                                 .build());
         }
 
-        /**
-         * Lista todos os depoimentos (uso administrativo).
-         * Exemplo: GET /api/v1/publico/depoimentos
-         * 
-         * @return ResponseEntity com a lista de todos os depoimentos.
-         */
-        @GetMapping("/api/v1/publico/depoimentos")
-        // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
+        @Operation(summary = "Lista todos os depoimentos (administração)", description = "Retorna uma lista completa de todos os depoimentos, independentemente do status. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", responses = {
+                        @ApiResponse(responseCode = "200", description = "Todos os depoimentos listados para administração", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class))),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @GetMapping("/admin/depoimentos/todos")
+
         public ResponseEntity<BaseResponse<List<DepoimentoResponseDTO>>> listarTodosAdmin() {
                 List<DepoimentoResponseDTO> depoimentos = appService.listarTodos();
                 return ResponseEntity.ok(BaseResponse.<List<DepoimentoResponseDTO>>builder()
@@ -161,15 +156,14 @@ public class DepoimentoController {
                                 .build());
         }
 
-        /**
-         * Busca um depoimento específico pelo ID (uso administrativo).
-         * Exemplo: GET /api/v1/publico/depoimentos/{id}
-         * 
-         * @param id O ID do depoimento.
-         * @return ResponseEntity com o depoimento encontrado.
-         */
-        @GetMapping("/api/v1/publico/depoimentos/{id}")
-        // @PreAuthorize("hasRole('PLATAFORMA_ADMIN')")
+        @Operation(summary = "Busca um depoimento por ID (administração)", description = "Retorna um depoimento específico pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", parameters = @Parameter(name = "id", description = "ID do depoimento a ser buscado", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef"), responses = {
+                        @ApiResponse(responseCode = "200", description = "Depoimento encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class))),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido"),
+                        @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @GetMapping("/admin/depoimentos/{id}")
+
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> buscarDepoimentoPorIdAdmin(@PathVariable UUID id) {
                 DepoimentoResponseDTO depoimento = appService.buscarPorId(id);
                 return ResponseEntity.ok(BaseResponse.<DepoimentoResponseDTO>builder()

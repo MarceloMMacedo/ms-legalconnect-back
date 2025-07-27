@@ -268,7 +268,7 @@ CREATE TABLE tb_user (
     updated_at timestamp(6) without time zone NOT NULL,
     cpf character varying(14),
     id uuid NOT NULL,
-    tenant_id uuid NOT NULL,
+    tenant_id uuid  ,
     telefone character varying(20),
     status character varying(50) NOT NULL,
     user_type character varying(50) NOT NULL,
