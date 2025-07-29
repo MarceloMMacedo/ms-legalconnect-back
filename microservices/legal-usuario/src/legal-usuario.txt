@@ -3445,7 +3445,7 @@ management.endpoints.web.base-path=/actuator
 # Esta configuração é um exemplo e pode ser ajustada conforme a necessidade.
 # Em produção, 'allowed-origins' deve ser restrito aos domínios do seu frontend.
 # spring.web.cors.allowed-origins=*
-# spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS,PATCH
+# spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS,put
 # spring.web.cors.allowed-headers=*
 # spring.web.cors.allow-credentials=false
 # spring.web.cors.max-age=3600
@@ -7242,7 +7242,7 @@ management.endpoints.web.base-path=/actuator
 # Esta configuração é um exemplo e pode ser ajustada conforme a necessidade.
 # Em produção, 'allowed-origins' deve ser restrito aos domínios do seu frontend.
 # spring.web.cors.allowed-origins=*
-# spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS,PATCH
+# spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS,put
 # spring.web.cors.allowed-headers=*
 # spring.web.cors.allow-credentials=false
 # spring.web.cors.max-age=3600

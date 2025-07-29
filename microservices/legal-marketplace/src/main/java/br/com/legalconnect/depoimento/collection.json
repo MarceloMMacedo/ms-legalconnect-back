@@ -306,7 +306,7 @@
       }
     },
     "/api/v1/publico/depoimentos/{id}/reprovar": {
-      "patch": {
+      "put": {
         "tags": ["Depoimentos"],
         "summary": "Reprova um depoimento",
         "description": "Altera o status de um depoimento para 'REPROVADO'. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
@@ -367,7 +367,7 @@
       }
     },
     "/api/v1/publico/depoimentos/{id}/aprovar": {
-      "patch": {
+      "put": {
         "tags": ["Depoimentos"],
         "summary": "Aprova um depoimento",
         "description": "Altera o status de um depoimento para 'APROVADO'. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",

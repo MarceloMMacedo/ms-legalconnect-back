@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -67,7 +66,6 @@ public class DepoimentoController {
                         @ApiResponse(responseCode = "403", description = "Acesso proibido")
         }, security = @SecurityRequirement(name = "bearerAuth")) // Referência ao esquema de segurança JWT
         @PostMapping("/publico/depoimentos")
-
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> criarDepoimento(
                         @RequestBody @Valid DepoimentoRequestDTO request,
                         @RequestHeader("X-Correlation-ID") String userId) {
@@ -104,7 +102,6 @@ public class DepoimentoController {
                         @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
         }, security = @SecurityRequirement(name = "bearerAuth"))
         @DeleteMapping("/publico/depoimentos/{id}")
-
         public ResponseEntity<BaseResponse<Void>> excluirDepoimento(@PathVariable UUID id) {
                 appService.excluirDepoimento(id);
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body(BaseResponse.<Void>builder()
@@ -118,8 +115,7 @@ public class DepoimentoController {
                         @ApiResponse(responseCode = "403", description = "Acesso proibido"),
                         @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
         }, security = @SecurityRequirement(name = "bearerAuth"))
-        @PatchMapping("/publico/depoimentos/{id}/aprovar")
-
+        @PutMapping("/publico/depoimentos/{id}/aprovar")
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> aprovarDepoimento(@PathVariable UUID id) {
                 DepoimentoResponseDTO depoimentoAprovado = appService.aprovarDepoimento(id);
                 return ResponseEntity.ok(BaseResponse.<DepoimentoResponseDTO>builder()
@@ -134,8 +130,7 @@ public class DepoimentoController {
                         @ApiResponse(responseCode = "403", description = "Acesso proibido"),
                         @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
         }, security = @SecurityRequirement(name = "bearerAuth"))
-        @PatchMapping("/publico/depoimentos/{id}/reprovar")
-
+        @PutMapping("/publico/depoimentos/{id}/reprovar")
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> reprovarDepoimento(@PathVariable UUID id) {
                 DepoimentoResponseDTO depoimentoReprovado = appService.reprovarDepoimento(id);
                 return ResponseEntity.ok(BaseResponse.<DepoimentoResponseDTO>builder()
@@ -150,7 +145,6 @@ public class DepoimentoController {
                         @ApiResponse(responseCode = "403", description = "Acesso proibido")
         }, security = @SecurityRequirement(name = "bearerAuth"))
         @GetMapping("/publico/depoimentos/todos")
-
         public ResponseEntity<BaseResponse<List<DepoimentoResponseDTO>>> listarTodosAdmin() {
                 List<DepoimentoResponseDTO> depoimentos = appService.listarTodos();
                 return ResponseEntity.ok(BaseResponse.<List<DepoimentoResponseDTO>>builder()
@@ -166,7 +160,6 @@ public class DepoimentoController {
                         @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
         }, security = @SecurityRequirement(name = "bearerAuth"))
         @GetMapping("/publico/depoimentos/{id}")
-
         public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> buscarDepoimentoPorIdAdmin(@PathVariable UUID id) {
                 DepoimentoResponseDTO depoimento = appService.buscarPorId(id);
                 return ResponseEntity.ok(BaseResponse.<DepoimentoResponseDTO>builder()

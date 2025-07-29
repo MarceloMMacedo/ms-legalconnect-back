@@ -29,8 +29,6 @@ import br.com.legalconnect.auth.dto.RefreshTokenRequestDTO;
 import br.com.legalconnect.auth.dto.UserProfileUpdate;
 import br.com.legalconnect.auth.dto.UserRegistrationRequest;
 import br.com.legalconnect.auth.dto.UserResponseDTO;
-import br.com.legalconnect.auth.entity.Tenant;
-import br.com.legalconnect.auth.repository.TenantRepository;
 import br.com.legalconnect.common.dto.BaseResponse;
 import br.com.legalconnect.common.exception.BusinessException;
 import br.com.legalconnect.common.exception.ErrorCode;
@@ -61,8 +59,6 @@ public class AuthService {
     private final JwtService jwtService;
 
     private final AuthenticationManager authenticationManager;
-
-    private final TenantRepository tenantRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -125,22 +121,16 @@ public class AuthService {
         claims.put("roles", roles);
 
         claims.put("X-Correlation-ID", user.getId());
-        if (user.getTenant() != null) {
-            claims.put("X-Tenant-ID", user.getTenant().getSchemaName());
-        }
+
+        claims.put("X-Tenant-ID", "public");
 
         // Gera os tokens com os claims adicionais
         String jwtToken = jwtService.generateToken(claims, user);
         String refreshToken = jwtService.generateRefreshToken(user);
-        log.info("Tokens JWT gerados para o usuário ID: {}, Tenant ID: {}", user.getId(),
-                user.getTenant() != null ? user.getTenant().getId() : "N/A");
 
         // Adiciona informações ao MDC após autenticação bem-sucedida para logs
         // subsequentes
         MDC.put("X-Correlation-ID", String.valueOf(user.getId()));
-        if (user.getTenant() != null) {
-            MDC.put("X-Tenant-ID", String.valueOf(user.getTenant().getId()));
-        }
 
         return BaseResponse.<AuthResponse>builder()
                 .status(StatusResponse.SUCESSO)
@@ -184,19 +174,13 @@ public class AuthService {
             // Ao gerar um novo access token, re-incluímos os claims de userId e tenantId
             Map<String, Object> claims = new HashMap<>();
             claims.put("userId", user.getId());
-            if (user.getTenant() != null) {
-                claims.put("tenantId", user.getTenant().getId());
-            }
-            String accessToken = jwtService.generateToken(claims, user);
 
-            log.info("Novo access token gerado para o usuário ID: {}, Tenant ID: {}", user.getId(),
-                    user.getTenant() != null ? user.getTenant().getId() : "N/A");
+            claims.put("tenantId", "public");
+
+            String accessToken = jwtService.generateToken(claims, user);
 
             // Adiciona informações ao MDC para logs subsequentes
             MDC.put("userId", String.valueOf(user.getId()));
-            if (user.getTenant() != null) {
-                MDC.put("tenantId", String.valueOf(user.getTenant().getId()));
-            }
 
             return br.com.legalconnect.common.dto.BaseResponse.<AuthResponse>builder()
                     .status(StatusResponse.SUCESSO)
@@ -239,22 +223,23 @@ public class AuthService {
         // }
         // 2. Busca o tenant padrão
         // 2. Busca o tenant padrão ou cria um novo se não existir
-        Tenant defaultTenant = tenantRepository.findBySchemaName(defaultTenantIds)
-                .orElseGet(() -> {
-                    log.info("Tenant padrão não encontrado. Criando novo tenant com schema: {}", defaultTenantIds);
-                    return tenantRepository.save(Tenant.builder()
-                            .schemaName(defaultTenantIds)
-                            .createdAt(LocalDateTime.now())
-                            .updatedAt(LocalDateTime.now())
-                            .nome("Tenant Padrão")
-                            .build());
-                });
+        // Tenant defaultTenant = tenantRepository.findBySchemaName(defaultTenantIds)
+        // .orElseGet(() -> {
+        // log.info("Tenant padrão não encontrado. Criando novo tenant com schema: {}",
+        // defaultTenantIds);
+        // return tenantRepository.save(Tenant.builder()
+        // .schemaName(defaultTenantIds)
+        // .createdAt(LocalDateTime.now())
+        // .updatedAt(LocalDateTime.now())
+        // .nome("Tenant Padrão")
+        // .build());
+        // });
 
         // 3. Cria a entidade User
         User user = userMapper.toEntity(request);
         user.setSenhaHash(passwordEncoder.encode(request.getSenha())); // Criptografa a senha
         user.setUserType(userType);
-        user.setTenant(defaultTenant); // Associa ao tenant padrão
+        // user.setTenant(defaultTenant); // Associa ao tenant padrão
 
         // 4. Define o status inicial e atribui a role com base no tipo de usuário
         Role assignedRole;

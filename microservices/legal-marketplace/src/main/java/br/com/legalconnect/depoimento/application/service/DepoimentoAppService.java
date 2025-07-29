@@ -17,7 +17,6 @@ import br.com.legalconnect.depoimento.domain.enums.TipoDepoimento;
 import br.com.legalconnect.depoimento.domain.model.Depoimento;
 import br.com.legalconnect.depoimento.domain.service.DepoimentoService;
 import br.com.legalconnect.depoimento.infrastructure.repository.DepoimentoJpaRepository;
-import br.com.legalconnect.depoimento.user.domain.service.UserService;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -32,7 +31,7 @@ public class DepoimentoAppService {
 
     private final DepoimentoService domainService;
     private final DepoimentoJpaRepository repository;
-    private final UserService userService;
+    private final UserServiceImpl userService;
 
     /**
      * Converte um DepoimentoRequestDTO para uma entidade Depoimento.

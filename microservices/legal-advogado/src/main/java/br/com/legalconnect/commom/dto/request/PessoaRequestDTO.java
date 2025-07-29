@@ -27,7 +27,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder
 public class PessoaRequestDTO {
-    // ID é opcional para atualização (usado em PUT/PATCH para identificar a Pessoa)
+    // ID é opcional para atualização (usado em PUT/put para identificar a Pessoa)
     private UUID id;
 
     @Valid

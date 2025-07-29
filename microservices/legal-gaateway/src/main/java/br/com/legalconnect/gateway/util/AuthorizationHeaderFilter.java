@@ -14,8 +14,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
-import br.com.legalconnect.gateway.config.exception.BusinessException;
-import br.com.legalconnect.gateway.config.exception.ErrorCode;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -43,18 +41,18 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                 String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
                 if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                    throw new BusinessException(ErrorCode.USER_NOT_FOUND, "Token não encontrado");
+                    return chain.filter(exchange);
                 }
 
                 String token = authHeader.substring(7);
 
                 if (token == null || token.isBlank()) {
-                    throw new BusinessException(ErrorCode.USER_NOT_FOUND, "Token não encontrado");
+                    return chain.filter(exchange);
                 }
 
                 Claims claims = extractAllClaims(token);
                 if (isTokenExpired(token)) {
-                    throw new BusinessException(ErrorCode.TOKEN_EXPIRED, "Token expirado");
+                    return chain.filter(exchange);
                 }
                 List<String> userRoles = (List<String>) claims.get("roles", List.class);
 
@@ -75,7 +73,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
             } catch (Exception e) {
                 log.error("Erro ao processar token JWT: {}", e.getMessage());
-                return chain.filter(mutated);
+                return chain.filter(exchange);
             }
         };
     }

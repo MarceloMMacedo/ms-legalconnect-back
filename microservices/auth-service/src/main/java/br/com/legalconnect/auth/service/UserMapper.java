@@ -34,7 +34,7 @@ public interface UserMapper {
     }
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "tenant", ignore = true) // Tenant é definido no serviço
+    // @Mapping(target = "tenant", ignore = true) // Tenant é definido no serviço
     @Mapping(target = "roles", ignore = true) // Roles são definidas no serviço
     @Mapping(target = "senhaHash", ignore = true) // Senha é criptografada no serviço
     @Mapping(target = "userType", ignore = true) // userType é definido no serviço
@@ -44,7 +44,7 @@ public interface UserMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "tenant", ignore = true)
+    // @Mapping(target = "tenant", ignore = true)
     @Mapping(target = "roles", ignore = true)
     @Mapping(target = "senhaHash", ignore = true)
     @Mapping(target = "userType", ignore = true)

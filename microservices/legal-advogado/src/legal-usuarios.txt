@@ -4057,7 +4057,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class EnderecoRequestDTO {
-    // ID é opcional para atualização (usado em PUT/PATCH)
+    // ID é opcional para atualização (usado em PUT/put)
     private String id; // Pode ser UUID ou String, dependendo da BaseEntity
 
     @NotBlank(message = "O logradouro é obrigatório.")
@@ -4124,7 +4124,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder
 public class PessoaRequestDTO {
-    // ID é opcional para atualização (usado em PUT/PATCH para identificar a Pessoa)
+    // ID é opcional para atualização (usado em PUT/put para identificar a Pessoa)
     private UUID id;
 
     @Valid
@@ -4173,7 +4173,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class UserRequestDTO {
-    // ID é opcional para atualização (usado em PUT/PATCH)
+    // ID é opcional para atualização (usado em PUT/put)
     private String id;
 
     @NotBlank(message = "O e-mail do usuário é obrigatório.")
@@ -5883,7 +5883,7 @@ management.endpoints.web.base-path=/actuator
 # Esta configuração é um exemplo e pode ser ajustada conforme a necessidade.
 # Em produção, 'allowed-origins' deve ser restrito aos domínios do seu frontend.
 # spring.web.cors.allowed-origins=*
-# spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS,PATCH
+# spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS,put
 # spring.web.cors.allowed-headers=*
 # spring.web.cors.allow-credentials=false
 # spring.web.cors.max-age=3600

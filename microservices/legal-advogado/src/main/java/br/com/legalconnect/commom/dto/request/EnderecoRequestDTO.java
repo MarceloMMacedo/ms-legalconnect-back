@@ -20,7 +20,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class EnderecoRequestDTO {
-    // ID é opcional para atualização (usado em PUT/PATCH)
+    // ID é opcional para atualização (usado em PUT/put)
     private String id; // Pode ser UUID ou String, dependendo da BaseEntity
 
     @NotBlank(message = "O logradouro é obrigatório.")

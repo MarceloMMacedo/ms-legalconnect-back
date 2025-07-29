@@ -11,7 +11,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import br.com.legalconnect.auth.entity.Tenant;
 import br.com.legalconnect.common.dto.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,7 +20,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -51,10 +49,12 @@ public class User extends BaseEntity implements UserDetails { // Implementa User
 
     private static final Logger log = LoggerFactory.getLogger(User.class);
 
-    @ManyToOne(fetch = FetchType.LAZY) // Relacionamento muitos-para-um com Tenant
-    // Referencia a tabela tb_tenant que está no schema public (global)
-    @JoinColumn(name = "tenant_id", nullable = false, referencedColumnName = "id")
-    private Tenant tenant; // Identificador do tenant ao qual o usuário pertence
+    // @ManyToOne(fetch = FetchType.LAZY) // Relacionamento muitos-para-um com
+    // Tenant
+    // // Referencia a tabela tb_tenant que está no schema public (global)
+    // @JoinColumn(name = "tenant_id", nullable = false, referencedColumnName =
+    // "id")
+    // private Tenant tenant; // Identificador do tenant ao qual o usuário pertence
 
     @Column(name = "nome_completo", nullable = false, length = 255)
     private String nomeCompleto; // Nome completo do usuário
