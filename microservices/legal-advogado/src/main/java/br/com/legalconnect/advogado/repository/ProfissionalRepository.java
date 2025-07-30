@@ -61,6 +61,6 @@ public interface ProfissionalRepository extends JpaRepository<Profissional, UUID
      *
      * @return Uma lista de Object[] contendo pares [estado, cidade].
      */
-    @Query(value = "SELECT DISTINCT p.estado, p.cidade FROM tb_pessoa p WHERE p.estado IS NOT NULL AND p.cidade IS NOT NULL ORDER BY p.estado, p.cidade", nativeQuery = true)
+    @Query(value = "SELECT DISTINCT e.estado, e.cidade FROM tb_endereco e WHERE e.estado IS NOT NULL AND e.cidade IS NOT NULL ORDER BY e.estado, e.cidade", nativeQuery = true)
     List<Object[]> findDistinctEstadosAndCidades();
 }
