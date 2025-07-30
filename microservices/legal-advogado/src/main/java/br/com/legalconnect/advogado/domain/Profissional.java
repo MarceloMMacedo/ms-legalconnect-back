@@ -44,19 +44,16 @@ public class Profissional extends Pessoa {
     private Boolean fazParteDePlano = false;
 
     @Column(name = "pessoa_id", nullable = false, unique = true)
-    private UUID pessoaId; // Referência ao ID da Pessoa (do Person Service)
+    private UUID pessoaId;
 
     @Column(name = "empresa_id")
-    private UUID empresaId; // Referência ao ID da Empresa (do Company Service)
-
+    private UUID empresaId;
     @Column(name = "plano_id", nullable = false)
-    private UUID planoId; // Referência ao ID do Plano (do Subscription Service)
+    private UUID planoId;
 
     @Column(name = "tenant_id", nullable = false)
-    private UUID tenantId; // Para isolamento de dados por tenant
+    private UUID tenantId;
 
-    // Relacionamentos com entidades que residem no mesmo Professional Service
-    // (infraestrutura)
     @OneToMany(mappedBy = "profissional", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Certificacao> certificacoes = new HashSet<>();
 

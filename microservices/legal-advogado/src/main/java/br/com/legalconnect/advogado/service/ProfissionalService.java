@@ -1,6 +1,9 @@
 package br.com.legalconnect.advogado.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -323,13 +326,7 @@ public class ProfissionalService {
     public Page<ProfissionalResponseDTO> findAllProfissionais(Pageable pageable) {
         UUID tenantId = TenantContext.getCurrentTenantId(); // Filtra por tenant
 
-        Page<Profissional> profissionaisPage = profissionalRepository.findAllByTenantId(tenantId, pageable); // This
-                                                                                                             // line is
-                                                                                                             // correct,
-                                                                                                             // no
-                                                                                                             // change
-                                                                                                             // needed
-                                                                                                             // here.
+        Page<Profissional> profissionaisPage = profissionalRepository.findAllByTenantId(tenantId, pageable);
         return profissionaisPage.map(this::mapToResponseDTOWithDetails);
     }
 
@@ -609,5 +606,17 @@ public class ProfissionalService {
                         entityName + " com ID " + id + " não encontrado(a).");
             }
         }
+    }
+
+    public Map<String, List<String>> listarLocalizacoesDisponiveis() {
+        List<Object[]> resultados = profissionalRepository.findDistinctEstadosAndCidades();
+        Map<String, List<String>> localizacoes = new HashMap<>();
+
+        for (Object[] row : resultados) {
+            String estado = (String) row[0];
+            String cidade = (String) row[1];
+            localizacoes.computeIfAbsent(estado, k -> new ArrayList<>()).add(cidade);
+        }
+        return localizacoes;
     }
 }

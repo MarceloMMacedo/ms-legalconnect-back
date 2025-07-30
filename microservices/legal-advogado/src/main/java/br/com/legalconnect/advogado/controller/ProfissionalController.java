@@ -3,6 +3,7 @@ package br.com.legalconnect.advogado.controller;
 import static br.com.legalconnect.enums.StatusResponse.SUCESSO;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,22 +23,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.legalconnect.advogado.application.dto.request.CertificacaoRequestDTO;
-import br.com.legalconnect.advogado.application.dto.request.DocumentoUploadRequest;
-import br.com.legalconnect.advogado.application.dto.request.ExperienciaProfissionalRequestDTO;
-import br.com.legalconnect.advogado.application.dto.request.FormacaoAcademicaRequestDTO;
-import br.com.legalconnect.advogado.application.dto.request.ProfissionalCreateRequest;
-import br.com.legalconnect.advogado.application.dto.request.ProfissionalUpdateRequest;
-import br.com.legalconnect.advogado.application.dto.response.CertificacaoResponseDTO;
-import br.com.legalconnect.advogado.application.dto.response.DocumentoResponseDTO;
-import br.com.legalconnect.advogado.application.dto.response.ExperienciaProfissionalResponseDTO;
-import br.com.legalconnect.advogado.application.dto.response.FormacaoAcademicaResponseDTO;
-import br.com.legalconnect.advogado.application.dto.response.ProfissionalResponseDTO;
-import br.com.legalconnect.advogado.application.service.CertificacaoService;
-import br.com.legalconnect.advogado.application.service.DocumentoService;
-import br.com.legalconnect.advogado.application.service.ExperienciaProfissionalService;
-import br.com.legalconnect.advogado.application.service.FormacaoAcademicaService;
-import br.com.legalconnect.advogado.application.service.ProfissionalService;
+import br.com.legalconnect.advogado.dto.request.CertificacaoRequestDTO;
+import br.com.legalconnect.advogado.dto.request.DocumentoUploadRequest;
+import br.com.legalconnect.advogado.dto.request.ExperienciaProfissionalRequestDTO;
+import br.com.legalconnect.advogado.dto.request.FormacaoAcademicaRequestDTO;
+import br.com.legalconnect.advogado.dto.request.ProfissionalCreateRequest;
+import br.com.legalconnect.advogado.dto.request.ProfissionalUpdateRequest;
+import br.com.legalconnect.advogado.dto.response.CertificacaoResponseDTO;
+import br.com.legalconnect.advogado.dto.response.DocumentoResponseDTO;
+import br.com.legalconnect.advogado.dto.response.ExperienciaProfissionalResponseDTO;
+import br.com.legalconnect.advogado.dto.response.FormacaoAcademicaResponseDTO;
+import br.com.legalconnect.advogado.dto.response.ProfissionalResponseDTO;
+import br.com.legalconnect.advogado.service.CertificacaoService;
+import br.com.legalconnect.advogado.service.DocumentoService;
+import br.com.legalconnect.advogado.service.ExperienciaProfissionalService;
+import br.com.legalconnect.advogado.service.FormacaoAcademicaService;
+import br.com.legalconnect.advogado.service.ProfissionalService;
 import br.com.legalconnect.commom.dto.request.UserRequestDTO;
 import br.com.legalconnect.common.dto.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -75,6 +76,33 @@ public class ProfissionalController {
                 this.documentoService = documentoService;
         }
 
+        // ***************************************
+
+        /**
+         * Lista todas as localizações (estados e cidades) onde há profissionais.
+         * Retorna um mapa onde a chave é o estado (UF) e o valor é uma lista de
+         * cidades.
+         *
+         * @return ResponseEntity com o mapa de localizações.
+         */
+        @Operation(summary = "Lista todas as localizações (estados e cidades)", description = "Retorna um mapa de estados e suas respectivas cidades onde há advogados cadastrados.", responses = {
+                        @ApiResponse(responseCode = "200", description = "Localizações listadas com sucesso"),
+                        @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+        })
+        @GetMapping("/localizacoes")
+        public ResponseEntity<BaseResponse<Map<String, List<String>>>> getAllLocalizacoes() {
+                Map<String, List<String>> response = profissionalService.listarLocalizacoesDisponiveis();
+
+                return ResponseEntity.status(HttpStatus.CREATED)
+                                .body(BaseResponse.<Map<String, List<String>>>builder()
+                                                .status(SUCESSO)
+                                                .message("Profissional criado com sucesso.")
+                                                .data(response)
+                                                .timestamp(java.time.LocalDateTime.now())
+                                                .build());
+        }
+
+        // ************************************************ */
         /**
          * Cria um novo profissional (advogado) no sistema.
          * Funcionalidade Completa: Cadastro de Advogado com dados aninhados.

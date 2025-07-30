@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.legalconnect.advogado.application.dto.response.TipoAtendimentoResponseDTO;
-import br.com.legalconnect.advogado.application.service.TipoAtendimentoService;
+import br.com.legalconnect.advogado.dto.response.TipoAtendimentoResponseDTO;
+import br.com.legalconnect.advogado.service.TipoAtendimentoService;
 import br.com.legalconnect.common.dto.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

@@ -7,9 +7,11 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @EnableJpaRepositories(basePackages = {
-		"br.com.legalconnect.advogado.domain.repository",
+		"br.com.legalconnect.advogado.repository",
 		"br.com.legalconnect.commom.repository" })
-@EntityScan(basePackages = { "br.com.legalconnect.commom.model", "br.com.legalconnect.advogado.domain.modal.entity" })
+@EntityScan(basePackages = {
+		"br.com.legalconnect.commom.model",
+		"br.com.legalconnect.advogado.domain" })
 @EnableDiscoveryClient
 @SpringBootApplication
 public class LegalUsuarioApplication {

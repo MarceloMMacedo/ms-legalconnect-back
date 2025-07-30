@@ -1,11 +1,13 @@
 package br.com.legalconnect.advogado.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable; // Importar Pageable
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import br.com.legalconnect.advogado.domain.Profissional;
@@ -50,4 +52,15 @@ public interface ProfissionalRepository extends JpaRepository<Profissional, UUID
      *         contrário.
      */
     boolean existsByPessoaId(UUID pessoaId);
+
+    /**
+     * NOVO MÉTODO: Busca todos os estados e cidades (municípios) distintos
+     * de todas as Pessoas cadastradas.
+     * Retorna uma lista de arrays de objetos, onde cada array contém [estado,
+     * cidade].
+     *
+     * @return Uma lista de Object[] contendo pares [estado, cidade].
+     */
+    @Query(value = "SELECT DISTINCT p.estado, p.cidade FROM tb_pessoa p WHERE p.estado IS NOT NULL AND p.cidade IS NOT NULL ORDER BY p.estado, p.cidade", nativeQuery = true)
+    List<Object[]> findDistinctEstadosAndCidades();
 }

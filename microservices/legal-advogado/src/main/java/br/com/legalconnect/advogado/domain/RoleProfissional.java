@@ -27,13 +27,3 @@ public class RoleProfissional extends BaseEntity {
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 }
-
-// --- Entidades de Dados Mestres (se gerenciadas localmente no Professional
-// Service) ---
-// NOTA: Se estas entidades residirem em um "Master Data Service" separado e o
-// Professional Service
-// apenas referenciar seus IDs, então estas classes de entidade não estariam
-// aqui.
-// Elas são incluídas assumindo que o Professional Service pode ter uma cópia
-// local ou gerenciar
-// essas entidades para seu próprio contexto.

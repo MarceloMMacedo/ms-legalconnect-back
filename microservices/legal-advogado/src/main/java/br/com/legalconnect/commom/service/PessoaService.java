@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import br.com.legalconnect.advogado.domain.modal.entity.LocalAtuacao;
+import br.com.legalconnect.advogado.domain.LocalAtuacao;
 import br.com.legalconnect.commom.dto.request.PessoaRequestDTO;
 import br.com.legalconnect.commom.dto.request.UserRequestDTO;
 import br.com.legalconnect.commom.dto.response.PessoaResponseDTO;
