@@ -36,7 +36,7 @@ import lombok.RequiredArgsConstructor;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1") // Mover o prefixo da URL para o nível da classe
+@RequestMapping("/api/v1/publico/marketplace") // Mover o prefixo da URL para o nível da classe
 @Tag(name = "Depoimentos", description = "Gerenciamento de depoimentos para o marketplace jurídico")
 public class DepoimentoController {
 
@@ -48,7 +48,7 @@ public class DepoimentoController {
         }, responses = {
                         @ApiResponse(responseCode = "200", description = "Depoimentos listados com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class)))
         })
-        @GetMapping("/publico/depoimentos")
+        @GetMapping("/depoimentos")
         public ResponseEntity<BaseResponse<List<DepoimentoResponseDTO>>> listarParaHome(
                         @RequestParam(defaultValue = "5") int limit,
                         @RequestParam(defaultValue = "false") boolean random) {

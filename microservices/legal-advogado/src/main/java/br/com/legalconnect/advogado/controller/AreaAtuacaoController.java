@@ -1,6 +1,5 @@
 package br.com.legalconnect.advogado.controller;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,26 +59,4 @@ public class AreaAtuacaoController {
                                 .build());
         }
 
-        /**
-         * Lista todas as Áreas de Atuação.
-         * Funcionalidade Completa: Listagem de todas as áreas disponíveis para seleção
-         * pelos advogados.
-         * Regras de Negócio: N/A (apenas listagem).
-         *
-         * @return ResponseEntity com a lista de DTOs de Áreas de Atuação.
-         */
-        @Operation(summary = "Lista todas as áreas de atuação", description = "Retorna uma lista de todas as áreas de atuação cadastradas.", responses = {
-                        @ApiResponse(responseCode = "200", description = "Áreas de Atuação listadas com sucesso"),
-                        @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
-        })
-        @GetMapping
-        public ResponseEntity<BaseResponse<List<AreaAtuacaoResponseDTO>>> getAllAreasAtuacao() {
-                List<AreaAtuacaoResponseDTO> response = areaAtuacaoService.findAllAreasAtuacao();
-                return ResponseEntity.ok(BaseResponse.<List<AreaAtuacaoResponseDTO>>builder()
-                                .status(StatusResponse.SUCESSO)
-                                .message("Áreas de Atuação listadas com sucesso.")
-                                .data(response)
-                                .timestamp(java.time.LocalDateTime.now())
-                                .build());
-        }
 }

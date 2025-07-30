@@ -33,10 +33,6 @@
       "path": "../../../../../../../../legal-gaateway"
     },
     {
-      "name": "legal-connect",
-      "path": "../../../../../../../../../front/legal-connect"
-    },
-    {
       "path": "../../../../../../../../legal-marketplace"
     }
   ],

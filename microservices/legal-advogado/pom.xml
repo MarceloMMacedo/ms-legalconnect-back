@@ -108,6 +108,11 @@
 			<version>1.0.1</version>
 		</dependency>
 
+		<dependency>
+			<groupId>br.com.legalconnect.common</groupId> <!-- GroupId da biblioteca -->
+			<artifactId>common-role</artifactId> <!-- ArtifactId da biblioteca -->
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 		<!-- Lombok for boilerplate code reduction -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
