@@ -83,6 +83,11 @@
             <scope>runtime</scope>
         </dependency>
 
+        <dependency>
+            <groupId>br.com.legalconnect.common</groupId> <!-- GroupId da biblioteca -->
+            <artifactId>common-role</artifactId> <!-- ArtifactId da biblioteca -->
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <!-- MapStruct for DTO-Entity mapping -->
         <dependency>
             <groupId>org.mapstruct</groupId>
