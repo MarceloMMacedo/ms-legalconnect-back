@@ -1,10 +1,10 @@
-package br.com.legalconnect.depoimento.application.service;
+package br.com.legalconnect.depoimento.service;
 
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import br.com.legalconnect.depoimento.infrastructure.repository.UserRepository;
+import br.com.legalconnect.depoimento.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 /**

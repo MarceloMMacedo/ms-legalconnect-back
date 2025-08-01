@@ -1,4 +1,4 @@
-package br.com.legalconnect.depoimento.application.service;
+package br.com.legalconnect.depoimento.service;
 
 import java.util.List;
 import java.util.UUID;
@@ -10,13 +10,13 @@ import org.springframework.stereotype.Service;
 
 import br.com.legalconnect.common.exception.BusinessException;
 import br.com.legalconnect.common.exception.ErrorCode;
-import br.com.legalconnect.depoimento.application.dto.DepoimentoRequestDTO;
-import br.com.legalconnect.depoimento.application.dto.DepoimentoResponseDTO;
 import br.com.legalconnect.depoimento.domain.enums.DepoimentoStatus;
 import br.com.legalconnect.depoimento.domain.enums.TipoDepoimento;
 import br.com.legalconnect.depoimento.domain.model.Depoimento;
 import br.com.legalconnect.depoimento.domain.service.DepoimentoService;
-import br.com.legalconnect.depoimento.infrastructure.repository.DepoimentoJpaRepository;
+import br.com.legalconnect.depoimento.dto.DepoimentoRequestDTO;
+import br.com.legalconnect.depoimento.dto.DepoimentoResponseDTO;
+import br.com.legalconnect.depoimento.repository.DepoimentoJpaRepository;
 import lombok.RequiredArgsConstructor;
 
 /**

@@ -1,4 +1,4 @@
-package br.com.legalconnect.depoimento.application.dto;
+package br.com.legalconnect.depoimento.dto;
 
 import java.util.UUID;
 

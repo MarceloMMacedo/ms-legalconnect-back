@@ -1,4 +1,4 @@
-package br.com.legalconnect.depoimento.application.controller;
+package br.com.legalconnect.depoimento.controller;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.legalconnect.common.dto.BaseResponse;
-import br.com.legalconnect.depoimento.application.dto.DepoimentoRequestDTO;
-import br.com.legalconnect.depoimento.application.dto.DepoimentoResponseDTO;
-import br.com.legalconnect.depoimento.application.service.DepoimentoAppService;
+import br.com.legalconnect.depoimento.dto.DepoimentoRequestDTO;
+import br.com.legalconnect.depoimento.dto.DepoimentoResponseDTO;
+import br.com.legalconnect.depoimento.service.DepoimentoAppService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

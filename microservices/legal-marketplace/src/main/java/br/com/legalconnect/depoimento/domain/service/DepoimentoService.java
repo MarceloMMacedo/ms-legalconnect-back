@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import br.com.legalconnect.depoimento.domain.enums.DepoimentoStatus;
 import br.com.legalconnect.depoimento.domain.enums.TipoDepoimento;
 import br.com.legalconnect.depoimento.domain.model.Depoimento;
-import br.com.legalconnect.depoimento.infrastructure.repository.DepoimentoJpaRepository;
+import br.com.legalconnect.depoimento.repository.DepoimentoJpaRepository;
 import lombok.RequiredArgsConstructor;
 
 /**
