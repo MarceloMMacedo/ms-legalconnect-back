@@ -1,7 +1,7 @@
 //
 // DTO específico para um patrocínio de escritório.
 //
-package br.com.legalconnect.patrocinio.application.dto;
+package br.com.legalconnect.patrocinio.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -12,7 +12,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
-public class PatrocinioEscritorioRequestDTO extends PatrocinioRequestDTO {
+public class DestaquesEscritorioRequestDTO extends DestaquesRequestDTO {
     @NotBlank(message = "O nome do escritório é obrigatório.")
     private String nome;
     @NotBlank(message = "O slogan do escritório é obrigatório.")

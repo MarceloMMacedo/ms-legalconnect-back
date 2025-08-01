@@ -1,9 +1,5 @@
-//
-// Entidade JPA para um patrocínio de notícia.
-//
-package br.com.legalconnect.patrocinio.domain.model;
 
-import java.time.LocalDateTime;
+package br.com.legalconnect.patrocinio.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -15,21 +11,21 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@DiscriminatorValue("NOTICIA")
+@DiscriminatorValue("ESCRITORIO")
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class PatrocinioNoticia extends PatrocinioItem {
+public class DestaquesEscritorio extends DestaquesItem {
     @Column(length = 255)
-    private String titulo;
-    @Column(name = "imagem_url", length = 255)
-    private String imagemUrl;
-    @Column(name = "data_publicacao")
-    private LocalDateTime dataPublicacao;
+    private String nome;
+    @Column(length = 255)
+    private String slogan;
+    @Column(name = "logo_url", length = 255)
+    private String logoUrl;
 
     @PostLoad
     public void setTipo() {
-        this.tipo = "NOTICIA";
+        this.tipo = "ESCRITORIO";
     }
 }

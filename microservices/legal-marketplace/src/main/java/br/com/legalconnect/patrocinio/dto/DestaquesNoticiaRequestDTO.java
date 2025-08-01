@@ -1,7 +1,7 @@
 //
 // DTO específico para um patrocínio de notícia.
 //
-package br.com.legalconnect.patrocinio.application.dto;
+package br.com.legalconnect.patrocinio.dto;
 
 import java.time.LocalDateTime;
 
@@ -14,7 +14,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
-public class PatrocinioNoticiaRequestDTO extends PatrocinioRequestDTO {
+public class DestaquesNoticiaRequestDTO extends DestaquesRequestDTO {
     @NotBlank(message = "O título da notícia é obrigatório.")
     private String titulo;
     @NotBlank(message = "A URL da imagem é obrigatória.")

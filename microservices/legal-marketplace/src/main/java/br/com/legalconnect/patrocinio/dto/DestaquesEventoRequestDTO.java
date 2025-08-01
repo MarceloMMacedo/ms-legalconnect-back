@@ -1,7 +1,7 @@
 //
 // DTO específico para um patrocínio de evento.
 //
-package br.com.legalconnect.patrocinio.application.dto;
+package br.com.legalconnect.patrocinio.dto;
 
 import java.time.LocalDateTime;
 
@@ -14,7 +14,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
-public class PatrocinioEventoRequestDTO extends PatrocinioRequestDTO {
+public class DestaquesEventoRequestDTO extends DestaquesRequestDTO {
     @NotBlank(message = "O título do evento é obrigatório.")
     private String titulo;
     @NotNull(message = "A data do evento é obrigatória.")

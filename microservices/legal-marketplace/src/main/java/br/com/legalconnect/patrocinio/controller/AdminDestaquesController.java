@@ -2,7 +2,7 @@
 // Controlador REST para gerenciar os patrocinadores do marketplace jurídico.
 // Este controlador lida com os endpoints de administração.
 //
-package br.com.legalconnect.patrocinio.application.controller;
+package br.com.legalconnect.patrocinio.controller;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,9 +21,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.legalconnect.common.dto.BaseResponse;
-import br.com.legalconnect.patrocinio.application.dto.PatrocinioRequestDTO;
-import br.com.legalconnect.patrocinio.application.dto.PatrocinioResponseDTO;
-import br.com.legalconnect.patrocinio.application.service.PatrocinioAppService;
+import br.com.legalconnect.patrocinio.dto.DestaquesRequestDTO;
+import br.com.legalconnect.patrocinio.dto.DestaquesResponseDTO;
+import br.com.legalconnect.patrocinio.service.PatrocinioAppService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -41,8 +41,8 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "Patrocínios (Admin)", description = "Endpoints para gerenciamento de patrocinadores no marketplace jurídico (acesso administrativo)")
-@RequestMapping("/api/v1/patrocinios")
-public class AdminPatrocinioController {
+@RequestMapping("/api/v1/destaques")
+public class AdminDestaquesController {
 
         private final PatrocinioAppService patrocinioAppService;
 
@@ -55,13 +55,13 @@ public class AdminPatrocinioController {
          *         resposta padrão.
          */
         @Operation(summary = "Lista todos os patrocinadores (administração)", description = "Retorna uma lista completa de todos os patrocinadores, independentemente do status. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", responses = {
-                        @ApiResponse(responseCode = "200", description = "Todos os patrocinadores listados", content = @Content(mediaType = "application/json", schema = @Schema(implementation = PatrocinioResponseDTO.class))),
+                        @ApiResponse(responseCode = "200", description = "Todos os patrocinadores listados", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DestaquesResponseDTO.class))),
                         @ApiResponse(responseCode = "403", description = "Acesso proibido")
         }, security = @SecurityRequirement(name = "bearerAuth"))
         @GetMapping
-        public ResponseEntity<BaseResponse<List<PatrocinioResponseDTO>>> getAllPatrocinios() {
-                List<PatrocinioResponseDTO> patrocinadores = patrocinioAppService.findAllPatrocinios();
-                return ResponseEntity.ok(BaseResponse.<List<PatrocinioResponseDTO>>builder()
+        public ResponseEntity<BaseResponse<List<DestaquesResponseDTO>>> getAllPatrocinios() {
+                List<DestaquesResponseDTO> patrocinadores = patrocinioAppService.findAllPatrocinios();
+                return ResponseEntity.ok(BaseResponse.<List<DestaquesResponseDTO>>builder()
                                 .data(patrocinadores)
                                 .message("Todos os patrocinadores listados.")
                                 .build());
@@ -76,15 +76,15 @@ public class AdminPatrocinioController {
          * @return ResponseEntity com o patrocinador criado e uma resposta padrão.
          */
         @Operation(summary = "Cria um novo patrocinador", description = "Cria um novo patrocinador. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", responses = {
-                        @ApiResponse(responseCode = "201", description = "Patrocinador criado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = PatrocinioResponseDTO.class))),
+                        @ApiResponse(responseCode = "201", description = "Patrocinador criado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DestaquesResponseDTO.class))),
                         @ApiResponse(responseCode = "400", description = "Requisição inválida"),
                         @ApiResponse(responseCode = "403", description = "Acesso proibido")
         }, security = @SecurityRequirement(name = "bearerAuth"))
         @PostMapping
-        public ResponseEntity<BaseResponse<PatrocinioResponseDTO>> createPatrocinio(
-                        @RequestBody @Valid PatrocinioRequestDTO requestDTO) {
-                PatrocinioResponseDTO novoPatrocinio = patrocinioAppService.createPatrocinio(requestDTO);
-                return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.<PatrocinioResponseDTO>builder()
+        public ResponseEntity<BaseResponse<DestaquesResponseDTO>> createPatrocinio(
+                        @RequestBody @Valid DestaquesRequestDTO requestDTO) {
+                DestaquesResponseDTO novoPatrocinio = patrocinioAppService.createPatrocinio(requestDTO);
+                return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.<DestaquesResponseDTO>builder()
                                 .data(novoPatrocinio)
                                 .message("Patrocinador criado com sucesso.")
                                 .build());
@@ -99,17 +99,17 @@ public class AdminPatrocinioController {
          * @return ResponseEntity com o patrocinador atualizado e uma resposta padrão.
          */
         @Operation(summary = "Atualiza um patrocinador existente", description = "Atualiza um patrocinador pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", responses = {
-                        @ApiResponse(responseCode = "200", description = "Patrocinador atualizado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = PatrocinioResponseDTO.class))),
+                        @ApiResponse(responseCode = "200", description = "Patrocinador atualizado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DestaquesResponseDTO.class))),
                         @ApiResponse(responseCode = "400", description = "Requisição inválida"),
                         @ApiResponse(responseCode = "403", description = "Acesso proibido"),
                         @ApiResponse(responseCode = "404", description = "Patrocinador não encontrado")
         }, security = @SecurityRequirement(name = "bearerAuth"))
         @PutMapping("/{id}")
-        public ResponseEntity<BaseResponse<PatrocinioResponseDTO>> updatePatrocinio(
+        public ResponseEntity<BaseResponse<DestaquesResponseDTO>> updatePatrocinio(
                         @PathVariable UUID id,
-                        @RequestBody @Valid PatrocinioRequestDTO requestDTO) {
-                PatrocinioResponseDTO updatedPatrocinio = patrocinioAppService.updatePatrocinio(id, requestDTO);
-                return ResponseEntity.ok(BaseResponse.<PatrocinioResponseDTO>builder()
+                        @RequestBody @Valid DestaquesRequestDTO requestDTO) {
+                DestaquesResponseDTO updatedPatrocinio = patrocinioAppService.updatePatrocinio(id, requestDTO);
+                return ResponseEntity.ok(BaseResponse.<DestaquesResponseDTO>builder()
                                 .data(updatedPatrocinio)
                                 .message("Patrocinador atualizado com sucesso.")
                                 .build());
@@ -123,16 +123,16 @@ public class AdminPatrocinioController {
          * @return ResponseEntity com o patrocinador atualizado e uma resposta padrão.
          */
         @Operation(summary = "Muda o status de um patrocinador", description = "Altera o status de um patrocinador (ex: de INACTIVE para ACTIVE). Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", responses = {
-                        @ApiResponse(responseCode = "200", description = "Status do patrocinador alterado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = PatrocinioResponseDTO.class))),
+                        @ApiResponse(responseCode = "200", description = "Status do patrocinador alterado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DestaquesResponseDTO.class))),
                         @ApiResponse(responseCode = "403", description = "Acesso proibido"),
                         @ApiResponse(responseCode = "404", description = "Patrocinador não encontrado")
         }, security = @SecurityRequirement(name = "bearerAuth"))
         @PatchMapping("/{id}/status")
-        public ResponseEntity<BaseResponse<PatrocinioResponseDTO>> updatePatrocinioStatus(
+        public ResponseEntity<BaseResponse<DestaquesResponseDTO>> updatePatrocinioStatus(
                         @PathVariable UUID id,
                         @RequestParam String status) {
-                PatrocinioResponseDTO updatedPatrocinio = patrocinioAppService.updatePatrocinioStatus(id, status);
-                return ResponseEntity.ok(BaseResponse.<PatrocinioResponseDTO>builder()
+                DestaquesResponseDTO updatedPatrocinio = patrocinioAppService.updatePatrocinioStatus(id, status);
+                return ResponseEntity.ok(BaseResponse.<DestaquesResponseDTO>builder()
                                 .data(updatedPatrocinio)
                                 .message("Status do patrocinador alterado com sucesso.")
                                 .build());

@@ -2,21 +2,28 @@
 // Entidade base abstrata JPA para representar um item de patrocínio.
 // Usa herança de tabela única (@Inheritance) para persistir todos os tipos de patrocínio em uma única tabela.
 //
-package br.com.legalconnect.patrocinio.domain.model;
+package br.com.legalconnect.patrocinio.domain;
 
 import br.com.legalconnect.common.dto.BaseEntity;
 import br.com.legalconnect.patrocinio.domain.enums.PatrocinioStatus;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.UUID;
-
 /**
  * Entidade JPA base abstrata para itens de patrocínio.
- * Usa herança de tabela única (@Inheritance) para centralizar todos os patrocínios em uma única tabela.
+ * Usa herança de tabela única (@Inheritance) para centralizar todos os
+ * patrocínios em uma única tabela.
  * O campo 'tipo' atua como o discriminador.
  */
 @Entity
@@ -27,7 +34,7 @@ import java.util.UUID;
 @SuperBuilder
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public abstract class PatrocinioItem extends BaseEntity {
+public abstract class DestaquesItem extends BaseEntity {
 
     @Column(name = "tipo", insertable = false, updatable = false)
     protected String tipo;

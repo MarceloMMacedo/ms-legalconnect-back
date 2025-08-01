@@ -2,7 +2,7 @@
 // Serviço de domínio que interage com o repositório JPA de patrocinadores.
 // Contém a lógica de negócio principal e a comunicação direta com a camada de infraestrutura (repositórios).
 //
-package br.com.legalconnect.patrocinio.domain.service;
+package br.com.legalconnect.patrocinio.service;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,12 +14,12 @@ import org.springframework.stereotype.Service;
 
 import br.com.legalconnect.common.exception.BusinessException;
 import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.patrocinio.domain.DestaquesEscritorio;
+import br.com.legalconnect.patrocinio.domain.DestaquesEvento;
+import br.com.legalconnect.patrocinio.domain.DestaquesItem;
+import br.com.legalconnect.patrocinio.domain.DestaquesNoticia;
 import br.com.legalconnect.patrocinio.domain.enums.PatrocinioStatus;
-import br.com.legalconnect.patrocinio.domain.model.PatrocinioEscritorio;
-import br.com.legalconnect.patrocinio.domain.model.PatrocinioEvento;
-import br.com.legalconnect.patrocinio.domain.model.PatrocinioItem;
-import br.com.legalconnect.patrocinio.domain.model.PatrocinioNoticia;
-import br.com.legalconnect.patrocinio.infrastructure.repository.PatrocinioJpaRepository;
+import br.com.legalconnect.patrocinio.repository.DestaquesJpaRepository;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -29,17 +29,17 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-public class PatrocinioDomainService {
+public class DestaquesDomainService {
 
-    private static final Logger log = LoggerFactory.getLogger(PatrocinioDomainService.class);
-    private final PatrocinioJpaRepository repository;
+    private static final Logger log = LoggerFactory.getLogger(DestaquesDomainService.class);
+    private final DestaquesJpaRepository repository;
 
     /**
      * Busca todos os patrocinadores com status ATIVO.
      *
      * @return Uma lista de entidades PatrocinioItem com o status ATIVO.
      */
-    public List<PatrocinioItem> findActivePatrocinios() {
+    public List<DestaquesItem> findActivePatrocinios() {
         log.debug("Buscando patrocinadores ativos no repositório.");
         return repository.findByStatus(PatrocinioStatus.ACTIVE);
     }
@@ -49,7 +49,7 @@ public class PatrocinioDomainService {
      *
      * @return Uma lista de todas as entidades PatrocinioItem.
      */
-    public List<PatrocinioItem> findAllPatrocinios() {
+    public List<DestaquesItem> findAllPatrocinios() {
         log.debug("Buscando todos os patrocinadores no repositório.");
         return repository.findAll();
     }
@@ -60,7 +60,7 @@ public class PatrocinioDomainService {
      * @param id O ID do patrocinador.
      * @return Um Optional contendo a entidade PatrocinioItem, se encontrada.
      */
-    public Optional<PatrocinioItem> findPatrocinioById(UUID id) {
+    public Optional<DestaquesItem> findPatrocinioById(UUID id) {
         log.debug("Buscando patrocinador por ID: {}", id);
         return repository.findById(id);
     }
@@ -71,7 +71,7 @@ public class PatrocinioDomainService {
      * @param patrocinio A entidade PatrocinioItem a ser salva.
      * @return A entidade PatrocinioItem salva, com o ID gerado.
      */
-    public PatrocinioItem createPatrocinio(PatrocinioItem patrocinio) {
+    public DestaquesItem createPatrocinio(DestaquesItem patrocinio) {
         log.info("Salvando novo patrocinador do tipo {}: {}", patrocinio.getTipo(), patrocinio.toString());
         return repository.save(patrocinio);
     }
@@ -83,7 +83,7 @@ public class PatrocinioDomainService {
      * @param updatedPatrocinio A entidade PatrocinioItem com os dados atualizados.
      * @return A entidade PatrocinioItem salva.
      */
-    public PatrocinioItem updatePatrocinio(UUID id, PatrocinioItem updatedPatrocinio) {
+    public DestaquesItem updatePatrocinio(UUID id, DestaquesItem updatedPatrocinio) {
         log.info("Atualizando patrocinador com ID: {}", id);
         return repository.findById(id).map(existing -> {
             // A lógica de atualização é genérica, mas a JPA cuida do tipo concreto
@@ -91,21 +91,21 @@ public class PatrocinioDomainService {
             existing.setStatus(updatedPatrocinio.getStatus());
 
             // A cópia dos dados específicos para cada tipo de patrocínio
-            if (existing instanceof PatrocinioEvento && updatedPatrocinio instanceof PatrocinioEvento) {
-                PatrocinioEvento existingEvento = (PatrocinioEvento) existing;
-                PatrocinioEvento updatedEvento = (PatrocinioEvento) updatedPatrocinio;
+            if (existing instanceof DestaquesEvento && updatedPatrocinio instanceof DestaquesEvento) {
+                DestaquesEvento existingEvento = (DestaquesEvento) existing;
+                DestaquesEvento updatedEvento = (DestaquesEvento) updatedPatrocinio;
                 existingEvento.setTitulo(updatedEvento.getTitulo());
                 existingEvento.setDataEvento(updatedEvento.getDataEvento());
                 existingEvento.setImagemUrl(updatedEvento.getImagemUrl());
-            } else if (existing instanceof PatrocinioEscritorio && updatedPatrocinio instanceof PatrocinioEscritorio) {
-                PatrocinioEscritorio existingEscritorio = (PatrocinioEscritorio) existing;
-                PatrocinioEscritorio updatedEscritorio = (PatrocinioEscritorio) updatedPatrocinio;
+            } else if (existing instanceof DestaquesEscritorio && updatedPatrocinio instanceof DestaquesEscritorio) {
+                DestaquesEscritorio existingEscritorio = (DestaquesEscritorio) existing;
+                DestaquesEscritorio updatedEscritorio = (DestaquesEscritorio) updatedPatrocinio;
                 existingEscritorio.setNome(updatedEscritorio.getNome());
                 existingEscritorio.setSlogan(updatedEscritorio.getSlogan());
                 existingEscritorio.setLogoUrl(updatedEscritorio.getLogoUrl());
-            } else if (existing instanceof PatrocinioNoticia && updatedPatrocinio instanceof PatrocinioNoticia) {
-                PatrocinioNoticia existingNoticia = (PatrocinioNoticia) existing;
-                PatrocinioNoticia updatedNoticia = (PatrocinioNoticia) updatedPatrocinio;
+            } else if (existing instanceof DestaquesNoticia && updatedPatrocinio instanceof DestaquesNoticia) {
+                DestaquesNoticia existingNoticia = (DestaquesNoticia) existing;
+                DestaquesNoticia updatedNoticia = (DestaquesNoticia) updatedPatrocinio;
                 existingNoticia.setTitulo(updatedNoticia.getTitulo());
                 existingNoticia.setImagemUrl(updatedNoticia.getImagemUrl());
                 existingNoticia.setDataPublicacao(updatedNoticia.getDataPublicacao());
@@ -125,7 +125,7 @@ public class PatrocinioDomainService {
      * @return A entidade PatrocinioItem com o status alterado.
      * @throws BusinessException se o patrocinador não for encontrado.
      */
-    public PatrocinioItem updatePatrocinioStatus(UUID id, PatrocinioStatus status) {
+    public DestaquesItem updatePatrocinioStatus(UUID id, PatrocinioStatus status) {
         log.info("Tentando alterar o status do patrocinador {} para {}", id, status);
         return repository.findById(id)
                 .map(patrocinio -> {

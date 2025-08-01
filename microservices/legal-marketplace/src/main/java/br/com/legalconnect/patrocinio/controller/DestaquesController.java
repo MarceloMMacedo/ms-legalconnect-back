@@ -3,7 +3,7 @@
 // Este controlador é o ponto de entrada da API, lidando com as requisições HTTP
 // e orquestrando o serviço de aplicação para executar a lógica de negócio.
 //
-package br.com.legalconnect.patrocinio.application.controller;
+package br.com.legalconnect.patrocinio.controller;
 
 import java.util.List;
 
@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.legalconnect.common.dto.BaseResponse;
-import br.com.legalconnect.patrocinio.application.dto.PatrocinioResponseDTO;
-import br.com.legalconnect.patrocinio.application.service.PatrocinioAppService;
+import br.com.legalconnect.patrocinio.dto.DestaquesResponseDTO;
+import br.com.legalconnect.patrocinio.service.PatrocinioAppService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,8 +25,8 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "Patrocínios", description = "Endpoints para gerenciamento de patrocinadores no marketplace jurídico")
-@RequestMapping("/api/v1/publico/patrocinios")
-public class PatrocinioController {
+@RequestMapping("/api/v1/publico/destaques")
+public class DestaquesController {
 
         private final PatrocinioAppService patrocinioAppService;
 
@@ -43,12 +43,12 @@ public class PatrocinioController {
          *         resposta padrão.
          */
         @Operation(summary = "Lista patrocinadores ativos", description = "Retorna uma lista de patrocinadores com status ATIVO. A resposta pode conter diferentes tipos de patrocinadores.", responses = {
-                        @ApiResponse(responseCode = "200", description = "Patrocinadores ativos listados com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = PatrocinioResponseDTO.class)))
+                        @ApiResponse(responseCode = "200", description = "Patrocinadores ativos listados com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DestaquesResponseDTO.class)))
         })
         @GetMapping
-        public ResponseEntity<BaseResponse<List<PatrocinioResponseDTO>>> getActivePatrocinios() {
-                List<PatrocinioResponseDTO> patrocinadores = patrocinioAppService.findActivePatrocinios();
-                return ResponseEntity.ok(BaseResponse.<List<PatrocinioResponseDTO>>builder()
+        public ResponseEntity<BaseResponse<List<DestaquesResponseDTO>>> getActivePatrocinios() {
+                List<DestaquesResponseDTO> patrocinadores = patrocinioAppService.findActivePatrocinios();
+                return ResponseEntity.ok(BaseResponse.<List<DestaquesResponseDTO>>builder()
                                 .data(patrocinadores)
                                 .message("Patrocinadores ativos listados com sucesso.")
                                 .build());
