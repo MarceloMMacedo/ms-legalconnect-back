@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -41,7 +42,8 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "Patrocínios (Admin)", description = "Endpoints para gerenciamento de patrocinadores no marketplace jurídico (acesso administrativo)")
-@RequestMapping("/api/v1/destaques")
+@RequestMapping("/api/v1/marketplace/destaques")
+@PreAuthorize("hasRole('ROLE_PLATAFORMA_ADMIN')")
 public class AdminDestaquesController {
 
         private final PatrocinioAppService patrocinioAppService;

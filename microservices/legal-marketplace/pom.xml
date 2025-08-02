@@ -11,9 +11,9 @@
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
     <groupId>br.com.legalconnect</groupId>
-    <artifactId>legal-marketplace</artifactId> <!-- Certifique-se de que o artifactId está correto para o auth-service -->
+    <artifactId>legalconnect-marketplace</artifactId> <!-- Certifique-se de que o artifactId está correto para o auth-service -->
     <version>0.0.1-SNAPSHOT</version>
-    <name>legal-marketplace</name>
+    <name>legalconnect-marketplace</name>
     <description>Authentication Microservice for LegalConnect</description>
 
     <properties>

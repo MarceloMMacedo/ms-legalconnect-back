@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "Patrocínios", description = "Endpoints para gerenciamento de patrocinadores no marketplace jurídico")
-@RequestMapping("/api/v1/publico/destaques")
+@RequestMapping("/api/v1/publico/marketplace/destaques")
 public class DestaquesController {
 
         private final PatrocinioAppService patrocinioAppService;

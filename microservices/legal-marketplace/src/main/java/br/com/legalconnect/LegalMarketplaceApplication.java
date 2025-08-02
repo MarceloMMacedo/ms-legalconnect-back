@@ -11,11 +11,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EntityScan(basePackages = {
         "br.com.legalconnect.depoimento.domain.model",
         "br.com.legalconnect.entity",
-        "br.com.legalconnect.patrocinio.domain.model"
+        "br.com.legalconnect.patrocinio.domain"
 })
 @EnableJpaRepositories(basePackages = {
         "br.com.legalconnect.depoimento.repository",
-        "br.com.legalconnect.patrocinio.infrastructure.repository"
+        "br.com.legalconnect.patrocinio.repository"
 })
 public class LegalMarketplaceApplication {
 

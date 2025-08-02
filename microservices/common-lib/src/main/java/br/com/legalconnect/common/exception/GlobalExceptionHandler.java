@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -122,5 +123,21 @@ public class GlobalExceptionHandler {
                                 .build();
 
                 return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
+
+        @ExceptionHandler(AccessDeniedException.class)
+        public ResponseEntity<BaseResponse> handleGlobalException(AccessDeniedException ex, WebRequest request) {
+                log.error("Unhandled Exception: {} - Path: {}", ex.getMessage(), request.getDescription(false), ex);
+
+                BaseResponse errorResponse = BaseResponse.builder()
+                                .status(StatusResponse.ERRO)
+                                .message(ErrorCode.UNAUTHORIZED_ACCESS.getMessage())
+                                .errors(List.of(ErrorCode.UNAUTHORIZED_ACCESS.getCode())) // Adiciona o código de erro
+                                                                                          // genérico
+                                .timestamp(LocalDateTime.now())
+                                .build();
+
+                return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
         }
 }
