@@ -1,4 +1,4 @@
-package br.com.legalconnect.common.common_lib;
+package br.com.legalconnect;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
