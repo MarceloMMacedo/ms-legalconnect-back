@@ -1,6 +1,7 @@
 package br.com.legalconnect.advogado.service;
 
 import java.util.ArrayList;
+import java.util.Comparator; // Import adicionado
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,19 +9,21 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable; // Importar Pageable
+import org.springframework.data.domain.PageRequest; // Import adicionado
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import br.com.legalconnect.advogado.domain.Certificacao;
 import br.com.legalconnect.advogado.domain.ExperienciaProfissional;
 import br.com.legalconnect.advogado.domain.FormacaoAcademica;
+import br.com.legalconnect.advogado.domain.Plano; // Import adicionado
 import br.com.legalconnect.advogado.domain.Profissional;
 import br.com.legalconnect.advogado.dto.request.ProfissionalCreateRequest;
 import br.com.legalconnect.advogado.dto.request.ProfissionalUpdateRequest;
 import br.com.legalconnect.advogado.dto.response.ProfissionalResponseDTO;
+import br.com.legalconnect.advogado.mapper.AdvogadoMapper; // Import atualizado
 import br.com.legalconnect.advogado.mapper.AreaAtuacaoMapper;
 import br.com.legalconnect.advogado.mapper.CertificacaoMapper;
 import br.com.legalconnect.advogado.mapper.DocumentoMapper;
@@ -37,6 +40,7 @@ import br.com.legalconnect.advogado.repository.ExperienciaRepository;
 import br.com.legalconnect.advogado.repository.FormacaoRepository;
 import br.com.legalconnect.advogado.repository.IdiomaRepository;
 import br.com.legalconnect.advogado.repository.LocalAtuacaoRepository;
+import br.com.legalconnect.advogado.repository.PlanoRepository; // Import adicionado
 import br.com.legalconnect.advogado.repository.ProfissionalRepository;
 import br.com.legalconnect.advogado.repository.TipoAtendimentoRepository;
 import br.com.legalconnect.commom.dto.request.PessoaRequestDTO;
@@ -46,7 +50,10 @@ import br.com.legalconnect.commom.service.S3Service; // Assumindo S3Service para
 import br.com.legalconnect.commom.service.TenantContext; // Assumindo TenantContext para multitenancy
 import br.com.legalconnect.common.exception.BusinessException;
 import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.perfilcardadvogado.dto.response.AdvogadoResponseDTO; // Import atualizado
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor; // Import adicionado
+import lombok.extern.slf4j.Slf4j; // Import adicionado
 
 /**
  * Serviço responsável pela gestão completa do Profissional (Advogado).
@@ -56,11 +63,14 @@ import jakarta.transaction.Transactional;
  * tenant.
  */
 @Service
+@RequiredArgsConstructor // Construtor gerado automaticamente para campos final
+@Slf4j // Adiciona logger
 public class ProfissionalService {
 
     private final ProfissionalRepository profissionalRepository;
     private final ProfissionalMapper profissionalMapper;
-    private final PessoaService pessoaService; // Para gerenciar a entidade Pessoa
+    private final AdvogadoMapper advogadoMapper;
+    private final PessoaService pessoaService;
     private final CertificacaoMapper certificacaoMapper;
     private final ExperienciaProfissionalMapper experienciaProfissionalMapper;
     private final FormacaoAcademicaMapper formacaoAcademicaMapper;
@@ -69,7 +79,7 @@ public class ProfissionalService {
     private final ExperienciaRepository experienciaRepository;
     private final FormacaoRepository formacaoRepository;
     private final DocumentoRepository documentoRepository;
-    private final S3Service s3Service; // Serviço para integração com S3
+    private final S3Service s3Service;
     private final AreaAtuacaoRepository areaAtuacaoRepository;
     private final IdiomaRepository idiomaRepository;
     private final LocalAtuacaoRepository localAtuacaoRepository;
@@ -78,49 +88,7 @@ public class ProfissionalService {
     private final IdiomaMapper idiomaMapper;
     private final LocalAtuacaoMapper localAtuacaoMapper;
     private final TipoAtendimentoMapper tipoAtendimentoMapper;
-
-    @Autowired
-    public ProfissionalService(ProfissionalRepository profissionalRepository,
-            ProfissionalMapper profissionalMapper,
-            PessoaService pessoaService,
-            CertificacaoMapper certificacaoMapper,
-            ExperienciaProfissionalMapper experienciaProfissionalMapper,
-            FormacaoAcademicaMapper formacaoAcademicaMapper,
-            DocumentoMapper documentoMapper,
-            CertificacaoRepository certificacaoRepository,
-            ExperienciaRepository experienciaRepository,
-            FormacaoRepository formacaoRepository,
-            DocumentoRepository documentoRepository,
-            S3Service s3Service,
-            AreaAtuacaoRepository areaAtuacaoRepository,
-            IdiomaRepository idiomaRepository,
-            LocalAtuacaoRepository localAtuacaoRepository,
-            TipoAtendimentoRepository tipoAtendimentoRepository,
-            AreaAtuacaoMapper areaAtuacaoMapper,
-            IdiomaMapper idiomaMapper,
-            LocalAtuacaoMapper localAtuacaoMapper,
-            TipoAtendimentoMapper tipoAtendimentoMapper) {
-        this.profissionalRepository = profissionalRepository;
-        this.profissionalMapper = profissionalMapper;
-        this.pessoaService = pessoaService;
-        this.certificacaoMapper = certificacaoMapper;
-        this.experienciaProfissionalMapper = experienciaProfissionalMapper;
-        this.formacaoAcademicaMapper = formacaoAcademicaMapper;
-        this.documentoMapper = documentoMapper;
-        this.certificacaoRepository = certificacaoRepository;
-        this.experienciaRepository = experienciaRepository;
-        this.formacaoRepository = formacaoRepository;
-        this.documentoRepository = documentoRepository;
-        this.s3Service = s3Service;
-        this.areaAtuacaoRepository = areaAtuacaoRepository;
-        this.idiomaRepository = idiomaRepository;
-        this.localAtuacaoRepository = localAtuacaoRepository;
-        this.tipoAtendimentoRepository = tipoAtendimentoRepository;
-        this.areaAtuacaoMapper = areaAtuacaoMapper;
-        this.idiomaMapper = idiomaMapper;
-        this.localAtuacaoMapper = localAtuacaoMapper;
-        this.tipoAtendimentoMapper = tipoAtendimentoMapper;
-    }
+    private final PlanoRepository planoRepository; // Novo repositório injetado
 
     /**
      * Cria um novo Profissional no sistema.
@@ -167,18 +135,17 @@ public class ProfissionalService {
 
         Pessoa newPessoa = pessoaService.createPessoa(pessoaRequestDTO);
 
-        // Regra de Negócio: Validar que o planoId existe (assumindo um PlanoService ou
-        // repositório de Plano)
-        // if (!planoService.existsById(createRequest.getPlanoId())) {
-        // throw new BusinessException(ErrorCode.PLANO_NAO_ENCONTRADO,
-        // HttpStatus.NOT_FOUND);
-        // }
+        // Regra de Negócio: Validar que o planoId existe e associar o Plano
+        Plano plano = planoRepository.findById(createRequest.getPlanoId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLANO_NAO_ENCONTRADO, HttpStatus.NOT_FOUND,
+                        "Plano com ID " + createRequest.getPlanoId() + " não encontrado."));
 
         Profissional profissional = profissionalMapper.toEntity(createRequest);
         profissional.setPessoaId(newPessoa.getId()); // Associa o ID da Pessoa recém-criada
         profissional.setUsuario(newPessoa.getUsuario()); // Garante que o usuário de Pessoa esteja associado
         profissional.setTenantId(tenantId); // Regra de Negócio: Define o tenant do profissional
         profissional.setStatusProfissional("PENDING_APPROVAL"); // Regra de Negócio: Status inicial
+        profissional.setPlano(plano); // Associa o objeto Plano
 
         // Relacionamentos muitos-para-muitos (apenas IDs aqui)
         if (createRequest.getLocaisAtuacaoIds() != null) {
@@ -250,12 +217,12 @@ public class ProfissionalService {
 
         // Regra de Negócio: Validar que o planoId existe se for alterado
         if (updateRequest.getPlanoId() != null
-                && !existingProfissional.getPlanoId().equals(updateRequest.getPlanoId())) {
-            // if (!planoService.existsById(updateRequest.getPlanoId())) {
-            // throw new BusinessException(ErrorCode.PLANO_NAO_ENCONTRADO,
-            // HttpStatus.NOT_FOUND);
-            // }
-            existingProfissional.setPlanoId(updateRequest.getPlanoId());
+                && (existingProfissional.getPlano() == null
+                        || !existingProfissional.getPlano().getId().equals(updateRequest.getPlanoId()))) {
+            Plano novoPlano = planoRepository.findById(updateRequest.getPlanoId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.PLANO_NAO_ENCONTRADO, HttpStatus.NOT_FOUND,
+                            "Plano com ID " + updateRequest.getPlanoId() + " não encontrado."));
+            existingProfissional.setPlano(novoPlano);
         }
 
         // Atualiza relacionamentos muitos-para-muitos
@@ -328,6 +295,50 @@ public class ProfissionalService {
 
         Page<Profissional> profissionaisPage = profissionalRepository.findAllByTenantId(tenantId, pageable);
         return profissionaisPage.map(this::mapToResponseDTOWithDetails);
+    }
+
+    /**
+     * NOVO MÉTODO: Busca 20 advogados aleatórios elegíveis para o marketplace
+     * público
+     * e os ordena pela visibilidade do plano.
+     *
+     * @return Uma lista de AdvogadoResponseDTO.
+     */
+    public List<AdvogadoResponseDTO> findAllAdvogadosPublico() {
+        // Busca 20 profissionais aleatórios do repositório
+        Page<Profissional> randomProfessionalsPage = profissionalRepository
+                .findAllPublicMarketplaceProfissionais(PageRequest.of(0, 20));
+        List<Profissional> randomProfessionals = randomProfessionalsPage.getContent();
+
+        // Converte para DTOs
+        List<AdvogadoResponseDTO> advogadoDTOs = randomProfessionals.stream()
+                .map(advogadoMapper::toAdvogadoResponseDTO)
+                .collect(Collectors.toList());
+
+        // Aplica a ordenação customizada em memória
+        advogadoDTOs.sort(Comparator.<AdvogadoResponseDTO, Integer>comparing(
+                dto -> {
+                    // Mapeia o nome do plano para um valor inteiro para ordenação
+                    if (dto.getNomePlano() == null) {
+                        return 5; // Planos nulos ou desconhecidos por último
+                    }
+                    switch (dto.getNomePlano().toUpperCase()) {
+                        case "GOLD":
+                            return 1;
+                        case "PREMIUM":
+                            return 2;
+                        case "EXENCIAL":
+                            return 3;
+                        case "PADRAO":
+                            return 4;
+                        default:
+                            return 5; // Outros planos por último
+                    }
+                })
+                .thenComparing(AdvogadoResponseDTO::getAvaliacao, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(AdvogadoResponseDTO::getNome, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)));
+
+        return advogadoDTOs;
     }
 
     /**
@@ -461,7 +472,7 @@ public class ProfissionalService {
                     .map(c -> c.getId())
                     .collect(Collectors.toSet());
 
-            // Remove certificações que existem na entidade mas não no DTO (deleção)
+            // Remove certificações que existem na entidade but not in the DTO (deleção)
             profissional.getCertificacoes().removeIf(
                     existingCert -> existingCert.getId() != null && !dtoCertIds.contains(existingCert.getId()));
 
@@ -585,7 +596,7 @@ public class ProfissionalService {
                         .collect(Collectors.toList()));
 
         // Define se faz parte de plano com base no planoId (regra de negócio)
-        responseDTO.setFazParteDePlano(profissional.getPlanoId() != null); // Simplificado
+        responseDTO.setFazParteDePlano(profissional.getPlano() != null); // Simplificado
 
         return responseDTO;
     }

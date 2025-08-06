@@ -14,13 +14,14 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne; // Import adicionado
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.experimental.SuperBuilder;
+import lombok.experimental.SuperBuilder; // Adicionado para consistência
 
 @Entity
 @Table(name = "tb_profissional")
@@ -28,7 +29,7 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder
+@SuperBuilder // Adicionado para consistência
 public class Profissional extends Pessoa {
 
     @Column(name = "numero_oab", nullable = false, unique = true, length = 50)
@@ -48,8 +49,10 @@ public class Profissional extends Pessoa {
 
     @Column(name = "empresa_id")
     private UUID empresaId;
-    @Column(name = "plano_id", nullable = false)
-    private UUID planoId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "plano_id", nullable = false) // Coluna de chave estrangeira
+    private Plano plano; // Relacionamento com a entidade Plano
 
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;

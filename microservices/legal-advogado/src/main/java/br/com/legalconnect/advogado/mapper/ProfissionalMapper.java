@@ -40,19 +40,6 @@ public interface ProfissionalMapper {
      */
     // @Mapping(source = "pessoa.user", target = "usuario") // Mapeia o
     // PessoaRequestDTO (que é 'pessoa') para a superclasse 'usuario'
-    @Mapping(target = "id", ignore = true) // ID do Profissional será gerado
-    @Mapping(target = "pessoaId", ignore = true) // Será preenchido no serviço após a persistência da Pessoa
-    @Mapping(target = "statusProfissional", ignore = true) // Definido pela lógica de negócio
-    @Mapping(target = "fazParteDePlano", ignore = true) // Definido pela lógica de negócio
-    @Mapping(target = "certificacoes", ignore = true) // Coleções aninhadas gerenciadas no serviço
-    @Mapping(target = "documentos", ignore = true) // Coleções aninhadas gerenciadas no serviço
-    @Mapping(target = "experiencias", ignore = true) // Coleções aninhadas gerenciadas no serviço
-    @Mapping(target = "formacoes", ignore = true) // Coleções aninhadas gerenciadas no serviço
-    @Mapping(target = "roleProfissionals", ignore = true) // Coleções aninhadas gerenciadas no serviço
-    @Mapping(source = "locaisAtuacaoIds", target = "locaisAtuacaoIds") // List<UUID> para Set<UUID>
-    @Mapping(source = "areaAtuacaoIds", target = "areaAtuacaoIds") // List<UUID> para Set<UUID>
-    @Mapping(source = "idiomaIds", target = "idiomaIds") // List<UUID> para Set<UUID>
-    @Mapping(source = "tipoAtendimentoIds", target = "tipoAtendimentoIds") // List<UUID> para Set<UUID>
     Profissional toEntity(ProfissionalCreateRequest dto);
 
     /**

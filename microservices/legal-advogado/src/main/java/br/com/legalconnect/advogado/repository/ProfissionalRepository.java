@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable; // Importar Pageable
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -54,7 +54,7 @@ public interface ProfissionalRepository extends JpaRepository<Profissional, UUID
     boolean existsByPessoaId(UUID pessoaId);
 
     /**
-     * NOVO MÉTODO: Busca todos os estados e cidades (municípios) distintos
+     * Busca todos os estados e cidades (municípios) distintos
      * de todas as Pessoas cadastradas.
      * Retorna uma lista de arrays de objetos, onde cada array contém [estado,
      * cidade].
@@ -63,4 +63,18 @@ public interface ProfissionalRepository extends JpaRepository<Profissional, UUID
      */
     @Query(value = "SELECT DISTINCT e.estado, e.cidade FROM tb_endereco e WHERE e.estado IS NOT NULL AND e.cidade IS NOT NULL ORDER BY e.estado, e.cidade", nativeQuery = true)
     List<Object[]> findDistinctEstadosAndCidades();
+
+    /**
+     * NOVO MÉTODO: Busca uma página de Profissionais ativos que usam o marketplace,
+     * ordenando aleatoriamente para seleção inicial.
+     *
+     * @param pageable Objeto Pageable contendo informações de paginação (para
+     *                 limitar o número de resultados aleatórios).
+     * @return Uma página de Profissionais.
+     */
+    @Query(value = "SELECT p FROM Profissional p JOIN FETCH p.usuario u LEFT JOIN FETCH p.enderecos e LEFT JOIN FETCH p.plano pl "
+            +
+            "WHERE p.usaMarketplace = true AND p.statusProfissional = 'ATIVO' " +
+            "ORDER BY RANDOM()") // Ordena aleatoriamente para pegar uma amostra
+    Page<Profissional> findAllPublicMarketplaceProfissionais(Pageable pageable);
 }

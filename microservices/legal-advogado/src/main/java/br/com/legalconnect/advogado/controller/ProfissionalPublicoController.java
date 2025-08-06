@@ -13,6 +13,7 @@ import br.com.legalconnect.advogado.service.AreaAtuacaoService;
 import br.com.legalconnect.advogado.service.ProfissionalService;
 import br.com.legalconnect.common.dto.BaseResponse;
 import br.com.legalconnect.enums.StatusResponse;
+import br.com.legalconnect.perfilcardadvogado.dto.response.AdvogadoResponseDTO; // Import atualizado
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,52 +29,77 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "Localizações", description = "Gerenciamento de dados mestre de Localizações (Estados e Cidades)")
 public class ProfissionalPublicoController {
 
-    private final ProfissionalService pessoaService;
+        private final ProfissionalService pessoaService;
 
-    private final AreaAtuacaoService areaAtuacaoService;
+        private final AreaAtuacaoService areaAtuacaoService;
 
-    /**
-     * Lista todas as localizações (estados e cidades) onde há profissionais.
-     * Retorna um mapa onde a chave é o estado (UF) e o valor é uma lista de
-     * cidades.
-     *
-     * @return ResponseEntity com o mapa de localizações.
-     */
-    @Operation(summary = "Lista todas as localizações (estados e cidades)", description = "Retorna um mapa de estados e suas respectivas cidades onde há advogados cadastrados.", responses = {
-            @ApiResponse(responseCode = "200", description = "Localizações listadas com sucesso"),
-            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
-    })
-    @GetMapping("/localizacoes")
-    public ResponseEntity<BaseResponse<Map<String, List<String>>>> getAllLocalizacoes() {
-        Map<String, List<String>> response = pessoaService.listarLocalizacoesDisponiveis();
-        return ResponseEntity.ok(BaseResponse.<Map<String, List<String>>>builder()
-                .status(StatusResponse.SUCESSO)
-                .message("Localizações listadas com sucesso.")
-                .data(response)
-                .timestamp(java.time.LocalDateTime.now())
-                .build());
-    }
+        /**
+         * Lista todas as localizações (estados e cidades) onde há profissionais.
+         * Retorna um mapa onde a chave é o estado (UF) e o valor é uma lista de
+         * cidades.
+         *
+         * @return ResponseEntity com o mapa de localizações.
+         */
+        @Operation(summary = "Lista todas as localizações (estados e cidades)", description = "Retorna um mapa de estados e suas respectivas cidades onde há advogados cadastrados.", responses = {
+                        @ApiResponse(responseCode = "200", description = "Localizações listadas com sucesso"),
+                        @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+        })
+        @GetMapping("/localizacoes")
+        public ResponseEntity<BaseResponse<Map<String, List<String>>>> getAllLocalizacoes() {
+                Map<String, List<String>> response = pessoaService.listarLocalizacoesDisponiveis();
+                return ResponseEntity.ok(BaseResponse.<Map<String, List<String>>>builder()
+                                .status(StatusResponse.SUCESSO)
+                                .message("Localizações listadas com sucesso.")
+                                .data(response)
+                                .timestamp(java.time.LocalDateTime.now())
+                                .build());
+        }
 
-    /**
-     * Lista todas as Áreas de Atuação.
-     * Funcionalidade Completa: Listagem de todas as áreas disponíveis para seleção
-     * pelos advogados.
-     * Regras de Negócio: N/A (apenas listagem).
-     *
-     * @return ResponseEntity com a lista de DTOs de Áreas de Atuação.
-     */
-    @Operation(summary = "Lista todas as áreas de atuação", description = "Retorna uma lista de todas as áreas de atuação cadastradas.", responses = {
-            @ApiResponse(responseCode = "200", description = "Áreas de Atuação listadas com sucesso"),
-            @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
-    })
-    @GetMapping("/areas-atuacao")
-    public ResponseEntity<BaseResponse<List<AreaAtuacaoResponseDTO>>> getAllAreasAtuacao() {
-        List<AreaAtuacaoResponseDTO> response = areaAtuacaoService.findAllAreasAtuacao();
-        return ResponseEntity.ok(BaseResponse.<List<AreaAtuacaoResponseDTO>>builder()
-                .status(StatusResponse.SUCESSO)
-                .message("Áreas de Atuação listadas com sucesso.")
-                .data(response)
-                .timestamp(java.time.LocalDateTime.now())
-                .build());
-    }
+        /**
+         * Lista todas as Áreas de Atuação.
+         * Funcionalidade Completa: Listagem de todas as áreas disponíveis para seleção
+         * pelos advogados.
+         * Regras de Negócio: N/A (apenas listagem).
+         *
+         * @return ResponseEntity com a lista de DTOs de Áreas de Atuação.
+         */
+        @Operation(summary = "Lista todas as áreas de atuação", description = "Retorna uma lista de todas as áreas de atuação cadastradas.", responses = {
+                        @ApiResponse(responseCode = "200", description = "Áreas de Atuação listadas com sucesso"),
+                        @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+        })
+        @GetMapping("/areas-atuacao")
+        public ResponseEntity<BaseResponse<List<AreaAtuacaoResponseDTO>>> getAllAreasAtuacao() {
+                List<AreaAtuacaoResponseDTO> response = areaAtuacaoService.findAllAreasAtuacao();
+                return ResponseEntity.ok(BaseResponse.<List<AreaAtuacaoResponseDTO>>builder()
+                                .status(StatusResponse.SUCESSO)
+                                .message("Áreas de Atuação listadas com sucesso.")
+                                .data(response)
+                                .timestamp(java.time.LocalDateTime.now())
+                                .build());
+        }
+
+        /**
+         * Lista todos os advogados do marketplace com paginação e ordenação.
+         * A ordenação prioriza profissionais com planos de assinatura pagos.
+         *
+         * @param page Número da página (0-indexed).
+         * @param size Tamanho da página.
+         * @param sort Critério de ordenação (ex: planoId,desc;avaliacao,desc;nome,asc).
+         * @return ResponseEntity com a página de DTOs de advogados.
+         */
+        @Operation(summary = "Lista todos os advogados do marketplace com paginação e ordenação", description = "Retorna uma lista paginada de todos os advogados do marketplace, com ordenação por plano de assinatura (pagos primeiro) e reputação.", responses = {
+                        @ApiResponse(responseCode = "200", description = "Advogados listados com sucesso"),
+                        @ApiResponse(responseCode = "500", description = "Erro interno do servidor")
+        })
+        @GetMapping
+        public ResponseEntity<BaseResponse<List<AdvogadoResponseDTO>>> getAllAdvogados() {
+                List<AdvogadoResponseDTO> response = pessoaService.findAllAdvogadosPublico();
+
+                return ResponseEntity.ok(BaseResponse.<List<AdvogadoResponseDTO>>builder()
+                                .status(StatusResponse.SUCESSO)
+                                .message("Advogados do marketplace listados com sucesso.")
+                                .data(response)
+                                .timestamp(java.time.LocalDateTime.now())
+                                .build());
+        }
 }
