@@ -1,0 +1,355 @@
+```java
+package br.com.legalconnect.gateway;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class LegalconnectGatewayApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(LegalconnectGatewayApplication.class, args);
+	}
+
+}
+
+```
+```java
+package br.com.legalconnect.gateway.config;
+
+import java.net.URI;
+
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class GatewayConfig {
+
+    // Este bean é para permitir o roteamento dinâmico no application.yml
+    // para o Swagger, onde precisamos pegar o URI de qualquer serviço.
+    @Bean
+    public CustomDiscoveryClientService customDiscoveryClientService(DiscoveryClient discoveryClient) {
+        return new CustomDiscoveryClientService(discoveryClient);
+    }
+
+    public static class CustomDiscoveryClientService {
+        private final DiscoveryClient discoveryClient;
+
+        public CustomDiscoveryClientService(DiscoveryClient discoveryClient) {
+            this.discoveryClient = discoveryClient;
+        }
+
+        public URI getServiceUri() {
+            // Este método será usado no application.yml para resolver o URI dinamicamente.
+            // Para o Swagger, precisamos de um URI genérico para que o Gateway possa
+            // proxyar requisições para qualquer serviço.
+            // Em um cenário real, você pode querer listar todos os serviços
+            // e construir as rotas do Swagger dinamicamente em tempo de execução
+            // ou ter um serviço de agregação de Swagger.
+            // Aqui, apenas retornamos um URI base para o balanceador de carga.
+            return URI.create("lb://");
+        }
+    }
+
+}
+
+```
+```java
+package br.com.legalconnect.gateway.config;
+
+import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class GatewayRouteConfig {
+        private final GatewayFilter jwtFilter;
+
+        public GatewayRouteConfig(GatewayFilter jwtFilter) {
+                this.jwtFilter = jwtFilter;
+        }
+        // @Bean
+        // public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+        // return builder.routes()
+        // // Swagger AUTH
+        // .route("swagger-ui-auth", r -> r.path("/auth/swagger-ui/**")
+        // .filters(f -> f.rewritePath("/auth/swagger-ui/(?<segment>.*)",
+        // "/swagger-ui/${segment}"))
+        // .uri("lb://AUTH-SERVICE"))
+        // // API Docs AUTH
+        // .route("api-docs-auth", r -> r.path("/auth/v3/api-docs/**")
+        // .filters(f -> f.rewritePath("/auth/v3/api-docs/(?<segment>.*)",
+        // "/v3/api-docs/${segment}"))
+        // .uri("lb://AUTH-SERVICE"))
+        // // Swagger USUARIO
+        // .route("swagger-ui-usuario", r -> r.path("/usuario/swagger-ui/**")
+        // .filters(f -> f.rewritePath("/usuario/swagger-ui/(?<segment>.*)",
+        // "/swagger-ui/${segment}"))
+        // .uri("lb://LEGALCONNECT-USUARIO-SERVICE"))
+        // // API Docs USUARIO
+        // .route("api-docs-usuario", r -> r.path("/usuario/v3/api-docs/**")
+        // .filters(f -> f.rewritePath("/usuario/v3/api-docs/(?<segment>.*)",
+        // "/v3/api-docs/${segment}"))
+        // .uri("lb://LEGALCONNECT-USUARIO-SERVICE"))
+        // .build();
+        // }
+
+        @Bean
+        public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+                return builder.routes()
+                                // Rota principal para o serviço de usuário
+                                .route("usuario-service", r -> r.path("/api/usuarios/**")
+                                                .filters(f -> f.rewritePath("/api/usuarios/(?<segment>.*)",
+                                                                "/${segment}"))
+                                                .uri("lb://legalconnect-usuario-service"))
+
+                                // Rota para a documentação OpenAPI
+                                .route("usuario-service-api-docs", r -> r.path("/api/usuarios/v3/api-docs/**")
+                                                .filters(f -> f.rewritePath("/api/usuarios/v3/api-docs/(?<segment>.*)",
+                                                                "/v3/api-docs/${segment}"))
+                                                .uri("lb://legalconnect-usuario-service"))
+
+                                // Rota para o Swagger UI
+                                .route("usuario-service-swagger-ui", r -> r.path("/api/usuarios/swagger-ui/**")
+                                                .filters(f -> f.rewritePath("/api/usuarios/swagger-ui/(?<segment>.*)",
+                                                                "/swagger-ui/${segment}"))
+                                                .uri("lb://legalconnect-usuario-service"))
+
+                                .build();
+        }
+
+}
+
+```
+```java
+package br.com.legalconnect.gateway.config;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+
+import br.com.legalconnect.gateway.util.JwtUtil;
+import reactor.core.publisher.Mono;
+
+@Component // Nome do bean para uso no application.yml
+public class JwtTokenFilter implements GatewayFilter {
+
+    private final JwtUtil jwtUtil;
+
+    public JwtTokenFilter(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        ServerHttpRequest request = exchange.getRequest();
+        ServerHttpResponse response = exchange.getResponse();
+
+        // Verifica se a rota é pública (ex: /auth/** ou Swagger)
+        // Isso é mais robusto fazer com Spring Security WebFilterChain
+        // Mas para este exemplo, podemos verificar o path
+        if (isPublicPath(request.getPath().value())) {
+            return chain.filter(exchange);
+        }
+
+        List<String> authHeaders = request.getHeaders().get(HttpHeaders.AUTHORIZATION);
+
+        if (authHeaders == null || authHeaders.isEmpty() || !authHeaders.get(0).startsWith("Bearer ")) {
+            response.setStatusCode(HttpStatus.UNAUTHORIZED);
+            return response.setComplete();
+        }
+
+        String token = authHeaders.get(0).substring(7); // Remove "Bearer "
+
+        if (!jwtUtil.validateToken(token)) {
+            response.setStatusCode(HttpStatus.UNAUTHORIZED);
+            return response.setComplete();
+        }
+
+        // Extrai e remove claims específicos
+        Map<String, Object> claims = jwtUtil.getAllClaimsFromToken(token);
+        String userId = (String) claims.get("X-Correlaton-ID");
+        String tenantId = (String) claims.get("X-Tenant-ID");
+
+        // Remove os claims do token original (se necessário para nova validação
+        // downstream)
+        // Isso é mais complexo pois você precisaria gerar um novo token sem esses
+        // claims.
+        // Uma abordagem mais comum é manter o token original e propagar os claims
+        // em headers separados para os microserviços.
+        // Para este projeto, vamos propagar os claims como headers.
+
+        ServerHttpRequest.Builder builder = request.mutate();
+        if (userId != null) {
+            builder.header("X-User-Id", userId);
+        }
+        if (tenantId != null) {
+            builder.header("X-Tenant-Id", tenantId);
+        }
+
+        // Para evitar que o token completo seja enviado para os serviços downstream
+        // Se você precisar do token completo downstream, considere remover essa linha
+        // ou validar a necessidade.
+        builder.header(HttpHeaders.AUTHORIZATION, "Bearer " + token); // Mantém o token original
+
+        return chain.filter(exchange.mutate().request(builder.build()).build());
+    }
+
+    // Helper para verificar se o path é público
+    private boolean isPublicPath(String path) {
+        // Rotas que devem ser liberadas sem autenticação
+        return path.startsWith("/auth/") ||
+                path.startsWith("/swagger-ui/") ||
+                path.startsWith("/v3/api-docs/");
+    }
+}
+
+```
+```java
+// com.example.gateway.config/SecurityConfig.java
+package br.com.legalconnect.gateway.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+
+@Configuration
+public class SecurityConfig {
+    @Bean
+    public CorsWebFilter corsWebFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+        config.addAllowedOrigin("*");
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+
+        return new CorsWebFilter(source);
+    }
+}
+```
+```java
+package br.com.legalconnect.gateway.util;
+
+import java.util.Date;
+import java.util.Map;
+import java.util.function.Function;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.Keys;
+
+@Component
+public class JwtUtil {
+
+    @Value("${application.security.jwt.secret-key}")
+    private String secret;
+
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = secret.getBytes();
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public Map<String, Object> getAllClaimsFromToken(String token) {
+        return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
+    }
+
+    public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = (Claims) getAllClaimsFromToken(token);
+        return claimsResolver.apply(claims);
+    }
+
+    public Date getExpirationDateFromToken(String token) {
+        return getClaimFromToken(token, Claims::getExpiration);
+    }
+
+    private Boolean isTokenExpired(String token) {
+        final Date expiration = getExpirationDateFromToken(token);
+        return expiration.before(new Date());
+    }
+
+    public Boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
+            return true;
+        } catch (SignatureException e) {
+            // Logger.error("Assinatura JWT inválida: {}", e.getMessage());
+        } catch (MalformedJwtException e) {
+            // Logger.error("Token JWT malformado: {}", e.getMessage());
+        } catch (ExpiredJwtException e) {
+            // Logger.error("Token JWT expirado: {}", e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            // Logger.error("Token JWT não suportado: {}", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            // Logger.error("String JWT compacta vazia: {}", e.getMessage());
+        }
+        return false;
+    }
+}
+```
+```java
+# Server Configuration
+server.port=8080
+
+# Application Configuration
+spring.application.name=legalconnect-gateway
+
+# Gateway Discovery Configuration
+spring.cloud.gateway.discovery.locator.enabled=true
+spring.cloud.gateway.discovery.locator.lower-case-service-id=true
+
+# Eureka Discovery Configuration
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.client.fetch-registry=true
+eureka.client.register-with-eureka=true
+eureka.instance.prefer-ip-address=true
+
+# Swagger Configuration
+ 
+
+# Actuator Configuration
+management.endpoints.web.exposure.include=health,info,
+application.security.jwt.secret-key=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+```
+```java
+package br.com.legalconnect.common.common_lib;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class CommonLibApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
+
+```

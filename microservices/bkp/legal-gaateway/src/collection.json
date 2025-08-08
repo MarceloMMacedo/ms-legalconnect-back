@@ -1,0 +1,345 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "LegalConnect Gateway API",
+    "description": "API Gateway para o sistema LegalConnect",
+    "version": "1.0"
+  },
+  "servers": [
+    { "url": "http://192.168.1.4:54557", "description": "Generated server url" }
+  ],
+  "security": [{ "JWT": [] }],
+  "paths": {
+    "/api/v1/auth/socios/registrar": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "registerSocio",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/senhas/redefinir": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "resetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResetPasswordRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/senhas/recuperar": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "recoverPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoverPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh-token": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "refreshToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseAuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "authenticate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequestDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseAuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/clientes/registrar": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "registerClient",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/advogados/registrar": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "registerAdvogado",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/administradores/registrar": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "registerAdmin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserRegistrationRequest": {
+        "required": ["cpf", "email", "nomeCompleto", "senha", "userType"],
+        "type": "object",
+        "properties": {
+          "nomeCompleto": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string"
+          },
+          "email": { "maxLength": 255, "minLength": 0, "type": "string" },
+          "cpf": {
+            "pattern": "^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$",
+            "type": "string"
+          },
+          "telefone": { "maxLength": 20, "minLength": 0, "type": "string" },
+          "senha": {
+            "maxLength": 2147483647,
+            "minLength": 8,
+            "type": "string"
+          },
+          "userType": { "type": "string" }
+        }
+      },
+      "BaseResponseUserResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/UserResponseDTO" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "UserResponseDTO": {
+        "type": "object",
+        "properties": {
+          "nomeCompleto": { "type": "string" },
+          "email": { "type": "string" },
+          "cpf": { "type": "string" },
+          "telefone": { "type": "string" },
+          "fotoUrl": { "type": "string" },
+          "status": { "type": "string" }
+        }
+      },
+      "ResetPasswordRequest": {
+        "required": ["novaSenha", "token"],
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" },
+          "novaSenha": {
+            "maxLength": 2147483647,
+            "minLength": 8,
+            "type": "string"
+          }
+        }
+      },
+      "BaseResponseVoid": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "type": "object" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "RecoverPasswordRequest": {
+        "required": ["email"],
+        "type": "object",
+        "properties": { "email": { "type": "string" } }
+      },
+      "RefreshTokenRequestDTO": {
+        "required": ["refreshToken"],
+        "type": "object",
+        "properties": { "refreshToken": { "type": "string" } }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": { "type": "string" },
+          "refreshToken": { "type": "string" },
+          "tokenType": { "type": "string" },
+          "expiresIn": { "type": "integer", "format": "int64" }
+        }
+      },
+      "BaseResponseAuthResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/AuthResponse" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "LoginRequestDTO": {
+        "required": ["email", "senha"],
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "senha": { "type": "string" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "JWT": {
+        "type": "http",
+        "name": "JWT",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

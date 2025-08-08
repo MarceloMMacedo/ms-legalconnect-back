@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.1.0</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>br.com.legalconnect</groupId>
+	<artifactId>shared-configs</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>shared-configs</name>
+	<description>Módulo de configurações compartilhadas para microsserviços LegalConnect</description>
+	<packaging>jar</packaging> <!-- Define como um módulo JAR, não uma aplicação executável -->
+
+	<properties>
+		<java.version>17</java.version>
+		<springdoc.version>2.1.0</springdoc.version> <!-- Versão do Springdoc OpenAPI -->
+	</properties>
+
+	<dependencies>
+		<!-- Spring Boot Starter para funcionalidades básicas do Spring (necessário para
+		@Configuration, @Bean) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter</artifactId>
+		</dependency>
+		<!-- Spring Boot Starter Web para funcionalidades web (necessário para CORS e
+		WebMvcConfigurer) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<!-- Springdoc OpenAPI Starter WebMVC UI para documentação Swagger/OpenAPI -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>${springdoc.version}</version>
+		</dependency>
+
+		<!-- Lombok para reduzir boilerplate code (Getters, Setters, etc.) -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<!-- Spring Boot Test para testes (opcional para um módulo de configuração, mas boa prática) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<!-- Plugin Maven para compilação -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+			<!-- Não incluir spring-boot-maven-plugin aqui, pois não é uma aplicação executável -->
+		</plugins>
+	</build>
+
+</project>

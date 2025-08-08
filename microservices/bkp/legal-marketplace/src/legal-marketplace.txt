@@ -1,0 +1,2813 @@
+```java
+package br.com.legalconnect;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+
+@EnableDiscoveryClient
+@SpringBootApplication(scanBasePackages = "br.com.legalconnect")
+@EntityScan(basePackages = {
+        "br.com.legalconnect.depoimento.domain.model",
+        "br.com.legalconnect.entity",
+        "br.com.legalconnect.patrocinio.domain"
+})
+@EnableJpaRepositories(basePackages = {
+        "br.com.legalconnect.depoimento.repository",
+        "br.com.legalconnect.patrocinio.repository"
+})
+public class LegalMarketplaceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(LegalMarketplaceApplication.class, args);
+    }
+}
+
+```
+```java
+package br.com.legalconnect.commom.dto.request;
+
+import java.util.UUID;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * DTO para requisição de criação ou atualização de um usuário.
+ *
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserRequestDTO {
+    // ID é opcional para atualização (usado em PUT/put)
+    private UUID id;
+
+    @NotBlank(message = "O e-mail do usuário é obrigatório.")
+    @Email(message = "Formato de e-mail inválido.")
+    @Size(max = 255, message = "O e-mail do usuário deve ter no máximo 255 caracteres.")
+    private String email;
+
+    @Size(max = 255, message = "O nome completo do usuário deve ter no máximo 255 caracteres.")
+    private String nomeCompleto; // Campo duplicado com Pessoa, se Pessoa for a principal
+
+    @Size(max = 20, message = "O telefone do usuário deve ter no máximo 20 caracteres.")
+    private String telefone; // Campo duplicado com Pessoa, se Pessoa for a principal
+
+    private String fotoUrl; // URL para a foto de perfil
+}
+```
+```java
+package br.com.legalconnect.commom.dto.response;
+
+import java.util.UUID;
+
+import br.com.legalconnect.depoimento.domain.model.User.UserStatus;
+import br.com.legalconnect.depoimento.domain.model.User.UserType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * DTO para resposta de um usuário.
+ * Não inclui a senha hash por questões de segurança.
+ * 
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserResponseDTO {
+    private UUID id;
+    private String nomeCompleto;
+    private String email;
+    private String cpf;
+    private String telefone;
+    private String fotoUrl;
+    private UserType userType; // Tipo de usuário (CLIENTE, ADVOGADO, etc.)
+    private UserStatus userStatus; // Status da conta do usuário
+}
+```
+```java
+{
+  "openapi": "3.0.1",
+  "info": { "title": "OpenAPI definition", "version": "v0" },
+  "servers": [
+    { "url": "http://localhost:49784", "description": "Generated server url" }
+  ],
+  "tags": [
+    {
+      "name": "Depoimentos",
+      "description": "Gerenciamento de depoimentos para o marketplace jurídico"
+    }
+  ],
+  "paths": {
+    "/api/v1/publico/depoimentos/{id}": {
+      "get": {
+        "tags": ["Depoimentos"],
+        "summary": "Busca um depoimento por ID (administração)",
+        "description": "Retorna um depoimento específico pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "buscarDepoimentoPorIdAdmin",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do depoimento a ser buscado",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Depoimento encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Depoimento não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "put": {
+        "tags": ["Depoimentos"],
+        "summary": "Atualiza um depoimento existente",
+        "description": "Atualiza os dados de um depoimento pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "atualizarDepoimento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do depoimento a ser atualizado",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        ],
+        "requestBody": {
+          "description": "Dados atualizados do depoimento",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DepoimentoRequestDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Depoimento atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Depoimento não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "delete": {
+        "tags": ["Depoimentos"],
+        "summary": "Exclui um depoimento",
+        "description": "Exclui um depoimento permanentemente pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "excluirDepoimento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do depoimento a ser excluído",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Depoimento excluído com sucesso",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "404": {
+            "description": "Depoimento não encontrado",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/api/v1/publico/depoimentos": {
+      "get": {
+        "tags": ["Depoimentos"],
+        "summary": "Lista depoimentos para a página inicial",
+        "description": "Retorna uma lista de depoimentos aprovados, com opções de limite e ordenação aleatória.",
+        "operationId": "listarParaHome",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Número máximo de depoimentos a serem retornados (padrão: 5)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 5 },
+            "example": 5
+          },
+          {
+            "name": "random",
+            "in": "query",
+            "description": "Indica se os depoimentos devem ser aleatórios (padrão: false)",
+            "required": false,
+            "schema": { "type": "boolean", "default": false },
+            "example": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Depoimentos listados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Depoimentos"],
+        "summary": "Cria um novo depoimento",
+        "description": "Cria um novo depoimento no sistema. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "criarDepoimento",
+        "parameters": [
+          {
+            "name": "X-Correlation-ID",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "description": "Dados do depoimento a ser criado",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DepoimentoRequestDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Depoimento criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/api/v1/publico/depoimentos/{id}/reprovar": {
+      "put": {
+        "tags": ["Depoimentos"],
+        "summary": "Reprova um depoimento",
+        "description": "Altera o status de um depoimento para 'REPROVADO'. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "reprovarDepoimento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do depoimento a ser reprovado",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Depoimento reprovado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Depoimento não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/api/v1/publico/depoimentos/{id}/aprovar": {
+      "put": {
+        "tags": ["Depoimentos"],
+        "summary": "Aprova um depoimento",
+        "description": "Altera o status de um depoimento para 'APROVADO'. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "aprovarDepoimento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do depoimento a ser aprovado",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Depoimento aprovado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Depoimento não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/api/v1/publico/depoimentos/todos": {
+      "get": {
+        "tags": ["Depoimentos"],
+        "summary": "Lista todos os depoimentos (administração)",
+        "description": "Retorna uma lista completa de todos os depoimentos, independentemente do status. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "listarTodosAdmin",
+        "responses": {
+          "200": {
+            "description": "Todos os depoimentos listados para administração",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListDepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DepoimentoRequestDTO": {
+        "required": ["nome", "texto", "tipoDepoimento", "userId"],
+        "type": "object",
+        "properties": {
+          "texto": { "maxLength": 500, "minLength": 0, "type": "string" },
+          "nome": { "maxLength": 100, "minLength": 0, "type": "string" },
+          "local": { "maxLength": 100, "minLength": 0, "type": "string" },
+          "fotoUrl": {
+            "maxLength": 255,
+            "minLength": 0,
+            "pattern": "^(https?|ftp)://[^ /$.?#].[^ ]*$",
+            "type": "string"
+          },
+          "userId": { "type": "string", "format": "uuid" },
+          "tipoDepoimento": {
+            "pattern": "CLIENTE|PROFISSIONAL",
+            "type": "string"
+          },
+          "status": {
+            "pattern": "PENDENTE|APROVADO|REPROVADO",
+            "type": "string"
+          }
+        }
+      },
+      "DepoimentoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "texto": { "type": "string" },
+          "nome": { "type": "string" },
+          "local": { "type": "string" },
+          "fotoUrl": { "type": "string" },
+          "userId": { "type": "string", "format": "uuid" },
+          "tipoDepoimento": { "type": "string" },
+          "status": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "BaseResponseDepoimentoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/DepoimentoResponseDTO" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseListDepoimentoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DepoimentoResponseDTO" }
+          },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseVoid": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "type": "object" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}
+
+```
+```java
+package br.com.legalconnect.depoimento.controller;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping; // Adicionada a importação para @RequestMapping no nível da classe
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import br.com.legalconnect.common.dto.BaseResponse;
+import br.com.legalconnect.depoimento.dto.DepoimentoRequestDTO;
+import br.com.legalconnect.depoimento.dto.DepoimentoResponseDTO;
+import br.com.legalconnect.depoimento.service.DepoimentoAppService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement; // Para segurança JWT
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Controlador REST para o módulo de Depoimentos.
+ * Gerencia endpoints públicos e de administração (com segurança).
+ */
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/v1/publico/marketplace/depoimentos") // Mover o prefixo da URL para o nível da classe
+@Tag(name = "Depoimentos", description = "Gerenciamento de depoimentos para o marketplace jurídico")
+public class DepoimentoController {
+
+        private final DepoimentoAppService appService;
+
+        @Operation(summary = "Lista depoimentos para a página inicial", description = "Retorna uma lista de depoimentos aprovados, com opções de limite e ordenação aleatória.", parameters = {
+                        @Parameter(name = "limit", description = "Número máximo de depoimentos a serem retornados (padrão: 5)", example = "5"),
+                        @Parameter(name = "random", description = "Indica se os depoimentos devem ser aleatórios (padrão: false)", example = "true")
+        }, responses = {
+                        @ApiResponse(responseCode = "200", description = "Depoimentos listados com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class)))
+        })
+        @GetMapping
+        public ResponseEntity<BaseResponse<List<DepoimentoResponseDTO>>> listarParaHome(
+                        @RequestParam(defaultValue = "5") int limit,
+                        @RequestParam(defaultValue = "false") boolean random) {
+                List<DepoimentoResponseDTO> depoimentos = appService.listarParaHome(limit, random);
+                return ResponseEntity.ok(BaseResponse.<List<DepoimentoResponseDTO>>builder()
+                                .data(depoimentos)
+                                .message("Depoimentos listados com sucesso.")
+                                .build());
+        }
+
+        @Operation(summary = "Cria um novo depoimento", description = "Cria um novo depoimento no sistema. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados do depoimento a ser criado", required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoRequestDTO.class))), responses = {
+                        @ApiResponse(responseCode = "201", description = "Depoimento criado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class))),
+                        @ApiResponse(responseCode = "400", description = "Requisição inválida"),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido")
+        }, security = @SecurityRequirement(name = "bearerAuth")) // Referência ao esquema de segurança JWT
+        @PostMapping("/publico/depoimentos")
+        public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> criarDepoimento(
+                        @RequestBody @Valid DepoimentoRequestDTO request,
+                        @RequestHeader("X-Correlation-ID") String userId) {
+                request.setUserId(UUID.fromString(userId));
+                DepoimentoResponseDTO novoDepoimento = appService.criarDepoimento(request);
+                return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.<DepoimentoResponseDTO>builder()
+                                .data(novoDepoimento)
+                                .message("Depoimento criado com sucesso.")
+                                .build());
+        }
+
+        @Operation(summary = "Atualiza um depoimento existente", description = "Atualiza os dados de um depoimento pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", parameters = @Parameter(name = "id", description = "ID do depoimento a ser atualizado", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef"), requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados atualizados do depoimento", required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoRequestDTO.class))), responses = {
+                        @ApiResponse(responseCode = "200", description = "Depoimento atualizado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class))),
+                        @ApiResponse(responseCode = "400", description = "Requisição inválida"),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido"),
+                        @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @PutMapping("/publico/depoimentos/{id}")
+        public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> atualizarDepoimento(
+                        @PathVariable UUID id,
+                        @RequestBody @Valid DepoimentoRequestDTO request) {
+                DepoimentoResponseDTO depoimentoAtualizado = appService.atualizarDepoimento(id, request);
+                return ResponseEntity.ok(BaseResponse.<DepoimentoResponseDTO>builder()
+                                .data(depoimentoAtualizado)
+                                .message("Depoimento atualizado com sucesso.")
+                                .build());
+        }
+
+        @Operation(summary = "Exclui um depoimento", description = "Exclui um depoimento permanentemente pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", parameters = @Parameter(name = "id", description = "ID do depoimento a ser excluído", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef"), responses = {
+                        @ApiResponse(responseCode = "204", description = "Depoimento excluído com sucesso"),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido"),
+                        @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @DeleteMapping("/publico/depoimentos/{id}")
+        public ResponseEntity<BaseResponse<Void>> excluirDepoimento(@PathVariable UUID id) {
+                appService.excluirDepoimento(id);
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(BaseResponse.<Void>builder()
+                                .message("Depoimento excluído com sucesso.")
+                                .build());
+        }
+
+        @Operation(summary = "Aprova um depoimento", description = "Altera o status de um depoimento para 'APROVADO'. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", parameters = @Parameter(name = "id", description = "ID do depoimento a ser aprovado", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef"), responses = {
+                        @ApiResponse(responseCode = "200", description = "Depoimento aprovado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class))),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido"),
+                        @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @PutMapping("/publico/depoimentos/{id}/aprovar")
+        public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> aprovarDepoimento(@PathVariable UUID id) {
+                DepoimentoResponseDTO depoimentoAprovado = appService.aprovarDepoimento(id);
+                return ResponseEntity.ok(BaseResponse.<DepoimentoResponseDTO>builder()
+                                .data(depoimentoAprovado)
+                                .message("Depoimento aprovado com sucesso.")
+                                .build());
+        }
+
+        @Operation(summary = "Reprova um depoimento", description = "Altera o status de um depoimento para 'REPROVADO'. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", parameters = @Parameter(name = "id", description = "ID do depoimento a ser reprovado", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef"), responses = {
+                        @ApiResponse(responseCode = "200", description = "Depoimento reprovado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class))),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido"),
+                        @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @PutMapping("/publico/depoimentos/{id}/reprovar")
+        public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> reprovarDepoimento(@PathVariable UUID id) {
+                DepoimentoResponseDTO depoimentoReprovado = appService.reprovarDepoimento(id);
+                return ResponseEntity.ok(BaseResponse.<DepoimentoResponseDTO>builder()
+                                .data(depoimentoReprovado)
+                                .message("Depoimento reprovado com sucesso.")
+                                .build());
+        }
+
+        @Operation(summary = "Lista todos os depoimentos (administração)", description = "Retorna uma lista completa de todos os depoimentos, independentemente do status. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", responses = {
+                        @ApiResponse(responseCode = "200", description = "Todos os depoimentos listados para administração", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class))),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @GetMapping("/publico/depoimentos/todos")
+        public ResponseEntity<BaseResponse<List<DepoimentoResponseDTO>>> listarTodosAdmin() {
+                List<DepoimentoResponseDTO> depoimentos = appService.listarTodos();
+                return ResponseEntity.ok(BaseResponse.<List<DepoimentoResponseDTO>>builder()
+                                .data(depoimentos)
+                                .message("Todos os depoimentos listados para administração.")
+                                .build());
+        }
+
+        @Operation(summary = "Busca um depoimento por ID (administração)", description = "Retorna um depoimento específico pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", parameters = @Parameter(name = "id", description = "ID do depoimento a ser buscado", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef"), responses = {
+                        @ApiResponse(responseCode = "200", description = "Depoimento encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepoimentoResponseDTO.class))),
+                        @ApiResponse(responseCode = "401", description = "Não autorizado"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido"),
+                        @ApiResponse(responseCode = "404", description = "Depoimento não encontrado")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @GetMapping("/publico/depoimentos/{id}")
+        public ResponseEntity<BaseResponse<DepoimentoResponseDTO>> buscarDepoimentoPorIdAdmin(@PathVariable UUID id) {
+                DepoimentoResponseDTO depoimento = appService.buscarPorId(id);
+                return ResponseEntity.ok(BaseResponse.<DepoimentoResponseDTO>builder()
+                                .data(depoimento)
+                                .message("Depoimento encontrado.")
+                                .build());
+        }
+}
+
+```
+```java
+package br.com.legalconnect.depoimento.domain.enums;
+
+/**
+ * Enum para definir o status de um depoimento.
+ */
+public enum DepoimentoStatus {
+    PENDENTE, // Depoimento enviado, aguardando revisão
+    APROVADO, // Depoimento revisado e aprovado, pode ser exibido
+    REPROVADO // Depoimento revisado e reprovado, não será exibido
+}
+```
+```java
+package br.com.legalconnect.depoimento.domain.enums;
+
+/**
+ * Enum para definir o tipo de depoimento (CLIENTE ou PROFISSIONAL).
+ */
+public enum TipoDepoimento {
+    CLIENTE,
+    PROFISSIONAL
+}
+```
+```java
+package br.com.legalconnect.depoimento.domain.model; // CORRETO - 'marketplace' adicionado
+
+import java.util.UUID;
+
+import br.com.legalconnect.common.dto.BaseEntity;
+import br.com.legalconnect.depoimento.domain.enums.DepoimentoStatus;
+import br.com.legalconnect.depoimento.domain.enums.TipoDepoimento;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * Entidade JPA para representar um depoimento.
+ * Inclui associação com o usuário, o tipo de depoimento e seu status.
+ */
+@Entity
+@Table(name = "tb_depoimento")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Depoimento extends BaseEntity { // O campo 'id' e suas anotações já são herdados de BaseEntity e não
+                                             // precisam ser redeclarados aqui.
+
+    @Column(nullable = false, length = 500)
+    private String texto;
+
+    @Column(nullable = false, length = 100)
+    private String nome; // Nome da pessoa que deu o depoimento
+
+    @Column(length = 100)
+    private String local; // Cidade/Estado ou empresa
+
+    @Column(name = "foto_url", length = 255)
+    private String fotoUrl; // URL da foto do depoente
+
+    @Column(name = "user_id", nullable = false)
+    private UUID userId; // ID do usuário (cliente ou profissional) relacionado ao depoimento
+
+    @Enumerated(EnumType.STRING) // Armazena o enum como String no banco de dados
+    @Column(name = "tipo_depoimento", nullable = false, length = 20)
+    private TipoDepoimento tipoDepoimento; // Tipo: CLIENTE ou PROFISSIONAL
+
+    @Enumerated(EnumType.STRING) // Armazena o enum como String no banco de dados
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default // Define um valor padrão para o Builder
+    private DepoimentoStatus status = DepoimentoStatus.PENDENTE; // Status inicial PENDENTE
+}
+
+```
+```java
+package br.com.legalconnect.depoimento.domain.model;
+
+import br.com.legalconnect.common.dto.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * @class User
+ * @brief Entidade base para todos os usuários (clientes, advogados,
+ *        administradores de tenant, etc.).
+ *
+ *        Esta entidade representa um usuário na plataforma e está associada a
+ *        um tenant
+ *        específico. A tabela de usuário reside nos schemas de tenant.
+ */
+@Entity
+@Table(name = "tb_user") // A tabela tb_user agora reside no schema do tenant
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class User extends BaseEntity { // Implementa UserDetails
+
+    @Column(name = "nome_completo", nullable = false, length = 255)
+    private String nomeCompleto; // Nome completo do usuário
+
+    @Column(name = "email", nullable = false, unique = true, length = 255)
+    private String email; // Endereço de e-mail principal do usuário (único por schema de tenant)
+
+    @Column(name = "cpf", nullable = false, unique = true, length = 14)
+    private String cpf; // Número do Cadastro de Pessoa Física do usuário (único por schema de tenant)
+
+    @Column(name = "telefone", length = 20)
+    private String telefone; // Número de telefone de contato do usuário
+
+    @Column(name = "senha_hash", nullable = false, columnDefinition = "TEXT")
+    private String senhaHash; // Representação criptografada (hashed) da senha do usuário
+
+    @Column(name = "foto_url", columnDefinition = "TEXT")
+    private String fotoUrl; // URL da foto de perfil do usuário no S3
+
+    /**
+     * @enum UserType
+     * @brief Enumeração para categorizar o tipo principal de um usuário.
+     *        Define se o usuário é um cliente, advogado ou administrador da
+     *        plataforma.
+     */
+    public enum UserType {
+        CLIENTE, // Usuário final que busca serviços jurídicos
+        ADVOGADO, // Profissional do direito que oferece serviços
+        PLATAFORMA_ADMIN, // Administrador da plataforma com privilégios totais
+        SOCIO
+    }
+
+    /**
+     * @enum UserStatus
+     * @brief Enumeração para representar o status atual da conta de um usuário.
+     *        Define o estado operacional da conta do usuário na plataforma.
+     */
+    public enum UserStatus {
+        ACTIVE, INACTIVE, PENDING_APPROVAL, REJECTED, PENDING
+    }
+
+    // --- Implementação de UserDetails ---
+
+}
+```
+```java
+package br.com.legalconnect.depoimento.domain.service;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import br.com.legalconnect.depoimento.domain.enums.DepoimentoStatus;
+import br.com.legalconnect.depoimento.domain.enums.TipoDepoimento;
+import br.com.legalconnect.depoimento.domain.model.Depoimento;
+import br.com.legalconnect.depoimento.repository.DepoimentoJpaRepository;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Serviço de domínio para gerenciar operações relacionadas a Depoimentos.
+ * Contém a lógica de negócio principal e interage diretamente com o
+ * repositório.
+ * Este serviço deve focar nas operações sobre o agregado de Depoimento, não em
+ * casos de uso específicos.
+ */
+@Service
+@RequiredArgsConstructor
+public class DepoimentoService {
+
+    private final DepoimentoJpaRepository repository;
+
+    /**
+     * Salva um novo depoimento.
+     * 
+     * @param novoDepoimento A entidade Depoimento a ser salva.
+     * @return O depoimento salvo.
+     */
+    public Depoimento salvar(Depoimento novoDepoimento) {
+        return repository.save(novoDepoimento);
+    }
+
+    /**
+     * Atualiza um depoimento existente.
+     * 
+     * @param id                   O ID do depoimento a ser atualizado.
+     * @param depoimentoAtualizado A entidade Depoimento com os dados atualizados.
+     * @return O depoimento atualizado.
+     */
+    public Optional<Depoimento> atualizar(UUID id, Depoimento depoimentoAtualizado) {
+        return repository.findById(id).map(depoimento -> {
+            depoimento.setTexto(depoimentoAtualizado.getTexto());
+            depoimento.setNome(depoimentoAtualizado.getNome());
+            depoimento.setLocal(depoimentoAtualizado.getLocal());
+            depoimento.setFotoUrl(depoimentoAtualizado.getFotoUrl());
+            depoimento.setUserId(depoimentoAtualizado.getUserId());
+            depoimento.setTipoDepoimento(depoimentoAtualizado.getTipoDepoimento());
+            depoimento.setStatus(depoimentoAtualizado.getStatus()); // Atualiza o status
+            return repository.save(depoimento);
+        });
+    }
+
+    /**
+     * Altera o status de um depoimento.
+     * 
+     * @param id         O ID do depoimento.
+     * @param novoStatus O novo status a ser atribuído.
+     * @return Um Optional contendo o depoimento atualizado, se encontrado.
+     */
+    public Optional<Depoimento> alterarStatus(UUID id, DepoimentoStatus novoStatus) {
+        return repository.findById(id).map(depoimento -> {
+            depoimento.setStatus(novoStatus);
+            return repository.save(depoimento);
+        });
+    }
+
+    /**
+     * Exclui um depoimento pelo seu ID.
+     * 
+     * @param id O ID do depoimento a ser excluído.
+     */
+    public void excluir(UUID id) {
+        repository.deleteById(id);
+    }
+
+    /**
+     * Busca um depoimento pelo seu ID.
+     * 
+     * @param id O ID do depoimento.
+     * @return Um Optional contendo o depoimento, se encontrado.
+     */
+    public Optional<Depoimento> buscarPorId(UUID id) {
+        return repository.findById(id);
+    }
+
+    /**
+     * Lista todos os depoimentos.
+     * 
+     * @return Uma lista de todos os depoimentos.
+     */
+    public List<Depoimento> listarTodos() {
+        return repository.findAll();
+    }
+
+    /**
+     * Lista depoimentos por tipo.
+     * 
+     * @param tipo O tipo de depoimento (CLIENTE ou PROFISSIONAL).
+     * @return Uma lista de depoimentos do tipo especificado.
+     */
+    public List<Depoimento> listarPorTipo(TipoDepoimento tipo) {
+        return repository.findByTipoDepoimento(tipo);
+    }
+
+    /**
+     * Lista depoimentos por ID de usuário.
+     * 
+     * @param userId O ID do usuário.
+     * @return Uma lista de depoimentos associados ao usuário.
+     */
+    public List<Depoimento> listarPorUserId(UUID userId) {
+        return repository.findByUserId(userId);
+    }
+}
+```
+```java
+package br.com.legalconnect.depoimento.dto;
+
+import java.util.UUID;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * DTO para requisições de criação/atualização de depoimentos.
+ * Inclui validações para garantir a integridade dos dados.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class DepoimentoRequestDTO {
+
+    @NotBlank(message = "O texto do depoimento é obrigatório.")
+    @Size(max = 500, message = "O texto do depoimento não pode exceder 500 caracteres.")
+    private String texto;
+
+    @NotBlank(message = "O nome é obrigatório.")
+    @Size(max = 100, message = "O nome não pode exceder 100 caracteres.")
+    private String nome;
+
+    @Size(max = 100, message = "O local não pode exceder 100 caracteres.")
+    private String local;
+
+    @Size(max = 255, message = "A URL da foto não pode exceder 255 caracteres.")
+    @Pattern(regexp = "^(https?|ftp)://[^\s/$.?#].[^\s]*$", message = "URL da foto inválida.")
+    private String fotoUrl;
+
+    @NotNull(message = "O ID do usuário é obrigatório.")
+    private UUID userId;
+
+    @NotBlank(message = "O tipo de depoimento é obrigatório.")
+    @Pattern(regexp = "CLIENTE|PROFISSIONAL", message = "O tipo de depoimento deve ser CLIENTE ou PROFISSIONAL.")
+    private String tipoDepoimento; // Recebido como String e convertido para Enum no Mapper
+
+    // Novo campo para o status do depoimento. Opcional na requisição para usuários
+    // comuns.
+    @Pattern(regexp = "PENDENTE|APROVADO|REPROVADO", message = "O status do depoimento deve ser PENDENTE, APROVADO ou REPROVADO.")
+    private String status; // Recebido como String e convertido para Enum no Mapper
+}
+```
+```java
+package br.com.legalconnect.depoimento.dto;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * DTO para respostas de depoimentos.
+ * Expõe apenas os campos relevantes para o cliente da API.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class DepoimentoResponseDTO {
+    private UUID id;
+    private String texto;
+    private String nome;
+    private String local;
+    private String fotoUrl;
+    private UUID userId; // Expor o ID do usuário
+    private String tipoDepoimento; // Expor o tipo como String
+    private String status; // Expor o status como String
+    private LocalDateTime createdAt; // Data de criação
+    private LocalDateTime updatedAt; // Data de atualização
+}
+```
+```java
+package br.com.legalconnect.depoimento.repository;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.depoimento.domain.enums.DepoimentoStatus;
+import br.com.legalconnect.depoimento.domain.enums.TipoDepoimento;
+import br.com.legalconnect.depoimento.domain.model.Depoimento;
+
+/**
+ * Repositório JPA para a entidade Depoimento, usando Spring Data JPA.
+ * Define métodos para operações CRUD e consultas personalizadas.
+ */
+@Repository
+public interface DepoimentoJpaRepository extends JpaRepository<Depoimento, UUID> {
+
+    /**
+     * Busca uma lista de depoimentos aleatórios, limitada pela quantidade
+     * especificada, apenas os APROVADOS.
+     * 
+     * @param limite O número máximo de depoimentos a serem retornados.
+     * @return Uma lista de depoimentos aleatórios.
+     */
+    @Query(value = "SELECT * FROM tb_depoimento WHERE status = 'APROVADO' ORDER BY random() LIMIT :limite", nativeQuery = true)
+    List<Depoimento> buscarAleatoriosAprovados(@Param("limite") int limite);
+
+    /**
+     * Busca os 5 depoimentos APROVADOS mais recentes, ordenados pela data de
+     * criação em ordem decrescente.
+     * 
+     * @param status O status do depoimento (APROVADO).
+     * @return Uma lista dos 5 depoimentos mais recentes.
+     */
+    List<Depoimento> findTop5ByStatusOrderByCreatedAtDesc(DepoimentoStatus status);
+
+    /**
+     * Busca depoimentos por tipo de depoimento.
+     * 
+     * @param tipoDepoimento O tipo de depoimento (CLIENTE ou PROFISSIONAL).
+     * @return Uma lista de depoimentos do tipo especificado.
+     */
+    List<Depoimento> findByTipoDepoimento(TipoDepoimento tipoDepoimento);
+
+    /**
+     * Busca depoimentos relacionados a um ID de usuário específico.
+     * 
+     * @param userId O ID do usuário.
+     * @return Uma lista de depoimentos associados ao usuário.
+     */
+    List<Depoimento> findByUserId(UUID userId);
+
+    /**
+     * Busca depoimentos por status.
+     * 
+     * @param status O status do depoimento.
+     * @return Uma lista de depoimentos com o status especificado.
+     */
+    List<Depoimento> findByStatus(DepoimentoStatus status);
+}
+```
+```java
+package br.com.legalconnect.depoimento.repository;
+
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.depoimento.domain.model.User;
+
+/**
+ * Repositório para a entidade {@link User}.
+ * Gerencia operações de persistência para informações de usuários no sistema.
+ */
+@Repository
+public interface UserRepository extends JpaRepository<User, UUID> {
+
+}
+```
+```java
+package br.com.legalconnect.depoimento.service;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.depoimento.domain.enums.DepoimentoStatus;
+import br.com.legalconnect.depoimento.domain.enums.TipoDepoimento;
+import br.com.legalconnect.depoimento.domain.model.Depoimento;
+import br.com.legalconnect.depoimento.domain.service.DepoimentoService;
+import br.com.legalconnect.depoimento.dto.DepoimentoRequestDTO;
+import br.com.legalconnect.depoimento.dto.DepoimentoResponseDTO;
+import br.com.legalconnect.depoimento.repository.DepoimentoJpaRepository;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Serviço de aplicação para o módulo de Depoimentos.
+ * Orquestra operações entre DTOs, e o serviço de domínio, realizando mapeamento
+ * manual com Builder.
+ * Contém regras de negócio de alto nível e validações.
+ */
+@Service
+@RequiredArgsConstructor
+public class DepoimentoAppService {
+
+    private final DepoimentoService domainService;
+    private final DepoimentoJpaRepository repository;
+    private final UserServiceImpl userService;
+
+    /**
+     * Converte um DepoimentoRequestDTO para uma entidade Depoimento.
+     * 
+     * @param dto O DTO de requisição.
+     * @return A entidade Depoimento.
+     */
+    private Depoimento toEntity(DepoimentoRequestDTO dto) {
+        return Depoimento.builder()
+                .texto(dto.getTexto())
+                .nome(dto.getNome())
+                .local(dto.getLocal())
+                .fotoUrl(dto.getFotoUrl())
+                .userId(dto.getUserId())
+                .tipoDepoimento(TipoDepoimento.valueOf(dto.getTipoDepoimento().toUpperCase()))
+                // O status é definido posteriormente na lógica de negócio, não aqui
+                .build();
+    }
+
+    /**
+     * Converte uma entidade Depoimento para um DepoimentoResponseDTO.
+     * 
+     * @param entity A entidade Depoimento.
+     * @return O DTO de resposta.
+     */
+    private DepoimentoResponseDTO toResponse(Depoimento entity) {
+        return DepoimentoResponseDTO.builder()
+                .id(entity.getId())
+                .texto(entity.getTexto())
+                .nome(entity.getNome())
+                .local(entity.getLocal())
+                .fotoUrl(entity.getFotoUrl())
+                .userId(entity.getUserId())
+                .tipoDepoimento(entity.getTipoDepoimento().name())
+                .status(entity.getStatus().name())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    /**
+     * Atualiza uma entidade Depoimento existente a partir de um DTO de requisição.
+     * 
+     * @param dto    O DTO de requisição.
+     * @param entity A entidade a ser atualizada.
+     */
+    private void updateEntityFromDto(DepoimentoRequestDTO dto, Depoimento entity) {
+        entity.setTexto(dto.getTexto());
+        entity.setNome(dto.getNome());
+        entity.setLocal(dto.getLocal());
+        entity.setFotoUrl(dto.getFotoUrl());
+        entity.setUserId(dto.getUserId());
+        entity.setTipoDepoimento(TipoDepoimento.valueOf(dto.getTipoDepoimento().toUpperCase()));
+        // O status é atualizado separadamente pela lógica de negócio no AppService
+    }
+
+    /**
+     * Converte uma String para DepoimentoStatus.
+     * 
+     * @param status String do status.
+     * @return DepoimentoStatus ou null se a string for nula ou vazia.
+     */
+    private DepoimentoStatus mapStringToDepoimentoStatus(String status) {
+        return (status != null && !status.isEmpty()) ? DepoimentoStatus.valueOf(status.toUpperCase()) : null;
+    }
+
+    /**
+     * Cria um novo depoimento a partir de um DTO de requisição.
+     * Implementa regras de negócio para status e validação de usuário.
+     * 
+     * @param request O DTO contendo os dados do novo depoimento.
+     * @return O DTO de resposta do depoimento criado.
+     * @throws BusinessException se o texto do depoimento for muito longo,
+     *                           o usuário não for encontrado ou o status inicial
+     *                           for inválido.
+     */
+    public DepoimentoResponseDTO criarDepoimento(DepoimentoRequestDTO request) {
+        if (request.getTexto().length() > 500) {
+            throw new BusinessException(ErrorCode.DADOS_INVALIDOS, ErrorCode.DADOS_INVALIDOS.getMessage());
+        }
+
+        if (!userService.userExists(request.getUserId())) {
+            throw new BusinessException(ErrorCode.USER_NAO_ENCONTRADO, ErrorCode.USER_NAO_ENCONTRADO.getMessage());
+        }
+
+        Depoimento depoimento = toEntity(request); // Usando o método toEntity manual
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_PLATAFORMA_ADMIN"));
+
+        if (!isAdmin && request.getStatus() != null
+                && !request.getStatus().equalsIgnoreCase(DepoimentoStatus.PENDENTE.name())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ACCESS, ErrorCode.FORBIDDEN_ACCESS.getMessage());
+        }
+
+        if (request.getStatus() != null && isAdmin) {
+            depoimento.setStatus(DepoimentoStatus.valueOf(request.getStatus().toUpperCase()));
+        } else {
+            depoimento.setStatus(DepoimentoStatus.PENDENTE);
+        }
+
+        Depoimento salvo = domainService.salvar(depoimento);
+        return toResponse(salvo); // Usando o método toResponse manual
+    }
+
+    /**
+     * Atualiza um depoimento existente.
+     * 
+     * @param id      O ID do depoimento a ser atualizado.
+     * @param request O DTO contendo os dados atualizados.
+     * @return O DTO de resposta do depoimento atualizado.
+     * @throws BusinessException se o depoimento não for encontrado, o texto for
+     *                           muito longo,
+     *                           o usuário não for encontrado ou o status for
+     *                           inválido para a operação.
+     */
+    public DepoimentoResponseDTO atualizarDepoimento(UUID id, DepoimentoRequestDTO request) {
+        if (request.getTexto().length() > 500) {
+            throw new BusinessException(ErrorCode.DADOS_INVALIDOS, ErrorCode.DADOS_INVALIDOS.getMessage());
+        }
+
+        if (!userService.userExists(request.getUserId())) {
+            throw new BusinessException(ErrorCode.USER_NAO_ENCONTRADO, ErrorCode.USER_NAO_ENCONTRADO.getMessage());
+        }
+
+        return domainService.buscarPorId(id)
+                .map(depoimentoExistente -> {
+                    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                    boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equals("ROLE_PLATAFORMA_ADMIN"));
+
+                    DepoimentoStatus novoStatus = mapStringToDepoimentoStatus(request.getStatus());
+
+                    if (novoStatus != null && novoStatus != depoimentoExistente.getStatus() && !isAdmin) {
+                        throw new BusinessException(ErrorCode.FORBIDDEN_ACCESS,
+                                ErrorCode.FORBIDDEN_ACCESS.getMessage());
+                    }
+
+                    updateEntityFromDto(request, depoimentoExistente); // Usando o método updateEntityFromDto manual
+                    if (novoStatus != null && isAdmin) {
+                        depoimentoExistente.setStatus(novoStatus);
+                    }
+
+                    return toResponse(domainService.salvar(depoimentoExistente)); // Usando o método toResponse manual
+                })
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENTIDADE_NAO_ENCONTRADA,
+                        ErrorCode.ENTIDADE_NAO_ENCONTRADA.getMessage()));
+    }
+
+    /**
+     * Exclui um depoimento pelo seu ID.
+     * 
+     * @param id O ID do depoimento a ser excluído.
+     * @throws BusinessException se o depoimento não for encontrado.
+     */
+    public void excluirDepoimento(UUID id) {
+        if (!domainService.buscarPorId(id).isPresent()) {
+            throw new BusinessException(ErrorCode.ENTIDADE_NAO_ENCONTRADA,
+                    ErrorCode.ENTIDADE_NAO_ENCONTRADA.getMessage());
+        }
+        domainService.excluir(id);
+    }
+
+    /**
+     * Aprova um depoimento. Apenas administradores podem realizar esta operação.
+     * 
+     * @param id O ID do depoimento a ser aprovado.
+     * @return O DTO do depoimento aprovado.
+     * @throws BusinessException se o depoimento não for encontrado ou se o status
+     *                           já for APROVADO.
+     */
+    public DepoimentoResponseDTO aprovarDepoimento(UUID id) {
+        return domainService.buscarPorId(id)
+                .map(depoimento -> {
+                    if (depoimento.getStatus() == DepoimentoStatus.APROVADO) {
+                        // throw new BusinessException(ErrorCode.DEPOIMENTO_ALREADY_APPROVED,
+                        // ErrorCode.DEPOIMENTO_ALREADY_APPROVED.getMessage());
+                    }
+                    return toResponse(domainService.alterarStatus(id, DepoimentoStatus.APROVADO).get()); // Usando o
+                                                                                                         // método
+                                                                                                         // toResponse
+                                                                                                         // manual
+                })
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENTIDADE_NAO_ENCONTRADA,
+                        ErrorCode.ENTIDADE_NAO_ENCONTRADA.getMessage()));
+    }
+
+    /**
+     * Reprova um depoimento. Apenas administradores podem realizar esta operação.
+     * 
+     * @param id O ID do depoimento a ser reprovado.
+     * @return O DTO do depoimento reprovado.
+     * @throws BusinessException se o depoimento não for encontrado ou se o status
+     *                           já for REPROVADO.
+     */
+    public DepoimentoResponseDTO reprovarDepoimento(UUID id) {
+        return domainService.buscarPorId(id)
+                .map(depoimento -> {
+                    if (depoimento.getStatus() == DepoimentoStatus.REPROVADO) {
+                        // throw new BusinessException(ErrorCode.DEPOIMENTO_ALREADY_REJECTED,
+                        // ErrorCode.DEPOIMENTO_ALREADY_REJECTED.getMessage());
+                    }
+                    return toResponse(domainService.alterarStatus(id, DepoimentoStatus.REPROVADO).get()); // Usando o
+                                                                                                          // método
+                                                                                                          // toResponse
+                                                                                                          // manual
+                })
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENTIDADE_NAO_ENCONTRADA,
+                        ErrorCode.ENTIDADE_NAO_ENCONTRADA.getMessage()));
+    }
+
+    /**
+     * Lista todos os depoimentos, convertendo-os para DTOs de resposta.
+     * 
+     * @return Uma lista de DTOs de resposta de depoimentos.
+     */
+    public List<DepoimentoResponseDTO> listarTodos() {
+        return domainService.listarTodos().stream()
+                .map(this::toResponse) // Usando o método toResponse manual
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca um depoimento pelo seu ID e o converte para DTO de resposta.
+     * 
+     * @param id O ID do depoimento.
+     * @return O DTO de resposta do depoimento.
+     * @throws BusinessException se o depoimento não for encontrado.
+     */
+    public DepoimentoResponseDTO buscarPorId(UUID id) {
+        return domainService.buscarPorId(id)
+                .map(this::toResponse) // Usando o método toResponse manual
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENTIDADE_NAO_ENCONTRADA,
+                        ErrorCode.ENTIDADE_NAO_ENCONTRADA.getMessage()));
+    }
+
+    /**
+     * Lista depoimentos para a página inicial, com opções de limite e
+     * aleatoriedade.
+     * Esta é uma responsabilidade do AppService, pois é um caso de uso específico.
+     * 
+     * @param limit  O número máximo de depoimentos a serem retornados.
+     * @param random Booleano indicando se a busca deve ser aleatória.
+     * @return Uma lista de DTOs de resposta de depoimentos.
+     */
+    public List<DepoimentoResponseDTO> listarParaHome(int limit, boolean random) {
+        List<Depoimento> depoimentos;
+        if (random) {
+            depoimentos = repository.buscarAleatoriosAprovados(limit);
+        } else {
+            depoimentos = repository.findTop5ByStatusOrderByCreatedAtDesc(DepoimentoStatus.APROVADO);
+        }
+        return depoimentos.stream()
+                .map(this::toResponse) // Usando o método toResponse manual
+                .collect(Collectors.toList());
+    }
+}
+```
+```java
+package br.com.legalconnect.depoimento.service;
+
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import br.com.legalconnect.depoimento.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Implementação mock do serviço de usuário para fins de demonstração.
+ * Em uma aplicação real, esta classe faria a comunicação com o repositório de
+ * usuários
+ * ou outro serviço de identidade.
+ */
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl {
+
+    private final UserRepository userRepository;
+
+    public boolean userExists(UUID userId) {
+        // Lógica mock: Em uma aplicação real, você consultaria o UserRepository aqui.
+        // Para este exemplo, verifica se o ID está no conjunto de IDs simulados.
+        return userRepository.existsById(userId);
+
+    }
+}
+```
+```java
+//
+// Controlador REST para gerenciar os patrocinadores do marketplace jurídico.
+// Este controlador lida com os endpoints de administração.
+//
+package br.com.legalconnect.patrocinio.controller;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import br.com.legalconnect.common.dto.BaseResponse;
+import br.com.legalconnect.patrocinio.dto.DestaquesRequestDTO;
+import br.com.legalconnect.patrocinio.dto.DestaquesResponseDTO;
+import br.com.legalconnect.patrocinio.service.PatrocinioAppService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Controlador REST para os endpoints de gerenciamento de patrocinadores
+ * (admin).
+ * Separado do controlador público para melhor organização e controle de acesso.
+ */
+@RestController
+@RequiredArgsConstructor
+@Tag(name = "Patrocínios (Admin)", description = "Endpoints para gerenciamento de patrocinadores no marketplace jurídico (acesso administrativo)")
+@RequestMapping("/api/v1/marketplace/destaques")
+@PreAuthorize("hasRole('ROLE_PLATAFORMA_ADMIN')")
+public class AdminDestaquesController {
+
+        private final PatrocinioAppService patrocinioAppService;
+
+        /**
+         * Endpoint privado para listar todos os patrocinadores, independentemente do
+         * status.
+         * Requer a role ROLE_PLATAFORMA_ADMIN.
+         *
+         * @return ResponseEntity contendo a lista completa de patrocinadores e uma
+         *         resposta padrão.
+         */
+        @Operation(summary = "Lista todos os patrocinadores (administração)", description = "Retorna uma lista completa de todos os patrocinadores, independentemente do status. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", responses = {
+                        @ApiResponse(responseCode = "200", description = "Todos os patrocinadores listados", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DestaquesResponseDTO.class))),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @GetMapping
+        public ResponseEntity<BaseResponse<List<DestaquesResponseDTO>>> getAllPatrocinios() {
+                List<DestaquesResponseDTO> patrocinadores = patrocinioAppService.findAllPatrocinios();
+                return ResponseEntity.ok(BaseResponse.<List<DestaquesResponseDTO>>builder()
+                                .data(patrocinadores)
+                                .message("Todos os patrocinadores listados.")
+                                .build());
+        }
+
+        /**
+         * Endpoint privado para criar um novo patrocinador.
+         * A API aceita um DTO polimórfico, permitindo a criação de diferentes tipos de
+         * patrocinadores.
+         *
+         * @param requestDTO DTO com os dados do novo patrocinador.
+         * @return ResponseEntity com o patrocinador criado e uma resposta padrão.
+         */
+        @Operation(summary = "Cria um novo patrocinador", description = "Cria um novo patrocinador. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", responses = {
+                        @ApiResponse(responseCode = "201", description = "Patrocinador criado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DestaquesResponseDTO.class))),
+                        @ApiResponse(responseCode = "400", description = "Requisição inválida"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @PostMapping
+        public ResponseEntity<BaseResponse<DestaquesResponseDTO>> createPatrocinio(
+                        @RequestBody @Valid DestaquesRequestDTO requestDTO) {
+                DestaquesResponseDTO novoPatrocinio = patrocinioAppService.createPatrocinio(requestDTO);
+                return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.<DestaquesResponseDTO>builder()
+                                .data(novoPatrocinio)
+                                .message("Patrocinador criado com sucesso.")
+                                .build());
+        }
+
+        /**
+         * Endpoint privado para atualizar um patrocinador existente.
+         * A API aceita um DTO polimórfico para a atualização.
+         *
+         * @param id         ID do patrocinador a ser atualizado.
+         * @param requestDTO DTO com os dados atualizados.
+         * @return ResponseEntity com o patrocinador atualizado e uma resposta padrão.
+         */
+        @Operation(summary = "Atualiza um patrocinador existente", description = "Atualiza um patrocinador pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", responses = {
+                        @ApiResponse(responseCode = "200", description = "Patrocinador atualizado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DestaquesResponseDTO.class))),
+                        @ApiResponse(responseCode = "400", description = "Requisição inválida"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido"),
+                        @ApiResponse(responseCode = "404", description = "Patrocinador não encontrado")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @PutMapping("/{id}")
+        public ResponseEntity<BaseResponse<DestaquesResponseDTO>> updatePatrocinio(
+                        @PathVariable UUID id,
+                        @RequestBody @Valid DestaquesRequestDTO requestDTO) {
+                DestaquesResponseDTO updatedPatrocinio = patrocinioAppService.updatePatrocinio(id, requestDTO);
+                return ResponseEntity.ok(BaseResponse.<DestaquesResponseDTO>builder()
+                                .data(updatedPatrocinio)
+                                .message("Patrocinador atualizado com sucesso.")
+                                .build());
+        }
+
+        /**
+         * Endpoint privado para mudar o status de um patrocinador.
+         *
+         * @param id     ID do patrocinador.
+         * @param status O novo status (e.g., "ACTIVE", "INACTIVE").
+         * @return ResponseEntity com o patrocinador atualizado e uma resposta padrão.
+         */
+        @Operation(summary = "Muda o status de um patrocinador", description = "Altera o status de um patrocinador (ex: de INACTIVE para ACTIVE). Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", responses = {
+                        @ApiResponse(responseCode = "200", description = "Status do patrocinador alterado com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DestaquesResponseDTO.class))),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido"),
+                        @ApiResponse(responseCode = "404", description = "Patrocinador não encontrado")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @PatchMapping("/{id}/status")
+        public ResponseEntity<BaseResponse<DestaquesResponseDTO>> updatePatrocinioStatus(
+                        @PathVariable UUID id,
+                        @RequestParam String status) {
+                DestaquesResponseDTO updatedPatrocinio = patrocinioAppService.updatePatrocinioStatus(id, status);
+                return ResponseEntity.ok(BaseResponse.<DestaquesResponseDTO>builder()
+                                .data(updatedPatrocinio)
+                                .message("Status do patrocinador alterado com sucesso.")
+                                .build());
+        }
+
+        /**
+         * Endpoint privado para excluir um patrocinador.
+         *
+         * @param id ID do patrocinador a ser excluído.
+         * @return ResponseEntity com status 204 (No Content) em caso de sucesso.
+         */
+        @Operation(summary = "Exclui um patrocinador", description = "Exclui um patrocinador permanentemente pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).", responses = {
+                        @ApiResponse(responseCode = "204", description = "Patrocinador excluído com sucesso"),
+                        @ApiResponse(responseCode = "403", description = "Acesso proibido"),
+                        @ApiResponse(responseCode = "404", description = "Patrocinador não encontrado")
+        }, security = @SecurityRequirement(name = "bearerAuth"))
+        @DeleteMapping("/{id}")
+        public ResponseEntity<BaseResponse<Void>> deletePatrocinio(@PathVariable UUID id) {
+                patrocinioAppService.deletePatrocinio(id);
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(BaseResponse.<Void>builder()
+                                .message("Patrocinador excluído com sucesso.")
+                                .build());
+        }
+}
+```
+```java
+//
+// Controlador REST para gerenciar os patrocinadores do marketplace jurídico.
+// Este controlador é o ponto de entrada da API, lidando com as requisições HTTP
+// e orquestrando o serviço de aplicação para executar a lógica de negócio.
+//
+package br.com.legalconnect.patrocinio.controller;
+
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import br.com.legalconnect.common.dto.BaseResponse;
+import br.com.legalconnect.patrocinio.dto.DestaquesResponseDTO;
+import br.com.legalconnect.patrocinio.service.PatrocinioAppService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequiredArgsConstructor
+@Tag(name = "Patrocínios", description = "Endpoints para gerenciamento de patrocinadores no marketplace jurídico")
+@RequestMapping("/api/v1/publico/marketplace/destaques")
+public class DestaquesController {
+
+        private final PatrocinioAppService patrocinioAppService;
+
+        // =================================================================================================================
+        // Endpoint Público
+        // =================================================================================================================
+
+        /**
+         * Endpoint público para listar todos os patrocinadores com status ATIVO.
+         * Retorna uma lista de DTOs polimórficos que podem representar diferentes tipos
+         * de patrocínios (Eventos, Escritórios, etc.).
+         *
+         * @return ResponseEntity contendo a lista de patrocinadores ativos e uma
+         *         resposta padrão.
+         */
+        @Operation(summary = "Lista patrocinadores ativos", description = "Retorna uma lista de patrocinadores com status ATIVO. A resposta pode conter diferentes tipos de patrocinadores.", responses = {
+                        @ApiResponse(responseCode = "200", description = "Patrocinadores ativos listados com sucesso", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DestaquesResponseDTO.class)))
+        })
+        @GetMapping
+        public ResponseEntity<BaseResponse<List<DestaquesResponseDTO>>> getActivePatrocinios() {
+                List<DestaquesResponseDTO> patrocinadores = patrocinioAppService.findActivePatrocinios();
+                return ResponseEntity.ok(BaseResponse.<List<DestaquesResponseDTO>>builder()
+                                .data(patrocinadores)
+                                .message("Patrocinadores ativos listados com sucesso.")
+                                .build());
+        }
+}
+```
+```java
+
+package br.com.legalconnect.patrocinio.domain;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.PostLoad;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+@Entity
+@DiscriminatorValue("ESCRITORIO")
+@Data
+@SuperBuilder
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class DestaquesEscritorio extends DestaquesItem {
+    @Column(length = 255)
+    private String nome;
+    @Column(length = 255)
+    private String slogan;
+    @Column(name = "logo_url", length = 255)
+    private String logoUrl;
+
+    @PostLoad
+    public void setTipo() {
+        this.tipo = "ESCRITORIO";
+    }
+}
+```
+```java
+//
+// Entidade JPA para um patrocínio de evento.
+//
+package br.com.legalconnect.patrocinio.domain;
+
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.PostLoad;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+@Entity
+@DiscriminatorValue("EVENTO")
+@Data
+@SuperBuilder
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class DestaquesEvento extends DestaquesItem {
+    @Column(length = 255)
+    private String titulo;
+    private LocalDateTime dataEvento;
+    @Column(name = "imagem_url", length = 255)
+    private String imagemUrl;
+
+    @PostLoad
+    public void setTipo() {
+        this.tipo = "EVENTO";
+    }
+}
+```
+```java
+//
+// Entidade base abstrata JPA para representar um item de patrocínio.
+// Usa herança de tabela única (@Inheritance) para persistir todos os tipos de patrocínio em uma única tabela.
+//
+package br.com.legalconnect.patrocinio.domain;
+
+import br.com.legalconnect.common.dto.BaseEntity;
+import br.com.legalconnect.patrocinio.domain.enums.PatrocinioStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * Entidade JPA base abstrata para itens de patrocínio.
+ * Usa herança de tabela única (@Inheritance) para centralizar todos os
+ * patrocínios em uma única tabela.
+ * O campo 'tipo' atua como o discriminador.
+ */
+@Entity
+@Table(name = "tb_patrocinio")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "tipo", discriminatorType = DiscriminatorType.STRING)
+@Data
+@SuperBuilder
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public abstract class DestaquesItem extends BaseEntity {
+
+    @Column(name = "tipo", insertable = false, updatable = false)
+    protected String tipo;
+
+    @Column(nullable = false, length = 255)
+    protected String link;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    protected PatrocinioStatus status;
+}
+```
+```java
+//
+// Entidade JPA para um patrocínio de notícia.
+//
+package br.com.legalconnect.patrocinio.domain;
+
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.PostLoad;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+@Entity
+@DiscriminatorValue("NOTICIA")
+@Data
+@SuperBuilder
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class DestaquesNoticia extends DestaquesItem {
+    @Column(length = 255)
+    private String titulo;
+    @Column(name = "imagem_url", length = 255)
+    private String imagemUrl;
+    @Column(name = "data_publicacao")
+    private LocalDateTime dataPublicacao;
+
+    @PostLoad
+    public void setTipo() {
+        this.tipo = "NOTICIA";
+    }
+}
+```
+```java
+//
+// Enum para o status dos patrocinadores.
+//
+package br.com.legalconnect.patrocinio.domain.enums;
+
+/**
+ * Define os possíveis status de um patrocinador.
+ */
+public enum PatrocinioStatus {
+    ACTIVE,   // Patrocinador está ativo e pode ser exibido.
+    INACTIVE  // Patrocinador está inativo e não deve ser exibido.
+}
+```
+```java
+//
+// DTO específico para um patrocínio de escritório.
+//
+package br.com.legalconnect.patrocinio.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.SuperBuilder;
+
+@Data
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class DestaquesEscritorioRequestDTO extends DestaquesRequestDTO {
+    @NotBlank(message = "O nome do escritório é obrigatório.")
+    private String nome;
+    @NotBlank(message = "O slogan do escritório é obrigatório.")
+    private String slogan;
+    @Size(max = 255, message = "A URL da logo deve ter no máximo 255 caracteres.")
+    private String logoUrl; // Opcional, se não houver, pode ser usado um placeholder
+}
+```
+```java
+//
+// DTO específico para a resposta de um patrocínio de escritório.
+//
+package br.com.legalconnect.patrocinio.dto;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.SuperBuilder;
+
+@Data
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class DestaquesEscritorioResponseDTO extends DestaquesResponseDTO {
+    private String nome;
+    private String slogan;
+    private String logoUrl;
+}
+```
+```java
+//
+// DTO específico para um patrocínio de evento.
+//
+package br.com.legalconnect.patrocinio.dto;
+
+import java.time.LocalDateTime;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.SuperBuilder;
+
+@Data
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class DestaquesEventoRequestDTO extends DestaquesRequestDTO {
+    @NotBlank(message = "O título do evento é obrigatório.")
+    private String titulo;
+    @NotNull(message = "A data do evento é obrigatória.")
+    private LocalDateTime dataEvento;
+    @NotBlank(message = "A URL da imagem é obrigatória.")
+    private String imagemUrl;
+}
+```
+```java
+//
+// DTO específico para a resposta de um patrocínio de evento.
+//
+package br.com.legalconnect.patrocinio.dto;
+
+import java.time.LocalDateTime;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.SuperBuilder;
+
+@Data
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class DestaquesEventoResponseDTO extends DestaquesResponseDTO {
+    private String titulo;
+    private LocalDateTime dataEvento;
+    private String imagemUrl;
+}
+```
+```java
+//
+// DTO específico para um patrocínio de notícia.
+//
+package br.com.legalconnect.patrocinio.dto;
+
+import java.time.LocalDateTime;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.SuperBuilder;
+
+@Data
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class DestaquesNoticiaRequestDTO extends DestaquesRequestDTO {
+    @NotBlank(message = "O título da notícia é obrigatório.")
+    private String titulo;
+    @NotBlank(message = "A URL da imagem é obrigatória.")
+    private String imagemUrl;
+    @NotNull(message = "A data de publicação da notícia é obrigatória.")
+    private LocalDateTime dataPublicacao;
+}
+```
+```java
+//
+// DTO específico para a resposta de um patrocínio de notícia.
+//
+package br.com.legalconnect.patrocinio.dto;
+
+import java.time.LocalDateTime;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.SuperBuilder;
+
+@Data
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class DestaquesNoticiaResponseDTO extends DestaquesResponseDTO {
+    private String titulo;
+    private String imagemUrl;
+    private LocalDateTime dataPublicacao;
+}
+```
+```java
+//
+// DTO para a requisição de criação/atualização de patrocinadores.
+// A anotação @JsonTypeInfo permite que o Spring determine qual classe de DTO
+// concreta deve ser usada com base no valor do campo 'tipo'.
+//
+package br.com.legalconnect.patrocinio.dto;
+
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * DTO base polimórfico para a requisição de criação e atualização de
+ * patrocinadores.
+ * A API usará este DTO para deserializar diferentes tipos de patrocinadores.
+ */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "tipo")
+@JsonSubTypes({
+                @JsonSubTypes.Type(value = DestaquesEventoRequestDTO.class, name = "EVENTO"),
+                @JsonSubTypes.Type(value = DestaquesEscritorioRequestDTO.class, name = "ESCRITORIO"),
+                @JsonSubTypes.Type(value = DestaquesNoticiaRequestDTO.class, name = "NOTICIA")
+})
+@Data
+@SuperBuilder
+public abstract class DestaquesRequestDTO {
+        @NotBlank(message = "O tipo de patrocínio é obrigatório.")
+        protected String tipo; // EVENTO, ESCRITORIO, NOTICIA
+        @NotBlank(message = "O link é obrigatório.")
+        protected String link;
+        protected String status;
+}
+```
+```java
+//
+// DTO base polimórfico para a resposta da API de patrocinadores.
+package br.com.legalconnect.patrocinio.dto;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+import lombok.Data;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * DTO base polimórfico para a resposta da API de patrocinadores.
+ * Utiliza o campo 'tipo' como discriminador para serializar o objeto correto.
+ */
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "tipo")
+@JsonSubTypes({
+                @JsonSubTypes.Type(value = DestaquesEventoResponseDTO.class, name = "EVENTO"),
+                @JsonSubTypes.Type(value = DestaquesEscritorioResponseDTO.class, name = "ESCRITORIO"),
+                @JsonSubTypes.Type(value = DestaquesNoticiaResponseDTO.class, name = "NOTICIA")
+})
+@Data
+@SuperBuilder
+public abstract class DestaquesResponseDTO {
+        protected UUID id;
+        protected String tipo;
+        protected String link;
+        protected String status;
+        protected LocalDateTime createdAt;
+        protected LocalDateTime updatedAt;
+}
+```
+```java
+//
+// Repositório JPA genérico para a entidade base PatrocinioItem.
+//
+package br.com.legalconnect.patrocinio.repository;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import br.com.legalconnect.patrocinio.domain.DestaquesItem;
+import br.com.legalconnect.patrocinio.domain.enums.PatrocinioStatus;
+
+/**
+ * Repositório Spring Data JPA para a entidade base PatrocinioItem.
+ * Através do polimorfismo, este repositório pode lidar com todos os tipos de
+ * patrocínios.
+ */
+@Repository
+public interface DestaquesJpaRepository extends JpaRepository<DestaquesItem, UUID> {
+    /**
+     * Busca uma lista de patrocinadores pelo seu status.
+     *
+     * @param status O status do patrocinador (ACTIVE ou INACTIVE).
+     * @return Uma lista de patrocinadores com o status especificado.
+     */
+    List<DestaquesItem> findByStatus(PatrocinioStatus status);
+}
+```
+```java
+//
+// Serviço de domínio que interage com o repositório JPA de patrocinadores.
+// Contém a lógica de negócio principal e a comunicação direta com a camada de infraestrutura (repositórios).
+//
+package br.com.legalconnect.patrocinio.service;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.patrocinio.domain.DestaquesEscritorio;
+import br.com.legalconnect.patrocinio.domain.DestaquesEvento;
+import br.com.legalconnect.patrocinio.domain.DestaquesItem;
+import br.com.legalconnect.patrocinio.domain.DestaquesNoticia;
+import br.com.legalconnect.patrocinio.domain.enums.PatrocinioStatus;
+import br.com.legalconnect.patrocinio.repository.DestaquesJpaRepository;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Serviço de domínio responsável por gerenciar a persistência dos
+ * patrocinadores.
+ * Esta camada deve ser agnóstica à API e se concentrar em operações de dados.
+ */
+@Service
+@RequiredArgsConstructor
+public class DestaquesDomainService {
+
+    private static final Logger log = LoggerFactory.getLogger(DestaquesDomainService.class);
+    private final DestaquesJpaRepository repository;
+
+    /**
+     * Busca todos os patrocinadores com status ATIVO.
+     *
+     * @return Uma lista de entidades PatrocinioItem com o status ATIVO.
+     */
+    public List<DestaquesItem> findActivePatrocinios() {
+        log.debug("Buscando patrocinadores ativos no repositório.");
+        return repository.findByStatus(PatrocinioStatus.ACTIVE);
+    }
+
+    /**
+     * Busca todos os patrocinadores, independente do status.
+     *
+     * @return Uma lista de todas as entidades PatrocinioItem.
+     */
+    public List<DestaquesItem> findAllPatrocinios() {
+        log.debug("Buscando todos os patrocinadores no repositório.");
+        return repository.findAll();
+    }
+
+    /**
+     * Busca um patrocinador pelo seu ID.
+     *
+     * @param id O ID do patrocinador.
+     * @return Um Optional contendo a entidade PatrocinioItem, se encontrada.
+     */
+    public Optional<DestaquesItem> findPatrocinioById(UUID id) {
+        log.debug("Buscando patrocinador por ID: {}", id);
+        return repository.findById(id);
+    }
+
+    /**
+     * Cria um novo patrocinador no banco de dados.
+     *
+     * @param patrocinio A entidade PatrocinioItem a ser salva.
+     * @return A entidade PatrocinioItem salva, com o ID gerado.
+     */
+    public DestaquesItem createPatrocinio(DestaquesItem patrocinio) {
+        log.info("Salvando novo patrocinador do tipo {}: {}", patrocinio.getTipo(), patrocinio.toString());
+        return repository.save(patrocinio);
+    }
+
+    /**
+     * Atualiza um patrocinador existente.
+     *
+     * @param id                O ID da entidade a ser atualizada.
+     * @param updatedPatrocinio A entidade PatrocinioItem com os dados atualizados.
+     * @return A entidade PatrocinioItem salva.
+     */
+    public DestaquesItem updatePatrocinio(UUID id, DestaquesItem updatedPatrocinio) {
+        log.info("Atualizando patrocinador com ID: {}", id);
+        return repository.findById(id).map(existing -> {
+            // A lógica de atualização é genérica, mas a JPA cuida do tipo concreto
+            existing.setLink(updatedPatrocinio.getLink());
+            existing.setStatus(updatedPatrocinio.getStatus());
+
+            // A cópia dos dados específicos para cada tipo de patrocínio
+            if (existing instanceof DestaquesEvento && updatedPatrocinio instanceof DestaquesEvento) {
+                DestaquesEvento existingEvento = (DestaquesEvento) existing;
+                DestaquesEvento updatedEvento = (DestaquesEvento) updatedPatrocinio;
+                existingEvento.setTitulo(updatedEvento.getTitulo());
+                existingEvento.setDataEvento(updatedEvento.getDataEvento());
+                existingEvento.setImagemUrl(updatedEvento.getImagemUrl());
+            } else if (existing instanceof DestaquesEscritorio && updatedPatrocinio instanceof DestaquesEscritorio) {
+                DestaquesEscritorio existingEscritorio = (DestaquesEscritorio) existing;
+                DestaquesEscritorio updatedEscritorio = (DestaquesEscritorio) updatedPatrocinio;
+                existingEscritorio.setNome(updatedEscritorio.getNome());
+                existingEscritorio.setSlogan(updatedEscritorio.getSlogan());
+                existingEscritorio.setLogoUrl(updatedEscritorio.getLogoUrl());
+            } else if (existing instanceof DestaquesNoticia && updatedPatrocinio instanceof DestaquesNoticia) {
+                DestaquesNoticia existingNoticia = (DestaquesNoticia) existing;
+                DestaquesNoticia updatedNoticia = (DestaquesNoticia) updatedPatrocinio;
+                existingNoticia.setTitulo(updatedNoticia.getTitulo());
+                existingNoticia.setImagemUrl(updatedNoticia.getImagemUrl());
+                existingNoticia.setDataPublicacao(updatedNoticia.getDataPublicacao());
+            } else {
+                throw new BusinessException(ErrorCode.DADOS_INVALIDOS,
+                        "Tentativa de atualizar um tipo de patrocínio com dados incompatíveis.");
+            }
+            return repository.save(existing);
+        }).orElseThrow(() -> new BusinessException(ErrorCode.ENTIDADE_NAO_ENCONTRADA, "Patrocinador não encontrado."));
+    }
+
+    /**
+     * Altera o status de um patrocinador.
+     *
+     * @param id     ID do patrocinador.
+     * @param status O novo status.
+     * @return A entidade PatrocinioItem com o status alterado.
+     * @throws BusinessException se o patrocinador não for encontrado.
+     */
+    public DestaquesItem updatePatrocinioStatus(UUID id, PatrocinioStatus status) {
+        log.info("Tentando alterar o status do patrocinador {} para {}", id, status);
+        return repository.findById(id)
+                .map(patrocinio -> {
+                    patrocinio.setStatus(status);
+                    return repository.save(patrocinio);
+                })
+                .orElseThrow(
+                        () -> new BusinessException(ErrorCode.ENTIDADE_NAO_ENCONTRADA, "Patrocinador não encontrado."));
+    }
+
+    /**
+     * Exclui um patrocinador pelo ID.
+     *
+     * @param id O ID do patrocinador a ser excluído.
+     * @throws BusinessException se o patrocinador não for encontrado.
+     */
+    public void deletePatrocinio(UUID id) {
+        log.info("Excluindo patrocinador com ID: {}", id);
+        if (!repository.existsById(id)) {
+            throw new BusinessException(ErrorCode.ENTIDADE_NAO_ENCONTRADA, "Patrocinador não encontrado.");
+        }
+        repository.deleteById(id);
+    }
+}
+```
+```java
+//
+// Serviço de aplicação para a lógica de negócio dos patrocinadores.
+//
+package br.com.legalconnect.patrocinio.service;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.patrocinio.domain.DestaquesEscritorio;
+import br.com.legalconnect.patrocinio.domain.DestaquesEvento;
+import br.com.legalconnect.patrocinio.domain.DestaquesItem;
+import br.com.legalconnect.patrocinio.domain.DestaquesNoticia;
+import br.com.legalconnect.patrocinio.domain.enums.PatrocinioStatus;
+import br.com.legalconnect.patrocinio.dto.DestaquesEscritorioRequestDTO;
+import br.com.legalconnect.patrocinio.dto.DestaquesEscritorioResponseDTO;
+import br.com.legalconnect.patrocinio.dto.DestaquesEventoRequestDTO;
+import br.com.legalconnect.patrocinio.dto.DestaquesEventoResponseDTO;
+import br.com.legalconnect.patrocinio.dto.DestaquesNoticiaRequestDTO;
+import br.com.legalconnect.patrocinio.dto.DestaquesNoticiaResponseDTO;
+import br.com.legalconnect.patrocinio.dto.DestaquesRequestDTO;
+import br.com.legalconnect.patrocinio.dto.DestaquesResponseDTO;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Serviço de aplicação para gerenciar a lógica de negócio dos patrocinadores.
+ * Atua como uma camada de tradução entre o mundo da API (DTOs) e o mundo do
+ * domínio (entidades).
+ * Contém a lógica de conversão entre DTOs e entidades de forma polimórfica.
+ */
+@Service
+@RequiredArgsConstructor
+public class PatrocinioAppService {
+
+    private static final Logger log = LoggerFactory.getLogger(PatrocinioAppService.class);
+    private final DestaquesDomainService domainService;
+
+    /**
+     * Converte uma entidade de domínio PatrocinioItem para um DTO de resposta
+     * polimórfico.
+     * 
+     * @param entity A entidade a ser convertida.
+     * @return O DTO de resposta.
+     */
+    private DestaquesResponseDTO toResponseDTO(DestaquesItem entity) {
+        if (entity instanceof DestaquesEvento) {
+            DestaquesEvento evento = (DestaquesEvento) entity;
+            return DestaquesEventoResponseDTO.builder()
+                    .id(evento.getId())
+                    .tipo(evento.getTipo())
+                    .link(evento.getLink())
+                    .status(evento.getStatus().name())
+                    .titulo(evento.getTitulo())
+                    .dataEvento(evento.getDataEvento())
+                    .imagemUrl(evento.getImagemUrl())
+                    .createdAt(evento.getCreatedAt())
+                    .updatedAt(evento.getUpdatedAt())
+                    .build();
+        } else if (entity instanceof DestaquesEscritorio) {
+            DestaquesEscritorio escritorio = (DestaquesEscritorio) entity;
+            return DestaquesEscritorioResponseDTO.builder()
+                    .id(escritorio.getId())
+                    .tipo(escritorio.getTipo())
+                    .link(escritorio.getLink())
+                    .status(escritorio.getStatus().name())
+                    .nome(escritorio.getNome())
+                    .slogan(escritorio.getSlogan())
+                    .logoUrl(escritorio.getLogoUrl())
+                    .createdAt(escritorio.getCreatedAt())
+                    .updatedAt(escritorio.getUpdatedAt())
+                    .build();
+        } else if (entity instanceof DestaquesNoticia) {
+            DestaquesNoticia noticia = (DestaquesNoticia) entity;
+            return DestaquesNoticiaResponseDTO.builder()
+                    .id(noticia.getId())
+                    .tipo(noticia.getTipo())
+                    .link(noticia.getLink())
+                    .status(noticia.getStatus().name())
+                    .titulo(noticia.getTitulo())
+                    .imagemUrl(noticia.getImagemUrl())
+                    .dataPublicacao(noticia.getDataPublicacao())
+                    .createdAt(noticia.getCreatedAt())
+                    .updatedAt(noticia.getUpdatedAt())
+                    .build();
+        }
+        return null;
+    }
+
+    /**
+     * Converte um DTO de requisição polimórfico para uma entidade de domínio
+     * PatrocinioItem.
+     * 
+     * @param dto O DTO de requisição.
+     * @param id  O ID da entidade (pode ser null para criação).
+     * @return A entidade de domínio.
+     */
+    private DestaquesItem toEntity(DestaquesRequestDTO dto, UUID id) {
+        PatrocinioStatus status = PatrocinioStatus.INACTIVE;
+        if (dto.getStatus() != null) {
+            try {
+                status = PatrocinioStatus.valueOf(dto.getStatus().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                log.warn("Status inválido '{}' fornecido na requisição. Usando status padrão INACTIVE.",
+                        dto.getStatus());
+            }
+        }
+
+        if ("EVENTO".equalsIgnoreCase(dto.getTipo())) {
+            DestaquesEventoRequestDTO eventoDto = (DestaquesEventoRequestDTO) dto;
+            return DestaquesEvento.builder()
+                    .id(id)
+                    .link(eventoDto.getLink())
+                    .status(status)
+                    .titulo(eventoDto.getTitulo())
+                    .dataEvento(eventoDto.getDataEvento())
+                    .imagemUrl(eventoDto.getImagemUrl())
+                    .build();
+        } else if ("ESCRITORIO".equalsIgnoreCase(dto.getTipo())) {
+            DestaquesEscritorioRequestDTO escritorioDto = (DestaquesEscritorioRequestDTO) dto;
+            return DestaquesEscritorio.builder()
+                    .id(id)
+                    .link(escritorioDto.getLink())
+                    .status(status)
+                    .nome(escritorioDto.getNome())
+                    .slogan(escritorioDto.getSlogan())
+                    .logoUrl(escritorioDto.getLogoUrl())
+                    .build();
+        } else if ("NOTICIA".equalsIgnoreCase(dto.getTipo())) {
+            DestaquesNoticiaRequestDTO noticiaDto = (DestaquesNoticiaRequestDTO) dto;
+            return DestaquesNoticia.builder()
+                    .id(id)
+                    .link(noticiaDto.getLink())
+                    .status(status)
+                    .titulo(noticiaDto.getTitulo())
+                    .imagemUrl(noticiaDto.getImagemUrl())
+                    .dataPublicacao(noticiaDto.getDataPublicacao())
+                    .build();
+        }
+        throw new BusinessException(ErrorCode.DADOS_INVALIDOS, "Tipo de patrocínio inválido.");
+    }
+
+    /**
+     * Busca todos os patrocinadores com status ATIVO.
+     *
+     * @return Uma lista de DTOs de resposta de patrocinadores ativos.
+     */
+    public List<DestaquesResponseDTO> findActivePatrocinios() {
+        log.info("Buscando patrocinadores ativos...");
+        return domainService.findActivePatrocinios().stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca todos os patrocinadores, independente do status.
+     * Requer privilégios de administrador.
+     *
+     * @return Uma lista de DTOs de resposta de todos os patrocinadores.
+     */
+    public List<DestaquesResponseDTO> findAllPatrocinios() {
+        log.info("Buscando todos os patrocinadores para administração...");
+        return domainService.findAllPatrocinios().stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Cria um novo patrocinador a partir de um DTO.
+     *
+     * @param requestDTO O DTO de requisição com os dados do patrocinador.
+     * @return O DTO de resposta do patrocinador criado.
+     */
+    public DestaquesResponseDTO createPatrocinio(DestaquesRequestDTO requestDTO) {
+        log.info("Iniciando a criação de um novo patrocinador do tipo: {}", requestDTO.getTipo());
+        DestaquesItem newEntity = toEntity(requestDTO, null);
+        DestaquesItem savedEntity = domainService.createPatrocinio(newEntity);
+        log.info("Patrocinador criado com sucesso. ID: {}", savedEntity.getId());
+        return toResponseDTO(savedEntity);
+    }
+
+    /**
+     * Atualiza um patrocinador existente.
+     *
+     * @param id         ID do patrocinador a ser atualizado.
+     * @param requestDTO O DTO de requisição com os dados atualizados.
+     * @return O DTO de resposta do patrocinador atualizado.
+     * @throws BusinessException se o patrocinador não for encontrado ou o status
+     *                           for inválido.
+     */
+    public DestaquesResponseDTO updatePatrocinio(UUID id, DestaquesRequestDTO requestDTO) {
+        log.info("Iniciando a atualização do patrocinador com ID: {}", id);
+        DestaquesItem existingEntity = domainService.findPatrocinioById(id)
+                .orElseThrow(
+                        () -> new BusinessException(ErrorCode.ENTIDADE_NAO_ENCONTRADA, "Patrocinador não encontrado."));
+
+        // Preenche a entidade existente com os novos dados do DTO
+        DestaquesItem updatedEntity = toEntity(requestDTO, id);
+        DestaquesItem savedEntity = domainService.updatePatrocinio(id, updatedEntity);
+        log.info("Patrocinador com ID {} atualizado com sucesso.", savedEntity.getId());
+        return toResponseDTO(savedEntity);
+    }
+
+    /**
+     * Atualiza o status de um patrocinador.
+     *
+     * @param id     ID do patrocinador.
+     * @param status A string do novo status (ex: "ACTIVE").
+     * @return O DTO de resposta do patrocinador com o status alterado.
+     * @throws BusinessException se o patrocinador não for encontrado ou o status
+     *                           for inválido.
+     */
+    public DestaquesResponseDTO updatePatrocinioStatus(UUID id, String status) {
+        log.info("Tentando atualizar o status do patrocinador com ID {} para: {}", id, status);
+        PatrocinioStatus newStatus;
+        try {
+            newStatus = PatrocinioStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.DADOS_INVALIDOS, "Status inválido fornecido: " + status);
+        }
+
+        DestaquesItem updatedEntity = domainService.updatePatrocinioStatus(id, newStatus);
+        log.info("Status do patrocinador com ID {} alterado para {}.", id, newStatus);
+        return toResponseDTO(updatedEntity);
+    }
+
+    /**
+     * Exclui um patrocinador pelo ID.
+     *
+     * @param id O ID do patrocinador a ser excluído.
+     */
+    public void deletePatrocinio(UUID id) {
+        log.warn("Solicitação para excluir patrocinador com ID: {}", id);
+        domainService.deletePatrocinio(id);
+        log.warn("Patrocinador com ID {} excluído com sucesso.", id);
+    }
+}
+```
+```java
+# ===================================================================
+# Configurações Gerais da Aplicação Spring Boot
+# ===================================================================
+spring.application.name=legalconnect-marketplace
+server.port=${PORT:0}
+server.forward-headers-strategy=FRAMEWORK
+spring.main.allow-bean-definition-overriding=true
+
+# ===================================================================
+# Configurações do Eureka Client (Service Discovery)
+# ===================================================================
+eureka.client.enabled=true
+eureka.client.serviceUrl.defaultZone=http://localhost:8761/eureka
+eureka.instance.preferIpAddress=true
+eureka.instance.lease-renewal-interval-in-seconds=30
+
+# ===================================================================
+# Configurações do SpringDoc OpenAPI (Swagger UI)
+# ===================================================================
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.api-docs.path=/v3/api-docs
+springdoc.packagesToScan=br.com.legalconnect
+springdoc.pathsToMatch=/api/v1/**
+springdoc.swagger-ui.url=/v3/api-docs
+springdoc.swagger-ui.disable-swagger-default-url=true
+springdoc.swagger-ui.display-request-duration=true
+
+# ===================================================================
+# Configurações do Banco de Dados PostgreSQL
+# ===================================================================
+spring.datasource.url=jdbc:postgresql://localhost:5432/jusplatform_db
+spring.datasource.username=jususer
+spring.datasource.password=juspassword
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.connection-timeout=30000
+spring.datasource.hikari.idle-timeout=600000
+spring.datasource.hikari.max-lifetime=1800000
+
+# ===================================================================
+# Configurações do JPA e Hibernate
+# ===================================================================
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto=none
+ 
+# ===================================================================
+# Configurações de Logging (Logback)
+# ===================================================================
+logging.level.br.com.legalconnect=INFO
+logging.level.org.springframework=WARN
+logging.level.org.hibernate.SQL=WARN
+logging.level.org.hibernate.type.descriptor.sql.BasicExtractor=WARN
+logging.level.org.hibernate.hbm2ddl=WARN
+logging.level.org.hibernate.engine.jdbc.connections=WARN
+ 
+logging.level.org.hibernate.jpa=INFO
+logging.level.org.springframework.orm.jpa=INFO
+logging.level.org.springframework.data.jpa=INFO
+logging.level.org.hibernate.engine.jdbc.connections.spi=INFO
+
+logging.level.org.springframework.web=DEBUG
+logging.level.org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping=TRACE
+
+ 
+# ===================================================================
+# Configurações do Spring Boot Actuator (Monitoramento)
+# ===================================================================
+management.endpoints.web.exposure.include=*
+management.endpoints.web.base-path=/actuator
+ 
+# ===================================================================
+# Configurações de CORS (Cross-Origin Resource Sharing)
+# ===================================================================
+spring.web.cors.allowed-origins=*
+spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS
+spring.web.cors.allowed-headers=*
+spring.web.cors.allow-credentials=true
+spring.web.cors.max-age=3600
+
+# ===================================================================
+# Propriedades de Aplicação Customizadas
+# ===================================================================
+app.frontend.url=http://localhost:4200
+# app.feature.new-registration-enabled=true
+
+```
+```java
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${subject}">Bem-vindo!</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        text-align: center;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #eee;
+      }
+      .header h1 {
+        color: #007bff;
+      }
+      .content {
+        padding: 20px 0;
+      }
+      .footer {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        font-size: 0.9em;
+        color: #777;
+      }
+      .button {
+        display: inline-block;
+        background-color: #007bff;
+        color: #ffffff;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1 th:text="${title}">Olá!</h1>
+      </div>
+      <div class="content">
+        <p>
+          Prezado(a) <strong th:text="${userName}">Nome do Usuário</strong>,
+        </p>
+        <p>
+          É com grande prazer que confirmamos seu cadastro em nossa plataforma.
+        </p>
+        <p>
+          Seu e-mail de acesso é:
+          <strong th:text="${userEmail}">email@example.com</strong>
+        </p>
+        <p th:text="${message}">
+          Aproveite todas as funcionalidades que oferecemos!
+        </p>
+
+        <p style="text-align: center">
+          <a
+            th:href="${callToActionLink}"
+            class="button"
+            th:text="${callToActionText}"
+            >Acessar Plataforma</a
+          >
+        </p>
+      </div>
+      <div class="footer">
+        <p>
+          Este é um e-mail de notificação automático. Por favor, não responda.
+        </p>
+        <p>
+          &copy; <span th:text="${currentYear}">2025</span> Sua Empresa. Todos
+          os direitos reservados.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
+
+```

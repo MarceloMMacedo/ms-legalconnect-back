@@ -1,0 +1,43 @@
+{
+  "folders": [
+    {
+      "name": "legal-usuario",
+      "path": "../../../../../../.."
+    },
+    {
+      "name": "auth-service",
+      "path": "../../../../../../../../auth-service"
+    },
+    {
+      "name": "infrastructure",
+      "path": "../../../../../../../../infrastructure"
+    },
+    {
+      "name": "legal-advogado",
+      "path": "../../../../../../../../legal-advogado"
+    },
+    {
+      "name": "common-role",
+      "path": "../../../../../../../../common-role"
+    },
+    {
+      "name": "common-tenent",
+      "path": "../../../../../../../../common-tenent"
+    },
+    {
+      "name": "common-lib",
+      "path": "../../../../../../../../common-lib"
+    },
+    {
+      "name": "legal-gaateway",
+      "path": "../../../../../../../../legal-gaateway"
+    },
+    {
+      "path": "../../../../../../../../legal-marketplace"
+    }
+  ],
+  "settings": {
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.debug.settings.onBuildFailureProceed": true
+  }
+}

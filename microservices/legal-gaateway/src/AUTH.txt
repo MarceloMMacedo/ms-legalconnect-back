@@ -1,0 +1,1657 @@
+/*
+================================================================================
+|                                                                              |
+|                            PROJETO: domain-lib                               |
+|              (Biblioteca com as entidades de domínio JPA)                    |
+|                                                                              |
+================================================================================
+*/
+
+// ------------------------------------------------------------------------------
+// ESTRUTURA DE ARQUIVOS DO PROJETO: domain-lib
+// ------------------------------------------------------------------------------
+/*
+domain-lib/
+├── pom.xml
+└── src/
+    └── main/
+        └── java/
+            └── br/
+                └── com/
+                    └── legalconnect/
+                        └── domain/
+                            └── entity/
+*/
+
+// ------------------------------------------------------------------------------
+// ESTRUTURA DE PACOTES: domain-lib
+// ------------------------------------------------------------------------------
+/*
+br.com.legalconnect.domain.entity
+├── BaseEntity.java
+├── Role.java
+└── User.java
+*/
+
+// ==============================================================================
+// ARQUIVO: domain-lib/pom.xml
+// ==============================================================================
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>br.com.legalconnect.domain</groupId>
+    <artifactId>domain-lib</artifactId>
+    <version>1.0.0</version>
+    <name>LegalConnect Domain Library</name>
+    <description>Shared domain entities for the LegalConnect platform</description>
+    <packaging>jar</packaging>
+
+    <properties>
+        <java.version>17</java.version>
+        <lombok.version>1.18.30</lombok.version>
+    </properties>
+
+    <dependencies>
+        <!-- Spring Data JPA for persistence annotations -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <!-- Spring Security Core for UserDetails interface -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+        </dependency>
+        <!-- Lombok for reducing boilerplate code -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>
+
+// ==============================================================================
+// CLASSE: src/main/java/br/com/legalconnect/domain/entity/BaseEntity.java
+// ==============================================================================
+package br.com.legalconnect.domain.entity;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@SuperBuilder
+@MappedSuperclass
+public abstract class BaseEntity implements Serializable {
+
+    private static final Logger log = LoggerFactory.getLogger(BaseEntity.class);
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    protected UUID id;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    protected LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    protected LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
+        updatedAt = now;
+        log.debug("Creating entity: {}. Creation timestamp: {}", this.getClass().getSimpleName(), createdAt);
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+        log.debug("Updating entity: {}. ID: {}. Update timestamp: {}", this.getClass().getSimpleName(), id, updatedAt);
+    }
+}
+
+// ==============================================================================
+// CLASSE: src/main/java/br/com/legalconnect/domain/entity/Role.java
+// ==============================================================================
+package br.com.legalconnect.domain.entity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+
+@Entity
+@Table(name = "tb_role")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class Role extends BaseEntity {
+
+    @Column(nullable = false, unique = true)
+    private String nome;
+}
+
+// ==============================================================================
+// CLASSE: src/main/java/br/com/legalconnect/domain/entity/User.java
+// ==============================================================================
+package br.com.legalconnect.domain.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Entity
+@Table(name = "tb_user")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class User extends BaseEntity implements UserDetails {
+
+    @Column(name = "nome_completo", nullable = false)
+    private String nomeCompleto;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(name = "senha_hash", nullable = false)
+    private String senhaHash;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "tb_user_role",
+               joinColumns = @JoinColumn(name = "user_id"),
+               inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles = new HashSet<>();
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles.stream()
+                    .map(role -> new SimpleGrantedAuthority(role.getNome()))
+                    .collect(Collectors.toList());
+    }
+
+    @Override
+    public String getPassword() {
+        return this.senhaHash;
+    }
+
+    @Override
+    public String getUsername() {
+        return this.email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() { return true; }
+
+    @Override
+    public boolean isAccountNonLocked() { return true; }
+
+    @Override
+    public boolean isCredentialsNonExpired() { return true; }
+
+    @Override
+    public boolean isEnabled() { return true; }
+}
+
+
+/*
+================================================================================
+|                                                                              |
+|                           PROJETO: common-lib                                |
+|             (Biblioteca com código compartilhado entre serviços)             |
+|                                                                              |
+================================================================================
+*/
+
+// ------------------------------------------------------------------------------
+// ESTRUTURA DE ARQUIVOS DO PROJETO: common-lib
+// ------------------------------------------------------------------------------
+/*
+common-lib/
+├── pom.xml
+└── src/
+    └── main/
+        └── java/
+            └── br/
+                └── com/
+                    └── legalconnect/
+                        └── common/
+                            ├── dto/
+                            ├── exception/
+                            └── constant/
+*/
+
+// ------------------------------------------------------------------------------
+// ESTRUTURA DE PACOTES: common-lib
+// ------------------------------------------------------------------------------
+/*
+br.com.legalconnect.common
+├── constant
+│   └── RoleConstant.java
+├── dto
+│   └── BaseResponse.java
+└── exception
+    ├── BusinessException.java
+    ├── ErrorCode.java
+    └── GlobalExceptionHandler.java
+*/
+
+// ==============================================================================
+// ARQUIVO: common-lib/pom.xml
+// ==============================================================================
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>br.com.legalconnect.common</groupId>
+    <artifactId>common-lib</artifactId>
+    <version>1.0.0</version>
+    <name>LegalConnect Common Library</name>
+    <description>Common utilities, DTOs, and configurations for LegalConnect microservices</description>
+    <packaging>jar</packaging>
+
+    <properties>
+        <java.version>17</java.version>
+        <lombok.version>1.18.30</lombok.version>
+    </properties>
+
+    <dependencies>
+        <!-- Domain Library -->
+        <dependency>
+            <groupId>br.com.legalconnect.domain</groupId>
+            <artifactId>domain-lib</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <!-- Spring Boot Starter Web for exception handling and web utilities -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- Spring Boot Starter Validation for annotations in DTOs -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- Lombok for reducing boilerplate code -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>
+
+// ==============================================================================
+// CLASSE: src/main/java/br/com/legalconnect/common/constant/RoleConstant.java
+// ==============================================================================
+package br.com.legalconnect.common.constant;
+
+public final class RoleConstant {
+    public static final String ROLE_CLIENTE = "ROLE_CLIENTE";
+    public static final String ROLE_ADVOGADO = "ROLE_ADVOGADO";
+    public static final String ROLE_ADMIN = "ROLE_ADMIN";
+
+    private RoleConstant() { }
+}
+
+// ==============================================================================
+// CLASSE: src/main/java/br/com/legalconnect/common/dto/BaseResponse.java
+// ==============================================================================
+package br.com.legalconnect.common.dto;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class BaseResponse<T> {
+    private String status;
+    private String message;
+    @Builder.Default
+    private LocalDateTime timestamp = LocalDateTime.now();
+    private T data;
+    private List<String> errors;
+}
+
+// ==============================================================================
+// CLASSE: src/main/java/br/com/legalconnect/common/exception/BusinessException.java
+// ==============================================================================
+package br.com.legalconnect.common.exception;
+
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
+@Getter
+public class BusinessException extends RuntimeException {
+
+    private final ErrorCode errorCode;
+    private final HttpStatus httpStatus;
+
+    public BusinessException(ErrorCode errorCode, HttpStatus httpStatus, String message) {
+        super(message);
+        this.errorCode = errorCode;
+        this.httpStatus = httpStatus;
+    }
+
+    public BusinessException(ErrorCode errorCode, String message) {
+        this(errorCode, HttpStatus.BAD_REQUEST, message);
+    }
+}
+
+// ==============================================================================
+// CLASSE: src/main/java/br/com/legalconnect/common/exception/ErrorCode.java
+// ==============================================================================
+package br.com.legalconnect.common.exception;
+
+import lombok.Getter;
+
+@Getter
+public enum ErrorCode {
+    INVALID_INPUT("LC-001", "Invalid input provided."),
+    RESOURCE_NOT_FOUND("LC-002", "Resource not found."),
+    UNAUTHORIZED("LC-003", "Unauthorized access."),
+    FORBIDDEN("LC-004", "Forbidden access."),
+    INTERNAL_SERVER_ERROR("LC-005", "An internal server error occurred."),
+    EMAIL_ALREADY_EXISTS("LC-101", "Email already registered."),
+    INVALID_CREDENTIALS("LC-102", "Invalid credentials provided."),
+    USER_NOT_FOUND("LC-103", "User not found."),
+    DEFAULT_ROLE_NOT_FOUND("LC-107", "Default user role not configured in the system."),
+    INVALID_JWT("LC-104", "Invalid or expired JWT."),
+    REFRESH_TOKEN_INVALID("LC-105", "Invalid or expired refresh token."),
+    PASSWORD_RESET_TOKEN_INVALID("LC-106", "Invalid or expired password reset token.");
+
+    private final String code;
+    private final String defaultMessage;
+
+    ErrorCode(String code, String defaultMessage) {
+        this.code = code;
+        this.defaultMessage = defaultMessage;
+    }
+}
+
+// ==============================================================================
+// CLASSE: src/main/java/br/com/legalconnect/common/exception/GlobalExceptionHandler.java
+// ==============================================================================
+package br.com.legalconnect.common.exception;
+
+import br.com.legalconnect.common.dto.BaseResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<BaseResponse<Object>> handleBusinessException(BusinessException ex) {
+        log.warn("Business exception occurred: Code={}, HttpStatus={}, Message={}", ex.getErrorCode().getCode(), ex.getHttpStatus(), ex.getMessage());
+        BaseResponse<Object> response = BaseResponse.builder()
+                .status("ERROR")
+                .message(ex.getMessage())
+                .errors(Collections.singletonList(ex.getErrorCode().getCode() + ": " + ex.getErrorCode().getDefaultMessage()))
+                .build();
+        return new ResponseEntity<>(response, ex.getHttpStatus());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<BaseResponse<Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        List<String> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .collect(Collectors.toList());
+        log.warn("Validation exception occurred: {}", errors);
+        BaseResponse<Object> response = BaseResponse.builder()
+                .status("ERROR")
+                .message("Validation failed. Check the error list for details.")
+                .errors(errors)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<BaseResponse<Object>> handleGenericException(Exception ex) {
+        log.error("An unexpected error occurred: ", ex);
+        BaseResponse<Object> response = BaseResponse.builder()
+                .status("ERROR")
+                .message("An unexpected internal server error occurred.")
+                .errors(Collections.singletonList(ErrorCode.INTERNAL_SERVER_ERROR.getCode() + ": " + ErrorCode.INTERNAL_SERVER_ERROR.getDefaultMessage()))
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
+
+
+/*
+================================================================================
+|                                                                              |
+|                           PROJETO: auth-service                              |
+|          (Microsserviço de Autenticação e Autorização de Usuários)           |
+|                                                                              |
+================================================================================
+*/
+
+// ------------------------------------------------------------------------------
+// ESTRUTURA DE ARQUIVOS DO PROJETO: auth-service
+// ------------------------------------------------------------------------------
+/*
+auth-service/
+├── Dockerfile
+├── pom.xml
+└── src/
+    ├── main/
+    │   ├── java/
+    │   │   └── br/
+    │   │       └── com/
+    │   │           └── legalconnect/
+    │   │               └── auth/
+    │   │                   ├── AuthServiceApplication.java
+    │   │                   ├── config/
+    │   │                   ├── controller/
+    │   │                   ├── dto/
+    │   │                   ├── mapper/
+    │   │                   ├── repository/
+    │   │                   └── service/
+    │   └── resources/
+    │       ├── application.properties
+    │       └── db/
+    │           └── migration/
+    │               └── V1__Create_User_And_Role_Tables.sql
+    └── test/
+*/
+
+// ------------------------------------------------------------------------------
+// ESTRUTURA DE PACOTES: auth-service
+// ------------------------------------------------------------------------------
+/*
+br.com.legalconnect.auth
+├── config
+│   ├── ApplicationConfig.java
+│   ├── JwtAuthFilter.java
+│   └── SecurityConfig.java
+├── controller
+│   └── AuthController.java
+├── dto
+│   ├── request
+│   │   ├── LoginRequestDTO.java
+│   │   └── RegisterRequestDTO.java
+│   └── response
+│       ├── AuthResponseDTO.java
+│       └── UserResponseDTO.java
+├── mapper
+│   └── UserMapper.java
+├── repository
+│   ├── RoleRepository.java
+│   └── UserRepository.java
+└── service
+    ├── AuthService.java
+    └── JwtService.java
+*/
+
+// ==============================================================================
+// ARQUIVO: auth-service/pom.xml
+// ==============================================================================
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>br.com.legalconnect</groupId>
+    <artifactId>auth-service</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>auth-service</name>
+    <description>Authentication and Authorization Microservice</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2023.0.1</spring-cloud.version>
+        <jjwt.version>0.12.3</jjwt.version>
+        <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
+        <lombok.version>1.18.30</lombok.version>
+    </properties>
+
+    <dependencies>
+        <!-- Common Library (includes domain-lib transitively) -->
+        <dependency>
+            <groupId>br.com.legalconnect.common</groupId>
+            <artifactId>common-lib</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <!-- Spring Boot Starters -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        
+        <!-- Database -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- JWT Libraries -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- MapStruct for DTO-Entity mapping -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${org.mapstruct.version}</version>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${org.mapstruct.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-Amapstruct.defaultComponentModel=spring</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+// ==============================================================================
+// ARQUIVO: auth-service/Dockerfile
+// ==============================================================================
+# Stage 1: Build the application with Maven
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+# Download all dependencies
+RUN mvn dependency:go-offline
+COPY src ./src
+# Build the application, skipping tests
+RUN mvn clean install -DskipTests
+
+# Stage 2: Create the final runtime image
+FROM eclipse-temurin:17-jre-focal
+WORKDIR /app
+# Copy the built JAR from the build stage
+COPY --from=build /app/target/auth-service-0.0.1-SNAPSHOT.jar app.jar
+# Expose the application port
+EXPOSE 8081
+# Set the entrypoint to run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+
+// ==============================================================================
+// ARQUIVO: auth-service/src/main/resources/application.properties
+// ==============================================================================
+# Application Configuration
+server.port=8081
+spring.application.name=auth-service
+
+# Database Configuration
+spring.datasource.url=jdbc:postgresql://localhost:5432/jusplatform_db
+spring.datasource.username=jususer
+spring.datasource.password=juspassword
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# JPA & Hibernate Configuration
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+# Flyway Configuration
+spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration
+
+# Eureka Client Configuration
+eureka.client.serviceUrl.defaultZone=http://localhost:8761/eureka
+
+# JWT Configuration
+application.security.jwt.secret-key=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+application.security.jwt.expiration=86400000
+application.security.jwt.refresh-expiration=604800000
+
+
+// ==============================================================================
+// ARQUIVO: auth-service/src/main/resources/db/migration/V1__Create_User_And_Role_Tables.sql
+// ==============================================================================
+-- This script creates the fundamental tables for roles, users, and their relationship.
+CREATE TABLE tb_role (
+    id UUID PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE tb_user (
+    id UUID PRIMARY KEY,
+    nome_completo VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    senha_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE tb_user_role (
+    user_id UUID NOT NULL,
+    role_id UUID NOT NULL,
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES tb_user (id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES tb_role (id) ON DELETE CASCADE
+);
+
+-- Insert default roles required for the application
+INSERT INTO tb_role (id, nome, created_at, updated_at) VALUES
+(gen_random_uuid(), 'ROLE_CLIENTE', NOW(), NOW()),
+(gen_random_uuid(), 'ROLE_ADVOGADO', NOW(), NOW()),
+(gen_random_uuid(), 'ROLE_ADMIN', NOW(), NOW());
+
+
+// ==============================================================================
+// CLASSE: auth-service/src/main/java/br/com/legalconnect/auth/AuthServiceApplication.java
+// ==============================================================================
+package br.com.legalconnect.auth;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication(scanBasePackages = {"br.com.legalconnect.auth", "br.com.legalconnect.common"})
+@EnableDiscoveryClient
+public class AuthServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(AuthServiceApplication.class, args);
+    }
+}
+
+
+// ==============================================================================
+// PACOTE: br.com.legalconnect.auth.config
+// ==============================================================================
+
+// CLASSE: src/main/java/br/com/legalconnect/auth/config/ApplicationConfig.java
+package br.com.legalconnect.auth.config;
+
+import br.com.legalconnect.auth.repository.UserRepository;
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@Configuration
+@RequiredArgsConstructor
+public class ApplicationConfig {
+
+    private final UserRepository userRepository;
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return username -> userRepository.findByEmail(username)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, HttpStatus.NOT_FOUND, "User not found with email: " + username));
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService());
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+
+// CLASSE: src/main/java/br/com/legalconnect/auth/config/JwtAuthFilter.java
+package br.com.legalconnect.auth.config;
+
+import br.com.legalconnect.auth.service.JwtService;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+@Component
+@RequiredArgsConstructor
+public class JwtAuthFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
+    private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
+
+    @Override
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        final String userEmail;
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        jwt = authHeader.substring(7);
+        try {
+            userEmail = jwtService.extractUsername(jwt);
+
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities()
+                    );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    log.debug("Authenticated user '{}' and set security context", userEmail);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("JWT token processing error: {}", e.getMessage());
+        }
+        
+        filterChain.doFilter(request, response);
+    }
+}
+
+// CLASSE: src/main/java/br/com/legalconnect/auth/config/SecurityConfig.java
+package br.com.legalconnect.auth.config;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+@EnableWebSecurity
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+    private final JwtAuthFilter jwtAuthFilter;
+    private final AuthenticationProvider authenticationProvider;
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/v1/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/actuator/**")
+                .permitAll()
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authenticationProvider(authenticationProvider)
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+}
+
+
+// ==============================================================================
+// PACOTE: br.com.legalconnect.auth.controller
+// ==============================================================================
+
+// CLASSE: src/main/java/br/com/legalconnect/auth/controller/AuthController.java
+package br.com.legalconnect.auth.controller;
+
+import br.com.legalconnect.auth.dto.request.LoginRequestDTO;
+import br.com.legalconnect.auth.dto.request.RegisterRequestDTO;
+import br.com.legalconnect.auth.dto.response.AuthResponseDTO;
+import br.com.legalconnect.auth.dto.response.UserResponseDTO;
+import br.com.legalconnect.auth.service.AuthService;
+import br.com.legalconnect.common.dto.BaseResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
+public class AuthController {
+
+    private final AuthService authService;
+
+    @PostMapping("/register")
+    public ResponseEntity<BaseResponse<UserResponseDTO>> register(@Valid @RequestBody RegisterRequestDTO request) {
+        UserResponseDTO registeredUser = authService.register(request);
+        BaseResponse<UserResponseDTO> response = BaseResponse.<UserResponseDTO>builder()
+                .status("SUCCESS")
+                .message("User registered successfully.")
+                .data(registeredUser)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<BaseResponse<AuthResponseDTO>> login(@Valid @RequestBody LoginRequestDTO request) {
+        AuthResponseDTO authResponse = authService.login(request);
+        BaseResponse<AuthResponseDTO> response = BaseResponse.<AuthResponseDTO>builder()
+                .status("SUCCESS")
+                .message("Login successful.")
+                .data(authResponse)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+}
+
+
+// ==============================================================================
+// PACOTE: br.com.legalconnect.auth.dto
+// ==============================================================================
+
+// CLASSE: src/main/java/br/com/legalconnect/auth/dto/request/LoginRequestDTO.java
+package br.com.legalconnect.auth.dto.request;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+@Data
+public class LoginRequestDTO {
+    @NotBlank(message = "Email is required.")
+    @Email(message = "Invalid email format.")
+    private String email;
+
+    @NotBlank(message = "Password is required.")
+    private String password;
+}
+
+// CLASSE: src/main/java/br/com/legalconnect/auth/dto/request/RegisterRequestDTO.java
+package br.com.legalconnect.auth.dto.request;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+@Data
+public class RegisterRequestDTO {
+    @NotBlank(message = "Full name is required.")
+    private String nomeCompleto;
+
+    @NotBlank(message = "Email is required.")
+    @Email(message = "Invalid email format.")
+    private String email;
+
+    @NotBlank(message = "Password is required.")
+    @Size(min = 8, message = "Password must be at least 8 characters long.")
+    private String password;
+}
+
+// CLASSE: src/main/java/br/com/legalconnect/auth/dto/response/AuthResponseDTO.java
+package br.com.legalconnect.auth.dto.response;
+
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+public class AuthResponseDTO {
+    private String accessToken;
+    private String refreshToken;
+}
+
+// CLASSE: src/main/java/br/com/legalconnect/auth/dto/response/UserResponseDTO.java
+package br.com.legalconnect.auth.dto.response;
+
+import lombok.Builder;
+import lombok.Data;
+import java.util.Set;
+import java.util.UUID;
+
+@Data
+@Builder
+public class UserResponseDTO {
+    private UUID id;
+    private String nomeCompleto;
+    private String email;
+    private Set<String> roles;
+}
+
+
+// ==============================================================================
+// PACOTE: br.com.legalconnect.auth.mapper
+// ==============================================================================
+
+// CLASSE: src/main/java/br/com/legalconnect/auth/mapper/UserMapper.java
+package br.com.legalconnect.auth.mapper;
+
+import br.com.legalconnect.auth.dto.response.UserResponseDTO;
+import br.com.legalconnect.domain.entity.Role;
+import br.com.legalconnect.domain.entity.User;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Mapper(componentModel = "spring")
+public interface UserMapper {
+    
+    @Mapping(target = "roles", source = "roles", qualifiedByName = "rolesToStrings")
+    UserResponseDTO toResponseDTO(User user);
+
+    @Named("rolesToStrings")
+    default Set<String> rolesToStrings(Set<Role> roles) {
+        if (roles == null) {
+            return null;
+        }
+        return roles.stream()
+                    .map(Role::getNome)
+                    .collect(Collectors.toSet());
+    }
+}
+
+
+// ==============================================================================
+// PACOTE: br.com.legalconnect.auth.repository
+// ==============================================================================
+
+// CLASSE: src/main/java/br/com/legalconnect/auth/repository/RoleRepository.java
+package br.com.legalconnect.auth.repository;
+
+import br.com.legalconnect.domain.entity.Role;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface RoleRepository extends JpaRepository<Role, UUID> {
+    Optional<Role> findByNome(String nome);
+}
+
+// CLASSE: src/main/java/br/com/legalconnect/auth/repository/UserRepository.java
+package br.com.legalconnect.auth.repository;
+
+import br.com.legalconnect.domain.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, UUID> {
+    Optional<User> findByEmail(String email);
+    boolean existsByEmail(String email);
+}
+
+
+// ==============================================================================
+// PACOTE: br.com.legalconnect.auth.service
+// ==============================================================================
+
+// CLASSE: src/main/java/br/com/legalconnect/auth/service/AuthService.java
+package br.com.legalconnect.auth.service;
+
+import br.com.legalconnect.auth.dto.request.LoginRequestDTO;
+import br.com.legalconnect.auth.dto.request.RegisterRequestDTO;
+import br.com.legalconnect.auth.dto.response.AuthResponseDTO;
+import br.com.legalconnect.auth.dto.response.UserResponseDTO;
+import br.com.legalconnect.auth.mapper.UserMapper;
+import br.com.legalconnect.auth.repository.RoleRepository;
+import br.com.legalconnect.auth.repository.UserRepository;
+import br.com.legalconnect.common.constant.RoleConstant;
+import br.com.legalconnect.common.exception.BusinessException;
+import br.com.legalconnect.common.exception.ErrorCode;
+import br.com.legalconnect.domain.entity.Role;
+import br.com.legalconnect.domain.entity.User;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Set;
+
+@Service
+@RequiredArgsConstructor
+public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+    private final UserMapper userMapper;
+
+    @Transactional
+    public UserResponseDTO register(RegisterRequestDTO request) {
+        log.info("Attempting to register new user with email: {}", request.getEmail());
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS, HttpStatus.CONFLICT, "Email is already in use.");
+        }
+
+        Role userRole = roleRepository.findByNome(RoleConstant.ROLE_CLIENTE)
+                .orElseThrow(() -> {
+                    log.error("Default role {} not found in database.", RoleConstant.ROLE_CLIENTE);
+                    return new BusinessException(ErrorCode.DEFAULT_ROLE_NOT_FOUND, HttpStatus.INTERNAL_SERVER_ERROR, "Default user role not configured.");
+                });
+
+        User user = User.builder()
+                .nomeCompleto(request.getNomeCompleto())
+                .email(request.getEmail())
+                .senhaHash(passwordEncoder.encode(request.getPassword()))
+                .roles(Set.of(userRole))
+                .build();
+
+        User savedUser = userRepository.save(user);
+        log.info("User registered successfully with ID: {}", savedUser.getId());
+        return userMapper.toResponseDTO(savedUser);
+    }
+
+    public AuthResponseDTO login(LoginRequestDTO request) {
+        log.info("Attempting to authenticate user with email: {}", request.getEmail());
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            );
+        } catch (AuthenticationException e) {
+            log.warn("Authentication failed for email {}: {}", request.getEmail(), e.getMessage());
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED, "Invalid email or password.");
+        }
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND, "User not found after successful authentication. This should not happen."));
+
+        String accessToken = jwtService.generateToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+        log.info("Authentication successful for user: {}", user.getEmail());
+
+        return AuthResponseDTO.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+}
+
+// CLASSE: src/main/java/br/com/legalconnect/auth/service/JwtService.java
+package br.com.legalconnect.auth.service;
+
+import br.com.legalconnect.domain.entity.Role;
+import br.com.legalconnect.domain.entity.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+
+import java.security.Key;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@Service
+public class JwtService {
+
+    @Value("${application.security.jwt.secret-key}")
+    private String secretKey;
+    @Value("${application.security.jwt.expiration}")
+    private long jwtExpiration;
+    @Value("${application.security.jwt.refresh-expiration}")
+    private long refreshExpiration;
+
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    public String generateToken(UserDetails userDetails) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        if (userDetails instanceof User user) {
+            extraClaims.put("roles", user.getRoles().stream().map(Role::getNome).collect(Collectors.toList()));
+            extraClaims.put("userId", user.getId().toString());
+            extraClaims.put("fullName", user.getNomeCompleto());
+        }
+        return buildToken(extraClaims, userDetails, jwtExpiration);
+    }
+
+    public String generateRefreshToken(UserDetails userDetails) {
+        return buildToken(new HashMap<>(), userDetails, refreshExpiration);
+    }
+
+    private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
+        return Jwts.builder()
+                .claims(extraClaims)
+                .subject(userDetails.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSignInKey())
+                .compact();
+    }
+
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    }
+
+    private boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    private Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSignInKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    private Key getSignInKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+}
+
+
+/*
+================================================================================
+|                                                                              |
+|                           PROJETO: eureka-service                            |
+|                  (Microsserviço de Service Discovery)                        |
+|                                                                              |
+================================================================================
+*/
+
+// ------------------------------------------------------------------------------
+// ESTRUTURA DE ARQUIVOS DO PROJETO: eureka-service
+// ------------------------------------------------------------------------------
+/*
+eureka-service/
+├── Dockerfile
+├── pom.xml
+└── src/
+    ├── main/
+    │   ├── java/
+    │   │   └── br/
+    │   │       └── com/
+    │   │           └── legalconnect/
+    │   │               └── eureka/
+    │   │                   └── EurekaServiceApplication.java
+    │   └── resources/
+    │       └── application.properties
+    └── test/
+*/
+
+// ==============================================================================
+// ARQUIVO: eureka-service/pom.xml
+// ==============================================================================
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.2.5</version>
+		<relativePath/>
+	</parent>
+	<groupId>br.com.legalconnect</groupId>
+	<artifactId>eureka-service</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>eureka-service</name>
+	<description>Service Discovery for LegalConnect Platform</description>
+	<properties>
+		<java.version>17</java.version>
+		<spring-cloud.version>2023.0.1</spring-cloud.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>
+
+// ==============================================================================
+// ARQUIVO: eureka-service/Dockerfile
+// ==============================================================================
+# Stage 1: Build the application with Maven
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline
+COPY src ./src
+RUN mvn clean install -DskipTests
+
+# Stage 2: Create the final runtime image
+FROM eclipse-temurin:17-jre-focal
+WORKDIR /app
+COPY --from=build /app/target/eureka-service-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8761
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+// ==============================================================================
+// ARQUIVO: eureka-service/src/main/resources/application.properties
+// ==============================================================================
+# Application Port
+server.port=8761
+
+# Application Name
+spring.application.name=eureka-service
+
+# Eureka Server Configuration
+# This instance is a server, so it should not register itself with another Eureka.
+eureka.client.register-with-eureka=false
+# This instance should not fetch the registry information from another Eureka. It is the source of truth.
+eureka.client.fetch-registry=false
+
+// ==============================================================================
+// CLASSE: eureka-service/src/main/java/br/com/legalconnect/eureka/EurekaServiceApplication.java
+// ==============================================================================
+package br.com.legalconnect.eureka;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+@SpringBootApplication
+@EnableEurekaServer
+public class EurekaServiceApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(EurekaServiceApplication.class, args);
+	}
+
+}
+
+
+/*
+================================================================================
+|                                                                              |
+|                           PROJETO: gateway-service                           |
+|                    (Microsserviço de API Gateway)                            |
+|                                                                              |
+================================================================================
+*/
+
+// ------------------------------------------------------------------------------
+// ESTRUTURA DE ARQUIVOS DO PROJETO: gateway-service
+// ------------------------------------------------------------------------------
+/*
+gateway-service/
+├── Dockerfile
+├── pom.xml
+└── src/
+    ├── main/
+    │   ├── java/
+    │   │   └── br/
+    │   │       └── com/
+    │   │           └── legalconnect/
+    │   │               └── gateway/
+    │   │                   └── GatewayServiceApplication.java
+    │   └── resources/
+    │       └── application.properties
+    └── test/
+*/
+
+// ==============================================================================
+// ARQUIVO: gateway-service/pom.xml
+// ==============================================================================
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.2.5</version>
+		<relativePath/>
+	</parent>
+	<groupId>br.com.legalconnect</groupId>
+	<artifactId>gateway-service</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>gateway-service</name>
+	<description>API Gateway for LegalConnect Platform</description>
+	<properties>
+		<java.version>17</java.version>
+		<spring-cloud.version>2023.0.1</spring-cloud.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-gateway</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>
+
+// ==============================================================================
+// ARQUIVO: gateway-service/Dockerfile
+// ==============================================================================
+# Stage 1: Build the application with Maven
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline
+COPY src ./src
+RUN mvn clean install -DskipTests
+
+# Stage 2: Create the final runtime image
+FROM eclipse-temurin:17-jre-focal
+WORKDIR /app
+COPY --from=build /app/target/gateway-service-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+// ==============================================================================
+// ARQUIVO: gateway-service/src/main/resources/application.properties
+// ==============================================================================
+# Application Port
+server.port=8080
+
+# Application Name
+spring.application.name=gateway-service
+
+# Eureka Client Configuration
+# The URL of the Eureka server for service registration and discovery.
+eureka.client.serviceUrl.defaultZone=http://localhost:8761/eureka
+
+# Spring Cloud Gateway Configuration
+# Enable service discovery locator to automatically create routes from Eureka.
+spring.cloud.gateway.discovery.locator.enabled=true
+
+# Manual Route Configuration
+# Routes requests for the auth-service.
+# 'lb' stands for Load Balancer, provided by Eureka.
+spring.cloud.gateway.routes[0].id=auth-service
+spring.cloud.gateway.routes[0].uri=lb://AUTH-SERVICE
+spring.cloud.gateway.routes[0].predicates[0]=Path=/api/v1/auth/**
+
+// ==============================================================================
+// CLASSE: gateway-service/src/main/java/br/com/legalconnect/gateway/GatewayServiceApplication.java
+// ==============================================================================
+package br.com.legalconnect.gateway;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient
+public class GatewayServiceApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(GatewayServiceApplication.class, args);
+	}
+
+}

@@ -1,3 +1,0 @@
-2025/07/16 02:43:49 [emerg] 1#1: unknown directive "auth_jwt_key_file" in /etc/nginx/nginx.conf:124
-2025/07/16 02:43:56 [emerg] 1#1: unknown directive "auth_jwt_key_file" in /etc/nginx/nginx.conf:124
-2025/07/16 02:43:58 [emerg] 1#1: unknown directive "auth_jwt_key_file" in /etc/nginx/nginx.conf:124

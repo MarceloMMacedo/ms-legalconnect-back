@@ -1,0 +1,292 @@
+### Análise Técnica e Proposta de Reestruturação
+
+Com base nos arquivos fornecidos, realizei uma análise detalhada da arquitetura e das especificações funcionais, focando nos objetivos de simplificação e reestruturação do projeto.
+
+-----
+
+### **Relatório Técnico: Análise e Proposta de Arquitetura de Microsserviços**
+
+#### **Resumo dos Principais Problemas de Complexidade**
+
+A arquitetura atual, embora bem intencionada com a adoção de microsserviços e multi-tenancy, apresenta complexidade excessiva e inconsistências que comprometem a agilidade da primeira fase do projeto. Os principais pontos de atenção são:
+
+1.  **Inconsistência Tecnológica no Frontend:** O código frontend anexado demonstra uma grande incoerência. [cite\_start]Os arquivos de configuração (`angular.json`, `tsconfig.json`) indicam um projeto Angular [cite: 88643, 88759][cite\_start], mas o arquivo `frontend.txt` contém código de uma aplicação React completa, com uso de `useState`, `useEffect` e sintaxe JSX[cite: 88740, 88741]. [cite\_start]Além disso, a aplicação usa dados mockados (e.g., `advogadosMock`, `eventosDestaquesMock`)[cite: 88740, 88741], o que a torna completamente desvinculada do backend e inadequada para produção.
+2.  **Acoplamento Excessivo no Módulo de Autenticação (`auth-service`):** O serviço de autenticação (`AuthServiceApplication.java`) está altamente acoplado a lógicas de negócio de outros módulos. [cite\_start]Ele contém endpoints e lógicas de registro para todos os tipos de usuário (`clientes`, `advogados`, `socios`, `administradores`) [cite: 48629, 48630, 48631, 48632] [cite\_start]e está diretamente acoplado a repositórios e serviços de outras áreas (e.g., `UserRepository`, `RoleRepository`, `EmailService`)[cite: 48641].
+3.  [cite\_start]**Complexidade Prematura de Multi-tenancy:** A implementação de multi-tenancy por esquema de banco de dados, embora robusta, é complexa para a fase inicial[cite: 48677, 48678, 48679]. [cite\_start]A gestão de um `TenantFilter` e a injeção de `TenantMigrationService` [cite: 48676] adicionam uma camada de abstração que pode ser simplificada para um MVP. A especificação funcional menciona apenas um "Marketplace Jurídico" e não detalha a necessidade de isolamento por cliente (tenant) nesta fase.
+
+#### **Sugestões Específicas de Simplificação e Reestruturação**
+
+Para atingir a meta de "simplicidade, clareza e alinhamento com os objetivos iniciais do projeto", as seguintes ações são prioritárias:
+
+1.  **Unificar/Redesenhar o Frontend:**
+
+      * **Ação Imediata:** Decidir entre Angular e React e eliminar o código da tecnologia não escolhida. Se a base de código do `frontend.txt` for a escolhida, ela deve ser reescrita para consumir os endpoints do backend em vez de dados mockados.
+      * [cite\_start]**Prioridade Alta:** A interface deve se conectar aos serviços de backend para buscar dinamicamente os `advogados`, `especialidades` e `localizacoes`, utilizando a paginação e os filtros conforme o backend já prevê[cite: 88746, 88755, 88756].
+
+2.  **Simplificar e Modularizar o Backend:**
+
+      * **Módulo de Autenticação (`auth-service`)**: Este serviço deve ser reduzido para gerenciar apenas autenticação e autorização (`login`, `refresh-token`) e, no máximo, a criação de usuários genéricos. A lógica de registro de tipos específicos de usuários (advogado, cliente, etc.) deve ser movida para seus respectivos serviços de domínio. O `auth-service` seria responsável por validar as credenciais e emitir o JWT com as roles, mas não por saber como criar cada tipo de entidade.
+      * **Módulo de Usuário (`user-service` ou similar)**: Um serviço de domínio, `UserService`, deveria ser o único responsável por criar, ler, atualizar e deletar a entidade `User` e suas entidades relacionadas (como `Pessoa`). O `auth-service` chamaria este serviço quando um novo usuário for registrado.
+      * **Remover Multi-tenancy no MVP**: Para a primeira fase, a complexidade de múltiplos esquemas de banco de dados é desnecessária. A multi-tenancy pode ser desativada e planejada para uma fase futura, quando a necessidade de isolamento de dados entre os escritórios (e.g., a "Gestão de Escritório") se tornar crítica. [cite\_start]A arquitetura pode ser mantida em um único esquema público, como já sugerido na configuração[cite: 48676].
+
+#### **Nova Proposta de Estrutura de Microsserviços (MVP)**
+
+A arquitetura de microsserviços pode ser simplificada para um modelo com menos acoplamento e responsabilidades mais claras, mantendo os benefícios de um ecossistema distribuído.
+
+  * **API Gateway (`gateway-service`):** Atua como o ponto de entrada único para o frontend. [cite\_start]Ele é responsável pelo roteamento, balanceamento de carga e, principalmente, a aplicação de filtros de autenticação/autorização, como a validação do JWT[cite: 29675].
+  * **Serviço de Autenticação (`auth-service`):** O mais enxuto possível. Cuida do registro de novos usuários genéricos, login e renovação de token. Ele não se preocupa se o usuário é um advogado ou cliente, apenas gerencia a credencial de acesso. [cite\_start]A rota `/api/v1/auth/register` [cite: 48598] seria genérica.
+  * **Serviço de Profissionais (`lawyer-service`):** O coração do marketplace. Este serviço teria a lógica de negócio para a entidade `Profissional` e suas entidades aninhadas (`FormacaoAcademica`, `ExperienciaProfissional`, etc.). Ele seria responsável por:
+      * Criar um perfil de advogado, incluindo a validação da OAB.
+      * Oferecer endpoints públicos para busca e listagem de advogados.
+      * [cite\_start]Gerenciar as "áreas de atuação" e "localizações" para os filtros de busca[cite: 60507, 60544].
+      * Permitir a criação e gestão de depoimentos atrelados a um profissional.
+  * **Serviço de Marketplace e Destaques (`marketplace-service`):** Um serviço dedicado à lógica do `marketplace` em si, incluindo a exposição de `eventos`, `escritórios` e `notícias` em destaque. [cite\_start]As operações de busca de `destaques` [cite: 69455] e a funcionalidade de depoimentos poderiam ser centralizadas aqui, descarregando o `lawyer-service`.
+
+#### **Diagrama de Arquitetura Proposto (Texto)**
+
+```
++----------------+      +-----------------+      +---------------------+
+|   Frontend     |----> | API Gateway     |----> |  Auth Service       |
+| (React/Angular)|      | (Spring Cloud)  |      | (Login, Tokens)     |
++----------------+      +-----------------+      +---------------------+
+                                 |                      ^
+                                 |                      |
+                                 |                      v
+                                 |        +---------------------+
+                                 |---->   |  Lawyer Service     |
+                                 |        | (CRUD de Perfis,    |
+                                 |        |  Busca de Advogados)|
+                                 |        +---------------------+
+                                 |                      ^
+                                 |                      |
+                                 |                      v
+                                 |        +---------------------+
+                                 |---->   |  Marketplace Service|
+                                 |        | (Destaques,         |
+                                 |        |  Depoimentos)       |
+                                 +---------------------+
+```
+
+#### **Lista de Ações Prioritárias (Curto Prazo)**
+
+1.  **Refatoração do Backend (Prioridade Alta):**
+
+      * [cite\_start]Criar um novo microsserviço `LawyerService` e migrar para ele toda a lógica de criação e atualização de perfis de advogado que atualmente está no `auth-service`[cite: 48629, 48630].
+      * [cite\_start]Transferir a lógica de busca de depoimentos e outros dados mestre (como `areas-atuacao` e `localizacoes`) para endpoints dedicados no `LawyerService` ou em um novo `MarketplaceService` para que o frontend possa consumi-los[cite: 60507, 60544].
+      * Simplificar o `auth-service` para que ele seja unicamente responsável por autenticação e gestão de usuários básicos, sem a lógica de domínio de advogados/clientes.
+      * Desativar temporariamente ou adiar a implementação completa de multi-tenancy para a fase 2, focando em um esquema de banco de dados único.
+
+2.  **Saneamento e Desenvolvimento do Frontend (Prioridade Altíssima):**
+
+      * Decidir a tecnologia: React ou Angular. Recomendo continuar com o Angular, já que a maioria dos arquivos de configuração aponta para ele.
+      * [cite\_start]Reescrever a aplicação frontend para consumir os novos endpoints do backend, removendo completamente os dados mockados de advogados e destaques[cite: 88740, 88741]. Isso é o ponto mais crítico para a viabilidade do projeto.
+      * Remover dependências e código da tecnologia não utilizada (por exemplo, os arquivos React se o Angular for o escolhido).
+
+Com base na análise detalhada dos arquivos anexos e atuando nos papéis de Product Owner, Arquiteto e Engenheiro de Software, apresento o seguinte relatório técnico com foco na simplificação da arquitetura e alinhamento aos objetivos iniciais do projeto.
+
+### **Relatório Técnico de Análise e Reestruturação de Arquitetura**
+
+#### **1. Resumo dos Principais Problemas de Complexidade Identificados**
+
+A análise da especificação funcional e da arquitetura de backend e frontend revelou um desalinhamento significativo com o objetivo de manter a simplicidade, especialmente no módulo de Marketplace. A complexidade atual é excessiva para uma primeira fase e apresenta riscos de atraso, custos elevados de manutenção e dificuldade de evolução.
+
+Os principais problemas são:
+
+* [cite_start]**Complexidade Excessiva no Módulo Marketplace:** A especificação funcional descreve um marketplace extremamente detalhado, com perfis de advogados com múltiplas seções (formação, experiência, certificados), filtros de busca complexos e funcionalidades avançadas como agendamento integrado e avaliações[cite: 1]. [cite_start]A arquitetura de backend reflete isso com um microsserviço dedicado (`legal-marketplace-service`) para gerenciar destaques e patrocínios, funcionalidades que não são essenciais para uma primeira versão[cite: 3]. [cite_start]O protótipo de frontend também implementa essa visão complexa[cite: 2].
+* [cite_start]**Alto Acoplamento e Redundância entre Microsserviços:** Existe uma sobreposição de responsabilidades e um forte acoplamento entre o `auth-service` e o `legal-usuario-service`[cite: 3]. O serviço de autenticação é responsável por registrar todos os tipos de usuários, enquanto o serviço de usuário gerencia os perfis detalhados. [cite_start]Isso fragmenta o domínio do usuário desde sua criação, gerando redundância de DTOs (`UserRegistrationRequest` [cite: 3][cite_start], `UserResponseDTO` [cite: 3]) e lógica de negócio duplicada.
+* [cite_start]**Esquema de Banco de Dados Superdimensionado:** O esquema SQL inicial é excessivamente granular para um MVP[cite: 3]. [cite_start]Tabelas como `tb_certificacao_profissional`, `tb_experiencia_profissional`, e `tb_formacao_academica` [cite: 3] poderiam ser simplificadas em campos de texto dentro da tabela principal do profissional, reduzindo a complexidade de junções e a lógica de persistência.
+
+#### **2. Sugestões Específicas de Simplificação da Arquitetura**
+
+Para alinhar o desenvolvimento aos objetivos de negócio e garantir uma entrega mais rápida e enxuta, sugiro as seguintes ações:
+
+1.  **Unificar Microsserviços de Usuário:** Fundir as responsabilidades do `auth-service` e do `legal-usuario-service` em um único microsserviço, que chamaremos de **`user-service`**. Este serviço será o único responsável por todo o ciclo de vida do usuário, desde o cadastro e autenticação até a gestão completa de perfis.
+2.  **Eliminar o Microsserviço de Marketplace (Temporariamente):** As funcionalidades essenciais do marketplace para a primeira fase (busca e listagem de advogados) são, na verdade, operações sobre os perfis dos profissionais. Portanto, o novo **`user-service`** deve absorver essa responsabilidade. O `legal-marketplace-service` e suas funcionalidades avançadas (destaques, patrocínios) devem ser descontinuados nesta fase.
+3.  **Simplificar o Modelo de Dados:** Reduzir a complexidade do banco de dados. Em vez de tabelas separadas para cada detalhe do perfil do advogado, consolidar informações como biografia, especialidades e formação em campos de texto simples dentro da tabela `tb_profissional`. Isso simplifica drasticamente as consultas e a manutenção.
+
+#### **3. Nova Proposta de Estrutura de Microsserviços**
+
+A nova arquitetura será mais enxuta e focada nas funcionalidades essenciais.
+
+* **`user-service` (Novo / Unificado):**
+    * **Responsabilidades:**
+        * **Gestão de Identidade e Acesso:** Cadastro, login, recuperação de senha, gerenciamento de tokens (JWT).
+        * **Gestão de Perfis:** CRUD completo para todos os tipos de usuários (Cliente, Advogado, Admin).
+        * **Funcionalidades do Marketplace (MVP):** Expor endpoints públicos para listar e filtrar advogados com base em dados simples como nome, especialidade (texto) e localização.
+
+* **`gateway-service` (Mantido):**
+    * **Responsabilidades:** Ponto de entrada único para todas as requisições. Roteia as chamadas para o `user-service` e, futuramente, para outros serviços. Continua responsável pela validação inicial de tokens e enriquecimento de headers.
+
+* **`eureka-service` (Mantido):**
+    * **Responsabilidades:** Service Discovery, essencial para a comunicação entre os microsserviços.
+
+* **`office-management-service` (Futuro):**
+    * **Responsabilidades:** Será criado em uma fase posterior para abrigar as funcionalidades de "Gestão de Escritório", mantendo o domínio desacoplado do núcleo de usuários e marketplace.
+
+#### **4. Diagrama de Arquitetura Atualizado (Descrição Textual)**
+
+**Fluxo da Requisição:**
+
+1.  O **Frontend (Angular)** envia uma requisição para o **`gateway-service`**.
+2.  O **`gateway-service`** atua como proxy reverso, validando o JWT (para rotas protegidas) e encaminhando a requisição para o serviço apropriado.
+3.  Todas as requisições relacionadas a usuários, perfis e listagem do marketplace são direcionadas para o **`user-service`**.
+4.  O **`user-service`** interage com seu banco de dados (PostgreSQL com esquema simplificado) para executar a lógica de negócio.
+5.  O **`eureka-service`** garante que o gateway consiga localizar o `user-service` na rede.
+
+Essa estrutura reduz o número de serviços em produção, diminui a latência de comunicação entre serviços e simplifica drasticamente o fluxo de dados do domínio de usuário.
+
+#### **5. Lista de Ações Prioritárias (Curto Prazo)**
+
+1.  **Refatoração do Backend:**
+    * Criar um novo projeto Spring Boot para o `user-service`.
+    * Migrar as entidades (`User`, `Role`, `Pessoa`, `Profissional`, etc.) dos serviços `auth-service` e `legal-usuario-service` para o novo `user-service`.
+    * Unificar a lógica de negócio de autenticação, registro e gestão de perfis no `AuthService` e `UserService` dentro do novo serviço.
+    * Criar um novo script de migração Flyway (`V1__initial_schema.sql`) com o modelo de dados simplificado.
+    * Atualizar as rotas no `gateway-service` para apontar para o novo `user-service`.
+    * Arquivar os projetos `auth-service`, `legal-usuario-service` e `legal-marketplace-service`.
+
+2.  **Refatoração do Frontend:**
+    * Atualizar o `ApiService` do Angular para direcionar todas as chamadas de usuário e marketplace para os novos endpoints do `user-service` via gateway.
+    * Remover do protótipo atual as funcionalidades não essenciais, como o assistente de IA, seções detalhadas de certificações/experiência no perfil do advogado e a área de patrocínios.
+    * Simplificar o formulário de busca para refletir os filtros básicos disponíveis no novo `user-service`.
+
+Ao seguir este plano, a equipe poderá focar em entregar um produto funcional e de valor rapidamente, deixando a complexidade para fases futuras, quando os requisitos de negócio estiverem mais maduros e validados pelo mercado.
+
+Claro\! Com base na nova proposta de arquitetura simplificada, aqui está a árvore de microsserviços, representando a estrutura e seus componentes:
+
+```
+🌳 **Plataforma Jurídica (Arquitetura Simplificada)**
+│
+├── 🌐 **Frontend (Cliente)**
+│   └── Aplicação Angular (Interface do Usuário)
+│
+├──  GATEWAY-SERVICE (Ponto de Entrada Único - Spring Cloud Gateway)
+│   │   # Responsável por rotear todas as requisições externas.
+│   │   # Aplica filtros de segurança (ex: validação de JWT).
+│   │
+│   └───> 🌳 **USER-SERVICE (Core da Aplicação)**
+│       │   # Microsserviço unificado, responsável pelo domínio principal.
+│       │
+│       ├── 📦 **Módulos Internos:**
+│       │   ├── 🔑 **auth-module:**
+│       │   │   └── Autenticação (Login, Geração de Token) e Registro de Usuários.
+│       │   │
+│       │   ├── 👤 **profile-module:**
+│       │   │   └── Gestão completa de perfis (CRUD de Clientes e Advogados).
+│       │   │
+│       │   └── 🔍 **marketplace-module (MVP):**
+│       │       └── Endpoints públicos para busca e listagem de advogados.
+│       │
+│       └── 💾 **Banco de Dados (PostgreSQL)**
+│           └── Esquema de tabelas simplificado (tb_usuario, tb_perfil, etc.)
+│
+├── EUREKA-SERVICE (Service Discovery)
+│   │   # Permite que o GATEWAY-SERVICE encontre o USER-SERVICE na rede.
+│   │
+│   └───> Comunica-se com todos os serviços registrados.
+│
+└── 🚀 **(Futuro) OFFICE-MANAGEMENT-SERVICE**
+    │   # Serviço a ser desenvolvido em uma fase posterior.
+    │
+    └── Responsabilidades: Gestão de Escritório, Casos, Documentos.
+```
+
+### **Resumo da Estrutura:**
+
+  * **Nível 1 (Entrada):** O `gateway-service` é a porta de entrada para todas as interações, garantindo um ponto único de controle e segurança.
+  * **Nível 2 (Core):** O `user-service` é o coração da aplicação nesta nova fase. Ele centraliza todas as regras de negócio essenciais: quem são os usuários, como eles se autenticam e como são encontrados (a função de marketplace MVP).
+  * **Nível 3 (Suporte):** O `eureka-service` é uma peça de infraestrutura fundamental que dá resiliência à arquitetura, permitindo que os serviços se descubram dinamicamente.
+  * **Visão de Futuro:** A estrutura já prevê a adição de novos serviços de forma organizada (`office-management-service`), sem impactar o núcleo já consolidado.
+
+Essa árvore demonstra uma arquitetura muito mais enxuta, com responsabilidades claras e baixo acoplamento, ideal para acelerar o desenvolvimento e focar na entrega de valor inicial.
+
+Excelente! Vamos detalhar um plano de ação sequencial para a construção do backend. O foco é entregar valor de forma incremental, começando pelo mais simples e essencial, e garantindo que cada fase resulte em um sistema funcional e testável.
+
+Este plano remove a complexidade inicial, priorizando a estabilidade e a clareza da arquitetura.
+
+### **Plano de Fases para Construção do Backend**
+
+---
+
+#### **Fase 1: Fundação da Arquitetura e Identidade do Usuário (O Esqueleto)**
+
+**Objetivo:** Ter a infraestrutura mínima de microsserviços rodando e permitir que um usuário se cadastre e se autentique. Nada mais.
+
+**Componentes a serem construídos:**
+
+1.  **`eureka-service`:**
+    * **Ação:** Configurar o servidor de Service Discovery.
+    * **Resultado:** Os serviços conseguirão se registrar e se encontrar na rede.
+
+2.  **`gateway-service`:**
+    * **Ação:** Configurar o API Gateway para ser o ponto de entrada. Inicialmente, ele apenas saberá redirecionar para o `user-service`.
+    * **Resultado:** Uma única URL de acesso (`localhost:8080`, por exemplo) para toda a aplicação.
+
+3.  **`user-service` (Versão Mínima):**
+    * **Ação:**
+        * Criar o projeto Spring Boot.
+        * Implementar a lógica de **Cadastro de Usuário** (login/senha) e **Autenticação** (geração de token JWT).
+        * Configurar a conexão com o banco de dados.
+    * **Banco de Dados (Schema V1):**
+        * Apenas duas tabelas: `tb_usuario` (com id, nome, email, senha) e `tb_perfil` (com id, nome_perfil - ex: ROLE_CLIENTE, ROLE_ADVOGADO).
+    * **Resultado:** Endpoints `/auth/register` e `/auth/login` funcionando. Um usuário pode ser criado e receber um token de acesso válido.
+
+**Ao final da Fase 1:** Teremos um esqueleto de arquitetura funcional, provando que a comunicação entre os serviços e a segurança fundamental estão operacionais.
+
+---
+
+#### **Fase 2: Gestão de Perfis e Marketplace MVP (A Primeira Funcionalidade de Valor)**
+
+**Objetivo:** Permitir que um advogado complete um perfil básico e que um cliente possa encontrá-lo através de uma busca simples.
+
+**Componentes a serem evoluídos:**
+
+1.  **`user-service` (Evolução):**
+    * **Ação:**
+        * Expandir o `user-service` para incluir a **Gestão de Perfis**.
+        * Criar endpoints de CRUD (`/api/usuarios/{id}`) para que o usuário autenticado possa atualizar suas próprias informações.
+        * Implementar a funcionalidade de **Marketplace MVP**: criar um endpoint público (`/api/public/advogados`) que lista os profissionais.
+    * **Banco de Dados (Schema V2):**
+        * Adicionar colunas simples à tabela `tb_usuario` (ou uma tabela `tb_perfil_profissional` com relação 1-para-1, se preferir manter a `tb_usuario` limpa).
+        * Campos a adicionar: `biografia` (TEXTO), `especialidade_principal` (TEXTO), `cidade` (TEXTO), `telefone_contato` (TEXTO). **Nenhuma tabela extra para formação, certificados, etc.**
+    * **Resultado:** Um advogado pode se cadastrar (Fase 1), logar, preencher sua bio e especialidade (Fase 2). Um visitante pode acessar uma página e ver a lista de advogados cadastrados.
+
+**Ao final da Fase 2:** O produto já entrega seu primeiro grande valor: a conexão entre cliente e profissional. A complexidade do marketplace foi totalmente removida e substituída por uma simples consulta na tabela de usuários.
+
+---
+
+#### **Fase 3: Otimização com Cache e Refinamento (Ganhando Performance)**
+
+**Objetivo:** Melhorar a performance das consultas públicas e preparar o sistema para um volume maior de acessos, alinhado ao seu interesse anterior no "uso de memória".
+
+**Componentes a serem evoluídos:**
+
+1.  **`user-service` (Otimização):**
+    * **Ação:**
+        * Implementar uma camada de **cache** (ex: usando Caffeine para cache em memória ou Redis para um cache distribuído) no endpoint de listagem de advogados (`/api/public/advogados`).
+        * A busca por advogados, que é uma operação de leitura muito frequente, não precisará mais acessar o banco de dados a cada requisição.
+    * **Resultado:** Respostas quase instantâneas para a busca no marketplace, reduzindo a carga no banco de dados e melhorando a experiência do usuário.
+
+2.  **`gateway-service` (Otimização):**
+    * **Ação:** Configurar políticas de **Rate Limiting** para proteger os endpoints públicos contra abuso.
+    * **Resultado:** Maior segurança e estabilidade para a aplicação.
+
+**Ao final da Fase 3:** A aplicação está não só funcional, mas também rápida e mais robusta, pronta para receber um número maior de usuários.
+
+---
+
+#### **Fase 4: Preparação para Expansão (Fundação Sólida)**
+
+**Objetivo:** Garantir que o núcleo da aplicação está maduro e observável antes de adicionar novos domínios de negócio complexos.
+
+**Ações de Engenharia:**
+
+1.  **Observabilidade:**
+    * **Ação:** Implementar **logging estruturado**, **métricas** (Micrometer + Prometheus) e **tracing distribuído** (Zipkin/Jaeger) em todos os microsserviços.
+    * **Resultado:** Capacidade total de monitorar a saúde da aplicação, identificar gargalos e depurar problemas em produção.
+
+2.  **Testes e CI/CD:**
+    * **Ação:** Fortalecer a suíte de testes (unitários, integração) e configurar um pipeline de Integração e Entrega Contínua (CI/CD).
+    * **Resultado:** Automação e segurança nas entregas de novas versões.
+
+**Ao final da Fase 4:** Temos um sistema `core` estável, performático, seguro e, acima de tudo, fácil de manter e monitorar, pronto para servir de alicerce para futuras funcionalidades como o `office-management-service`.

@@ -1,0 +1,548 @@
+{
+  "openapi": "3.0.1",
+  "info": { "title": "OpenAPI definition", "version": "v0" },
+  "servers": [
+    { "url": "http://localhost:49784", "description": "Generated server url" }
+  ],
+  "tags": [
+    {
+      "name": "Depoimentos",
+      "description": "Gerenciamento de depoimentos para o marketplace jurídico"
+    }
+  ],
+  "paths": {
+    "/api/v1/publico/depoimentos/{id}": {
+      "get": {
+        "tags": ["Depoimentos"],
+        "summary": "Busca um depoimento por ID (administração)",
+        "description": "Retorna um depoimento específico pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "buscarDepoimentoPorIdAdmin",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do depoimento a ser buscado",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Depoimento encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Depoimento não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "put": {
+        "tags": ["Depoimentos"],
+        "summary": "Atualiza um depoimento existente",
+        "description": "Atualiza os dados de um depoimento pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "atualizarDepoimento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do depoimento a ser atualizado",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        ],
+        "requestBody": {
+          "description": "Dados atualizados do depoimento",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DepoimentoRequestDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Depoimento atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Depoimento não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "delete": {
+        "tags": ["Depoimentos"],
+        "summary": "Exclui um depoimento",
+        "description": "Exclui um depoimento permanentemente pelo seu ID. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "excluirDepoimento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do depoimento a ser excluído",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Depoimento excluído com sucesso",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          },
+          "404": {
+            "description": "Depoimento não encontrado",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/BaseResponseVoid" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/api/v1/publico/depoimentos": {
+      "get": {
+        "tags": ["Depoimentos"],
+        "summary": "Lista depoimentos para a página inicial",
+        "description": "Retorna uma lista de depoimentos aprovados, com opções de limite e ordenação aleatória.",
+        "operationId": "listarParaHome",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Número máximo de depoimentos a serem retornados (padrão: 5)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 5 },
+            "example": 5
+          },
+          {
+            "name": "random",
+            "in": "query",
+            "description": "Indica se os depoimentos devem ser aleatórios (padrão: false)",
+            "required": false,
+            "schema": { "type": "boolean", "default": false },
+            "example": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Depoimentos listados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Depoimentos"],
+        "summary": "Cria um novo depoimento",
+        "description": "Cria um novo depoimento no sistema. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "criarDepoimento",
+        "parameters": [
+          {
+            "name": "X-Correlation-ID",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "description": "Dados do depoimento a ser criado",
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DepoimentoRequestDTO" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Depoimento criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/api/v1/publico/depoimentos/{id}/reprovar": {
+      "put": {
+        "tags": ["Depoimentos"],
+        "summary": "Reprova um depoimento",
+        "description": "Altera o status de um depoimento para 'REPROVADO'. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "reprovarDepoimento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do depoimento a ser reprovado",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Depoimento reprovado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Depoimento não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/api/v1/publico/depoimentos/{id}/aprovar": {
+      "put": {
+        "tags": ["Depoimentos"],
+        "summary": "Aprova um depoimento",
+        "description": "Altera o status de um depoimento para 'APROVADO'. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "aprovarDepoimento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do depoimento a ser aprovado",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Depoimento aprovado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Depoimento não encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseDepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/api/v1/publico/depoimentos/todos": {
+      "get": {
+        "tags": ["Depoimentos"],
+        "summary": "Lista todos os depoimentos (administração)",
+        "description": "Retorna uma lista completa de todos os depoimentos, independentemente do status. Requer autenticação de administrador (ROLE_PLATAFORMA_ADMIN).",
+        "operationId": "listarTodosAdmin",
+        "responses": {
+          "200": {
+            "description": "Todos os depoimentos listados para administração",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListDepoimentoResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso proibido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListDepoimentoResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DepoimentoRequestDTO": {
+        "required": ["nome", "texto", "tipoDepoimento", "userId"],
+        "type": "object",
+        "properties": {
+          "texto": { "maxLength": 500, "minLength": 0, "type": "string" },
+          "nome": { "maxLength": 100, "minLength": 0, "type": "string" },
+          "local": { "maxLength": 100, "minLength": 0, "type": "string" },
+          "fotoUrl": {
+            "maxLength": 255,
+            "minLength": 0,
+            "pattern": "^(https?|ftp)://[^ /$.?#].[^ ]*$",
+            "type": "string"
+          },
+          "userId": { "type": "string", "format": "uuid" },
+          "tipoDepoimento": {
+            "pattern": "CLIENTE|PROFISSIONAL",
+            "type": "string"
+          },
+          "status": {
+            "pattern": "PENDENTE|APROVADO|REPROVADO",
+            "type": "string"
+          }
+        }
+      },
+      "DepoimentoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "texto": { "type": "string" },
+          "nome": { "type": "string" },
+          "local": { "type": "string" },
+          "fotoUrl": { "type": "string" },
+          "userId": { "type": "string", "format": "uuid" },
+          "tipoDepoimento": { "type": "string" },
+          "status": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "BaseResponseDepoimentoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "$ref": "#/components/schemas/DepoimentoResponseDTO" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseListDepoimentoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DepoimentoResponseDTO" }
+          },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "BaseResponseVoid": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["SUCESSO", "ERRO", "AVISO"] },
+          "message": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "data": { "type": "object" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}
